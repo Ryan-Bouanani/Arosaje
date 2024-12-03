@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  api:
+    build:
+      context: ./api
+    ports:
+      - "8000:8000"          # API accessible sur localhost:8000
+    volumes:
+      - ./api:/app           # Montre le code local pour le développement
+    environment:
+      - ENV=production
+
+  web:
+    build:
+      context: ./web
+    ports:
+      - "8080:8080"          # Frontend accessible sur localhost:8080
+    volumes:
+      - ./web:/app           # Montre le code local pour le développement
+    environment:
+      - NODE_ENV=production

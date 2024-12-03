@@ -15,7 +15,7 @@ RUN npm install
 COPY . .
 
 # Exposer le port utilisé par Nuxt
-EXPOSE 3000
+EXPOSE 8080
 
 # Commande pour démarrer l'application
-CMD ["npm", "run", "dev"]
+CMD ["npm", "run", "serve"]

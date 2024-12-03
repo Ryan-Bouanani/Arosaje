@@ -15,7 +15,7 @@ services:
     build:
       context: ./web
     ports:
-      - "3000:3000"          # Frontend accessible sur localhost:3000
+      - "8080:8080"          # Frontend accessible sur localhost:8080
     volumes:
       - ./web:/app           # Montre le code local pour le développement
     environment:

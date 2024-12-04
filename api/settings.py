@@ -5,7 +5,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Configuration de la base de données
-DATABASE_URL = f"sqlite:///{BASE_DIR}/api/assets/arosaje.db"
+DATABASE_URL = f"sqlite:///{BASE_DIR}/api/assets/database/arosaje.db"
 
 # Configuration générale
 DEBUG_MODE = True  # Désactiver en production

@@ -1,16 +1,17 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from database import Base
 
 class Garde(Base):
     __tablename__ = "gardes"
     id = Column(Integer, primary_key=True, index=True)
-    date_debut = Column(Date, nullable=False)
-    date_fin = Column(Date, nullable=True)
+    date_debut = Column(String, nullable=False)
+    date_fin = Column(String, nullable=True)
     photo = Column(String, nullable=True)
     statut = Column(String, nullable=False)  # En cours/Terminée
-    gardien_id = Column(Integer, ForeignKey("users.id"))
-    plant_id = Column(Integer, ForeignKey("plants.id"))
+    caretaker_id = Column(Integer, ForeignKey("users.id"))  # Gardien
+    plant_id = Column(Integer, ForeignKey("plants.id"))  # Plante gardée
 
-    gardien = relationship("User", back_populates="gardes")
+    # Relations
+    caretaker = relationship("User", back_populates="caretaker_gardes")
     plant = relationship("Plant", back_populates="gardes")

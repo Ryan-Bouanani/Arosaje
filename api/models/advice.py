@@ -7,8 +7,9 @@ class Advice(Base):
     id = Column(Integer, primary_key=True, index=True)
     texte = Column(String, nullable=False)
     date = Column(String, nullable=False)
-    botanist_id = Column(Integer, ForeignKey("users.id"))
-    plant_id = Column(Integer, ForeignKey("plants.id"))
+    botanist_id = Column(Integer, ForeignKey("users.id"))  # Botaniste ayant créé le conseil
+    plant_id = Column(Integer, ForeignKey("plants.id"))  # Plante liée au conseil
 
-    botanist = relationship("User", back_populates="advices")
+    # Relations
+    botanist = relationship("User", back_populates="created_advices")
     plant = relationship("Plant", back_populates="advices")

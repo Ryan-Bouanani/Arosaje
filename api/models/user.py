@@ -9,10 +9,10 @@ class User(Base):
     prenom = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     telephone = Column(String, nullable=True)
-    role = Column(String, nullable=False)  # Propriétaire, Gardien, Botaniste
     mot_de_passe = Column(String, nullable=False)
     localisation = Column(String, nullable=True)
 
-    plants = relationship("Plant", back_populates="owner")
-    advices = relationship("Advice", back_populates="botanist")
-    gardes = relationship("Garde", back_populates="gardien")
+    # Relations
+    owned_plants = relationship("Plant", back_populates="owner", cascade="all, delete-orphan")  # Propriétaire
+    caretaker_gardes = relationship("Garde", back_populates="caretaker")  # Gardien
+    created_advices = relationship("Advice", back_populates="botanist")  # Botaniste

@@ -8,7 +8,7 @@ from alembic import context
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from database import Base
+from utils.database import Base
 from models import user, plant, advice, garde, photo_history
 
 # this is the Alembic Config object, which provides

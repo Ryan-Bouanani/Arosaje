@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import relationship
-from database import Base
+from utils.database import Base
 
 class PhotoHistory(Base):
     __tablename__ = "photo_histories"

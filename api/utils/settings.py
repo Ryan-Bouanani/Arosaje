@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 # Chemin de base du projet
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Configuration de la base de données
 DATABASE_URL = f"sqlite:///{BASE_DIR}/api/assets/database/arosaje.db"
@@ -16,3 +16,7 @@ VERSION = "1.0.0"
 SECRET_KEY = os.getenv("SECRET_KEY", "root")  # À changer pour la prod
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+CORS_ORIGINS = ["*"] 
+CORS_ALLOW_METHODS = ["*"]
+CORS_ALLOW_HEADERS = ["*"]

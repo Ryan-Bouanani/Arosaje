@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
-from database import Base
+from utils.database import Base
 
 class Plant(Base):
     __tablename__ = "plants"
@@ -15,3 +15,4 @@ class Plant(Base):
     owner = relationship("User", back_populates="owned_plants")
     gardes = relationship("Garde", back_populates="plant", cascade="all, delete-orphan")
     advices = relationship("Advice", back_populates="plant", cascade="all, delete-orphan")
+    photo_histories = relationship("PhotoHistory", back_populates="plant", cascade="all, delete-orphan")

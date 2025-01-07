@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'home_after_login_screen.dart';
 
 class AccueilPage extends StatelessWidget {
   const AccueilPage({super.key});
@@ -58,7 +59,12 @@ class AccueilPage extends StatelessWidget {
                     children: [
                       ElevatedButton(
                         onPressed: () {
-                          // Navigation vers la page de connexion
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomeAfterLogin(),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
@@ -78,25 +84,29 @@ class AccueilPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 15),
-                      OutlinedButton(
+                      ElevatedButton(
                         onPressed: () {
-                          // Navigation vers la page d'inscription
+                          // Navigation vers la page de connexion
                         },
-                        style: OutlinedButton.styleFrom(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
                           foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 50,
                             vertical: 15,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
+                            side: const BorderSide(color: Colors.white),
                           ),
                           minimumSize: const Size(double.infinity, 50),
                         ),
                         child: const Text(
                           'Créer un compte',
-                          style: TextStyle(fontSize: 18),
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ],

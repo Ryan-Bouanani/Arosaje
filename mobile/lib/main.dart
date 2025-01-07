@@ -25,6 +25,12 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
         useMaterial3: true,
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          selectedItemColor: Colors.green,
+          unselectedItemColor: Colors.grey[600],
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+        ),
       ),
       home: const AccueilPage(),
     );

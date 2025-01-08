@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AddPlantScreen extends StatelessWidget {
-  const AddPlantScreen({Key? key}) : super(key: key);
+  const AddPlantScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

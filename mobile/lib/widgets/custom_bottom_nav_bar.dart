@@ -16,7 +16,7 @@ class CustomBottomNavBar extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withAlpha(20),
             spreadRadius: 1,
             blurRadius: 10,
           ),
@@ -34,12 +34,8 @@ class CustomBottomNavBar extends StatelessWidget {
             label: 'Accueil',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Recherche',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
-            label: 'Ajouter',
+            label: 'Liste',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.message),

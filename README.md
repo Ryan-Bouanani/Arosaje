@@ -88,12 +88,93 @@ L’application inclut :
 ## 📦 Installation et Déploiement
 
 ### **Prérequis**
-- TODO
+- Docker & Docker Compose
+- Git
+- Python 3.11+ (pour l'API)
 
-### **Étapes d’installation**
-- TODO
+### **Étapes d'installation**
+```bash
+# Cloner le dépôt
+git clone <repository-url>
 
----
+# Rendre les scripts exécutables
+chmod +x bin/up bin/update bin/setup-api
+
+# Configurer l'environnement Python pour l'API
+bin/setup-api
+
+# Démarrer tous les services
+bin/up all
+
+# Mettre à jour tous les dépôts
+bin/update
+```
+
+### **🌐 Services & Ports**
+
+| Service | Description | URL Locale | Technologies |
+|---------|------------|------------|--------------|
+| API | Backend API | http://localhost:8000 | FastAPI (Python) |
+| Web | Interface Web | http://localhost:3000 | Vue.js (Nuxt.js) |
+| Mobile | App Flutter (Web) | http://localhost:8080 | Flutter |
+
+### **🛠️ Scripts Utilitaires**
+
+| Script | Description | Utilisation |
+|--------|------------|-------------|
+| `bin/up` | Gestion des conteneurs | `bin/up all` pour démarrer la stack |
+| `bin/update` | Mise à jour des dépôts | `bin/update` pour synchroniser avec main |
+| `bin/setup-api` | Configuration de l'API | `bin/setup-api` pour gérer les dépendances Python |
+
+#### Commandes Spéciales
+- `CTRL+C` : Arrêter proprement tous les conteneurs
+- `CTRL+R` : Redémarrer tous les conteneurs
+
+### **📝 Documentation API**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### **🛠️ Commandes Utiles**
+
+```bash
+# Démarrer tous les services
+bin/up all
+
+# Mettre à jour les dépôts
+bin/update
+
+# Voir les logs
+docker-compose logs -f [service]
+
+# Mettre à jour les dépendances Python
+bin/setup-api
+```
+
+### **⚠️ Résolution des Problèmes**
+
+Si `bin/up all` échoue, vérifiez :
+1. Que Docker est en cours d'exécution
+2. Que les ports requis (8000, 3000, 8080) sont disponibles
+3. Que tous les dossiers nécessaires existent (api, web, mobile)
+4. Que les Dockerfiles sont présents dans chaque dossier
+5. Que les dépendances Python sont correctement installées (`bin/setup-api`)
+
+Pour des logs détaillés :
+```bash
+docker-compose logs [service]
+```
+
+### **📝 Gestion des Dépendances**
+
+#### API (Python)
+```bash
+# Installation d'une nouvelle dépendance
+cd api
+source venv/bin/activate  # ou `source venv/Scripts/activate` sur Windows
+pip install nouvelle_dependance
+cd ..
+bin/setup-api  # Met à jour requirements.txt
+```
 
 ### **🤝 Contributeurs**
 

@@ -1,22 +1,63 @@
-version: "3.8"
+version: '3.8'
 
 services:
   api:
     build:
       context: ./api
+      dockerfile: Dockerfile
+    container_name: arosa-je-api
     ports:
-      - "8000:8000"          # API accessible sur localhost:8000
+      - "8000:8000"
     volumes:
-      - ./api:/app           # Montre le code local pour le développement
+      - ./api:/app
     environment:
-      - ENV=production
+      - ENVIRONMENT=development
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   web:
     build:
       context: ./web
+      dockerfile: Dockerfile
+    container_name: arosa-je-web
     ports:
-      - "8080:8080"          # Frontend accessible sur localhost:8080
+      - "3000:3000"
     volumes:
-      - ./web:/app           # Montre le code local pour le développement
+      - ./web:/app
+      - /app/node_modules
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - PORT=3000
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  mobile:
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
+    container_name: arosa-je-mobile
+    ports:
+      - "8080:80"
+    volumes:
+      - ./mobile:/app
+    environment:
+      - ENVIRONMENT=development
+    depends_on:
+      - api
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo "📦 Mise à jour des dépôts..."
+git pull origin main
+
+# Mise à jour des requirements.txt si dans l'API
+if [ -f "api/requirements.txt" ]; then
+    echo "📝 Mise à jour des requirements.txt..."
+    ./bin/setup-api
+fi
+
+# Mise à jour des sous-dossiers si nécessaire
+for dir in api web mobile; do
+  if [ -d "$dir" ]; then
+    echo "📂 Mise à jour de $dir..."
+    cd $dir
+    git pull origin main
+    cd ..
+  fi
+done
+
+echo "✅ Mise à jour terminée!" 

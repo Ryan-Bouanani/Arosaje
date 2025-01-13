@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# Fonction pour vérifier si Docker est en cours d'exécution
+check_docker() {
+    if ! docker info >/dev/null 2>&1; then
+        echo "❌ Erreur: Docker n'est pas en cours d'exécution."
+        echo "➡️  Veuillez démarrer Docker et réessayer."
+        exit 1
+    fi
+}
+
+# Fonction pour vérifier si docker-compose est installé
+check_docker_compose() {
+    if ! command -v docker-compose >/dev/null 2>&1; then
+        echo "❌ Erreur: docker-compose n'est pas installé."
+        echo "➡️  Veuillez installer docker-compose et réessayer."
+        exit 1
+    fi
+}
+
+# Fonction pour vérifier si les dossiers nécessaires existent
+check_directories() {
+    local missing_dirs=()
+    for dir in api web mobile; do
+        if [ ! -d "$dir" ]; then
+            missing_dirs+=($dir)
+        fi
+    done
+
+    if [ ${#missing_dirs[@]} -ne 0 ]; then
+        echo "❌ Erreur: Les dossiers suivants sont manquants:"
+        printf '  - %s\n' "${missing_dirs[@]}"
+        exit 1
+    fi
+}
+
+# Fonction pour vérifier si les Dockerfiles existent
+check_dockerfiles() {
+    local missing_files=()
+    for dir in api web mobile; do
+        if [ ! -f "$dir/Dockerfile" ]; then
+            missing_files+=($dir/Dockerfile)
+        fi
+    done
+
+    if [ ${#missing_files[@]} -ne 0 ]; then
+        echo "❌ Erreur: Les Dockerfiles suivants sont manquants:"
+        printf '  - %s\n' "${missing_files[@]}"
+        exit 1
+    fi
+}
+
+# Fonction pour vérifier si les images existent déjà
+check_images() {
+    # Utiliser docker-compose pour lister les images
+    if docker-compose images -q | grep -q "^$"; then
+        echo "true"  # Images manquantes
+    else
+        echo "false" # Images existantes
+    fi
+}
+
+# Fonction pour arrêter proprement les conteneurs
+cleanup() {
+    echo -e "\n\n🛑 Arrêt des conteneurs..."
+    docker-compose stop
+    echo "✅ Tous les conteneurs ont été arrêtés."
+    exit 0
+}
+
+# Fonction pour redémarrer les conteneurs
+restart() {
+    echo -e "\n\n🔄 Redémarrage des conteneurs..."
+    if ! docker-compose restart; then
+        echo "❌ Erreur lors du redémarrage des conteneurs."
+        exit 1
+    fi
+    echo "✅ Tous les conteneurs ont été redémarrés!"
+    echo "📊 Reprise de l'affichage des logs..."
+}
+
+# Fonction pour gérer les signaux
+handle_signal() {
+    case $1 in
+        SIGINT|SIGTERM)
+            cleanup
+            ;;
+        SIGQUIT)  # CTRL+R envoie SIGQUIT
+            restart
+            ;;
+    esac
+}
+
+case "$1" in
+    "all")
+        echo "🔍 Vérification de l'environnement..."
+        
+        check_docker
+        check_docker_compose
+        check_directories
+        check_dockerfiles
+
+        # Vérifier si c'est le premier démarrage
+        needs_build=$(check_images)
+        
+        echo "🚀 Démarrage de tous les conteneurs..."
+        
+        # Capture des signaux (CTRL+C et CTRL+R)
+        trap 'handle_signal SIGINT' SIGINT
+        trap 'handle_signal SIGTERM' SIGTERM
+        trap 'handle_signal SIGQUIT' SIGQUIT
+        
+        if [ "$needs_build" = "true" ]; then
+            echo "📦 Premier démarrage détecté - Construction des images..."
+            if ! docker-compose up -d --build; then
+                echo "❌ Erreur lors de la construction des images."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs
+                exit 1
+            fi
+            echo "✅ Images construites avec succès!"
+        else
+            echo "📦 Utilisation des images existantes..."
+            if ! docker-compose up -d; then
+                echo "❌ Erreur lors du démarrage des conteneurs."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs
+                exit 1
+            fi
+        fi
+
+        echo "✅ Conteneurs démarrés avec succès!"
+        echo "📊 Affichage des logs..."
+        echo "ℹ️  Utilisez CTRL+C pour arrêter ou CTRL+R pour redémarrer la stack"
+        
+        while true; do
+            docker-compose logs -f || true
+            # Si on sort des logs sans signal (erreur), on attend un peu
+            sleep 1
+        done
+        ;;
+    *)
+        echo "Usage: bin/up all"
+        exit 1
+        ;;
+esac 

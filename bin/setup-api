@@ -1,0 +1,47 @@
+#!/bin/bash
+
+echo "📦 Génération du fichier requirements.txt pour l'API..."
+
+# Vérifier si nous sommes dans le bon dossier
+if [ ! -d "api" ]; then
+    echo "❌ Erreur: Dossier 'api' non trouvé"
+    echo "➡️  Exécutez cette commande depuis la racine du projet"
+    exit 1
+fi
+
+# Vérifier si pip est installé
+if ! command -v pip >/dev/null 2>&1; then
+    echo "❌ Erreur: pip n'est pas installé"
+    exit 1
+fi
+
+# Entrer dans le dossier api
+cd api
+
+# Créer/activer un environnement virtuel si nécessaire
+if [ ! -d "venv" ]; then
+    echo "🔧 Création d'un environnement virtuel..."
+    python -m venv venv
+fi
+
+# Activer l'environnement virtuel
+source venv/bin/activate 2>/dev/null || source venv/Scripts/activate 2>/dev/null
+
+# Installer les dépendances si requirements.txt existe
+if [ -f "requirements.txt" ]; then
+    echo "📥 Installation des dépendances existantes..."
+    pip install -r requirements.txt
+fi
+
+# Générer le nouveau requirements.txt
+echo "📝 Génération du nouveau requirements.txt..."
+pip freeze > requirements.txt
+
+# Désactiver l'environnement virtuel
+deactivate
+
+echo "✅ Fichier requirements.txt généré avec succès!"
+echo "📋 Contenu du fichier requirements.txt :"
+echo "----------------------------------------"
+cat requirements.txt
+echo "----------------------------------------" 

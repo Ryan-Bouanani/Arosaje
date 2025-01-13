@@ -15,71 +15,29 @@ update_repo() {
     
     # Vérifier si on est dans un dépôt git
     if [ ! -d ".git" ]; then
-        handle_error "$dir n'est pas un dépôt git"
+        return 0  # Skip si pas de dépôt git
     fi
 
-    # Sauvegarder la branche actuelle
-    local current_branch=$(git branch --show-current)
-    echo "ℹ️  Branche actuelle: $current_branch"
-
-    # Vérifier les changements non commités
-    if ! git diff --quiet HEAD; then
-        echo "⚠️  Changements non commités détectés dans $dir"
-        echo "📝 Sauvegarde des modifications..."
-        git stash || handle_error "Impossible de sauvegarder les modifications"
-        local changes_stashed=true
+    # Pull depuis main
+    echo "⬇️  Récupération et fusion des modifications depuis main..."
+    if ! git pull origin main --ff-only; then
+        handle_error "Impossible de mettre à jour depuis main"
     fi
 
-    # Mettre à jour main
-    echo "⬇️  Récupération des modifications distantes..."
-    git fetch origin main || handle_error "Impossible de récupérer les modifications"
-
-    # Basculer sur main
-    echo "🔄 Basculement sur main..."
-    git checkout main || handle_error "Impossible de basculer sur main"
-
-    # Merger les changements
-    echo "🔀 Fusion des modifications..."
-    git merge origin/main || handle_error "Conflit lors de la fusion"
-
-    # Retourner à la branche précédente si différente de main
-    if [ "$current_branch" != "main" ]; then
-        echo "🔄 Retour à la branche $current_branch..."
-        git checkout "$current_branch" || handle_error "Impossible de retourner à la branche précédente"
-        
-        # Merger les changements de main dans la branche courante
-        echo "🔀 Fusion de main dans $current_branch..."
-        git merge main || handle_error "Conflit lors de la fusion avec la branche courante"
-    fi
-
-    # Restaurer les modifications si nécessaire
-    if [ "$changes_stashed" = true ]; then
-        echo "📝 Restauration des modifications locales..."
-        git stash pop || handle_error "Impossible de restaurer les modifications"
-    fi
-
-    echo "✅ Mise à jour de $dir terminée"
+    echo "✅ Mise à jour terminée"
 }
 
 # Mise à jour du dépôt principal
-echo "🔍 Mise à jour du dépôt principal..."
-update_repo "."
+update_repo "dépôt principal"
 
 # Mise à jour des sous-dossiers si nécessaire
 for dir in api web mobile; do
     if [ -d "$dir" ]; then
         echo "📂 Entrée dans $dir..."
         cd $dir
-        update_repo "."
+        update_repo "$dir"
         cd ..
     fi
 done
 
-echo "✅ Mise à jour globale terminée avec succès!"
-echo "📊 Résumé des mises à jour:"
-echo "- Dépôt principal"
-for dir in api web mobile; do
-    if [ -d "$dir" ]; then
-        echo "- $dir"
-    fi
-done 
+echo "✅ Mise à jour globale terminée!" 

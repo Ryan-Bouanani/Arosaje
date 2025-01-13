@@ -25,3 +25,7 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "API A'rosa-je prête !"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}

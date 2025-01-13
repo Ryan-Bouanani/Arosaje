@@ -1,21 +1,32 @@
-# Utiliser l'image officielle Node.js
-FROM node:18-slim
+# Image de base Node.js
+FROM node:18-alpine
 
-# Définir le répertoire de travail
+# Définition du répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers package.json et package-lock.json
+# Installation des dépendances globales nécessaires
+RUN npm install -g nuxt
+
+# Copie des fichiers de configuration des dépendances
 COPY package*.json ./
 
-# Installer les dépendances
-RUN npm install -g npm@latest
+# Installation des dépendances du projet
 RUN npm install
 
-# Copier le reste des fichiers du projet
+# Copie du reste des fichiers du projet
 COPY . .
 
-# Exposer le port utilisé par Nuxt
-EXPOSE 8080
+# Préparation de Nuxt
+RUN npm run postinstall
 
-# Commande pour démarrer l'application
-CMD ["npm", "run", "serve"]
+# Exposition du port
+EXPOSE 3000
+
+# Configuration des variables d'environnement pour le développement
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NODE_ENV=development
+ENV NODE_OPTIONS='--no-warnings'
+
+# Commande pour démarrer l'application en mode développement
+CMD ["npm", "run", "dev"]

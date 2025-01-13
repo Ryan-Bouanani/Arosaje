@@ -65,12 +65,6 @@ update_repo() {
 echo "🔍 Mise à jour du dépôt principal..."
 update_repo "."
 
-# Mise à jour des requirements.txt si dans l'API
-if [ -f "api/requirements.txt" ]; then
-    echo "📝 Mise à jour des requirements.txt..."
-    ./bin/setup-api
-fi
-
 # Mise à jour des sous-dossiers si nécessaire
 for dir in api web mobile; do
     if [ -d "$dir" ]; then

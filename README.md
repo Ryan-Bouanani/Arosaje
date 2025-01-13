@@ -116,7 +116,7 @@ bin/update
 |---------|------------|------------|--------------|
 | API | Backend API | http://localhost:8000 | FastAPI (Python) |
 | Web | Interface Web | http://localhost:3000 | Vue.js (Nuxt.js) |
-| Mobile | App Flutter (Web) | http://localhost:8080 | Flutter |
+| Mobile | App Flutter (Web) | http://localhost:5000 | Flutter |
 
 ### **🛠️ Scripts Utilitaires**
 
@@ -137,32 +137,28 @@ bin/update
 ### **🛠️ Commandes Utiles**
 
 ```bash
-# Démarrer tous les services
-bin/up all
+# S'attacher à un conteneur spécifique pour le debug
+docker attach arosa-je-api    # Pour débugger l'API
+docker attach arosa-je-web    # Pour débugger le frontend
+docker attach arosa-je-mobile # Pour débugger l'app mobile
 
-# Mettre à jour les dépôts
-bin/update
-
-# Voir les logs
-docker-compose logs -f [service]
-
-# Mettre à jour les dépendances Python
-bin/setup-api
+# Note: Utilisez CTRL+P CTRL+Q pour se détacher sans arrêter le conteneur
 ```
 
 ### **⚠️ Résolution des Problèmes**
 
 Si `bin/up all` échoue, vérifiez :
 1. Que Docker est en cours d'exécution
-2. Que les ports requis (8000, 3000, 8080) sont disponibles
+2. Que les ports requis (8000, 3000, 5000) sont disponibles
 3. Que tous les dossiers nécessaires existent (api, web, mobile)
 4. Que les Dockerfiles sont présents dans chaque dossier
 5. Que les dépendances Python sont correctement installées (`bin/setup-api`)
 
-Pour des logs détaillés :
-```bash
-docker-compose logs [service]
-```
+Pour un debug détaillé :
+- Utilisez `docker attach` pour vous connecter directement au conteneur
+- Les logs en temps réel s'afficheront dans votre terminal
+- CTRL+P CTRL+Q permet de se détacher sans arrêter le conteneur
+- CTRL+C arrêtera le conteneur si vous ne vous détachez pas proprement
 
 ### **📝 Gestion des Dépendances**
 

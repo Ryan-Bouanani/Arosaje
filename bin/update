@@ -18,10 +18,22 @@ update_repo() {
         return 0  # Skip si pas de dépôt git
     fi
 
-    # Pull depuis main
-    echo "⬇️  Récupération et fusion des modifications depuis main..."
-    if ! git pull origin main --ff-only; then
-        handle_error "Impossible de mettre à jour depuis main"
+    # Fetch depuis main
+    echo "⬇️  Récupération des modifications depuis main..."
+    if ! git fetch origin main; then
+        handle_error "Impossible de récupérer depuis main"
+    fi
+
+    # Tenter le merge
+    echo "🔄 Fusion avec main..."
+    if ! git merge origin/main; then
+        echo "⚠️  Conflits détectés!"
+        echo "➡️  Veuillez résoudre les conflits manuellement:"
+        echo "  1. Corrigez les fichiers en conflit"
+        echo "  2. git add <fichiers>"
+        echo "  3. git commit -m 'Résolution des conflits'"
+        echo "  4. Relancez bin/update"
+        exit 1
     fi
 
     echo "✅ Mise à jour terminée"

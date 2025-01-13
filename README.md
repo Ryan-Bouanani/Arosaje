@@ -176,6 +176,6 @@ bin/setup-api  # Met à jour requirements.txt
 
 - EL HAIMER Wacim
 - ANNAJAR Mohamed
-- AMIRI Mohamed
+- EL-FATEH AMIRI Mohamed
 - BOUANANI Ryan
 - AKAY Omer

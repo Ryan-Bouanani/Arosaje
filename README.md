@@ -134,22 +134,6 @@ bin/update
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-### **🛠️ Commandes Utiles**
-
-```bash
-# Démarrer tous les services
-bin/up all
-
-# Mettre à jour les dépôts
-bin/update
-
-# Voir les logs
-docker-compose logs -f [service]
-
-# Mettre à jour les dépendances Python
-bin/setup-api
-```
-
 ### **⚠️ Résolution des Problèmes**
 
 Si `bin/up all` échoue, vérifiez :

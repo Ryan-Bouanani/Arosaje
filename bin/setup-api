@@ -1,11 +1,18 @@
 #!/bin/bash
 
-echo "📦 Génération du fichier requirements.txt pour l'API..."
+echo "🚀 Installation et configuration de l'API..."
 
 # Vérifier si nous sommes dans le bon dossier
 if [ ! -d "api" ]; then
     echo "❌ Erreur: Dossier 'api' non trouvé"
     echo "➡️  Exécutez cette commande depuis la racine du projet"
+    exit 1
+fi
+
+# Vérifier si sqlite3 est installé
+if ! command -v sqlite3 >/dev/null 2>&1; then
+    echo "❌ Erreur: sqlite3 n'est pas installé"
+    echo "➡️  Veuillez installer sqlite3 avant de continuer"
     exit 1
 fi
 
@@ -27,21 +34,83 @@ fi
 # Activer l'environnement virtuel
 source venv/bin/activate 2>/dev/null || source venv/Scripts/activate 2>/dev/null
 
+if [ $? -ne 0 ]; then
+    echo "❌ Erreur: Impossible d'activer l'environnement virtuel"
+    exit 1
+fi
+
 # Installer les dépendances si requirements.txt existe
 if [ -f "requirements.txt" ]; then
     echo "📥 Installation des dépendances existantes..."
     pip install -r requirements.txt
+    if [ $? -ne 0 ]; then
+        echo "❌ Erreur: Installation des dépendances échouée"
+        exit 1
+    fi
 fi
 
 # Générer le nouveau requirements.txt
 echo "📝 Génération du nouveau requirements.txt..."
 pip freeze > requirements.txt
 
+# Créer les dossiers nécessaires
+echo "📁 Création des dossiers nécessaires..."
+mkdir -p assets/database
+
+# Sauvegarder l'ancienne base de données si elle existe
+if [ -f "assets/database/arosaje.db" ]; then
+    echo "💾 Sauvegarde de la base de données existante..."
+    cp assets/database/arosaje.db assets/database/arosaje.db.backup
+fi
+
+# Initialiser la base de données
+echo "🗄️  Initialisation de la base de données..."
+python init_db.py
+if [ $? -ne 0 ]; then
+    echo "❌ Erreur lors de l'initialisation de la base de données"
+    # Restaurer la sauvegarde si elle existe
+    if [ -f "assets/database/arosaje.db.backup" ]; then
+        echo "🔄 Restauration de la sauvegarde..."
+        mv assets/database/arosaje.db.backup assets/database/arosaje.db
+    fi
+    exit 1
+fi
+
+# Exécuter les migrations Alembic
+echo "🔄 Application des migrations..."
+alembic upgrade head
+if [ $? -ne 0 ]; then
+    echo "❌ Erreur lors de l'application des migrations"
+    exit 1
+fi
+
+# Vérifier si la base de données a été créée et est accessible
+if [ -f "assets/database/arosaje.db" ]; then
+    echo "🔍 Vérification de la base de données..."
+    if sqlite3 assets/database/arosaje.db ".tables" >/dev/null 2>&1; then
+        echo "✅ Base de données créée et accessible!"
+        # Supprimer la sauvegarde si tout est OK
+        rm -f assets/database/arosaje.db.backup
+    else
+        echo "❌ La base de données existe mais semble corrompue"
+        exit 1
+    fi
+else
+    echo "❌ Erreur: La base de données n'a pas été créée"
+    exit 1
+fi
+
 # Désactiver l'environnement virtuel
 deactivate
 
-echo "✅ Fichier requirements.txt généré avec succès!"
-echo "📋 Contenu du fichier requirements.txt :"
+echo "✅ Configuration terminée!"
+echo "📋 Résumé des actions effectuées :"
 echo "----------------------------------------"
-cat requirements.txt
-echo "----------------------------------------" 
+echo "✓ Environnement virtuel configuré"
+echo "✓ Dépendances installées"
+echo "✓ Fichier requirements.txt mis à jour"
+echo "✓ Dossiers créés"
+echo "✓ Base de données initialisée"
+echo "✓ Migrations appliquées"
+echo "----------------------------------------"
+echo "🚀 L'API est prête à être utilisée!" 

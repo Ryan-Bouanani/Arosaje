@@ -68,7 +68,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             SizedBox(width: 8),
             Text(
-              'Utilisateur',
+              'Nom plante + nom post',
               style: TextStyle(color: Colors.black),
             ),
           ],

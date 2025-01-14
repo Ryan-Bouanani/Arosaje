@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Couleurs pour les logs
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Fonction pour les logs
+log_info() {
+    echo -e "${BLUE}ℹ️ $1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
 # Fonction pour vérifier si Docker est en cours d'exécution
 check_docker() {
     if ! docker info >/dev/null 2>&1; then
@@ -18,45 +37,27 @@ check_docker_compose() {
     fi
 }
 
-# Fonction pour vérifier si les dossiers nécessaires existent
-check_directories() {
-    local missing_dirs=()
-    for dir in api web mobile; do
-        if [ ! -d "$dir" ]; then
-            missing_dirs+=($dir)
-        fi
-    done
-
-    if [ ${#missing_dirs[@]} -ne 0 ]; then
-        echo "❌ Erreur: Les dossiers suivants sont manquants:"
-        printf '  - %s\n' "${missing_dirs[@]}"
-        exit 1
-    fi
-}
-
-# Fonction pour vérifier si les Dockerfiles existent
-check_dockerfiles() {
-    local missing_files=()
-    for dir in api web mobile; do
-        if [ ! -f "$dir/Dockerfile" ]; then
-            missing_files+=($dir/Dockerfile)
-        fi
-    done
-
-    if [ ${#missing_files[@]} -ne 0 ]; then
-        echo "❌ Erreur: Les Dockerfiles suivants sont manquants:"
-        printf '  - %s\n' "${missing_files[@]}"
-        exit 1
-    fi
-}
-
-# Fonction pour vérifier si les images existent déjà
+# Fonction pour vérifier si les images existent
 check_images() {
-    # Utiliser docker-compose pour lister les images
-    if docker-compose images -q | grep -q "^$"; then
-        echo "true"  # Images manquantes
+    local missing_images=()
+    local images=("arosa-je-api" "arosa-je-web" "arosa-je-mobile")
+    
+    log_info "Vérification des images Docker..."
+    for image in "${images[@]}"; do
+        if ! docker images -q "$image" >/dev/null 2>&1; then
+            missing_images+=("$image")
+        fi
+    done
+
+    if [ ${#missing_images[@]} -ne 0 ]; then
+        log_warning "Images manquantes détectées"
+        for image in "${missing_images[@]}"; do
+            log_info "Construction de l'image $image..."
+            docker-compose build "$image"
+            log_success "Image $image construite avec succès"
+        done
     else
-        echo "false" # Images existantes
+        log_success "Toutes les images existent déjà"
     fi
 }
 
@@ -71,10 +72,7 @@ cleanup() {
 # Fonction pour redémarrer les conteneurs
 restart() {
     echo -e "\n\n🔄 Redémarrage des conteneurs..."
-    if ! docker-compose restart; then
-        echo "❌ Erreur lors du redémarrage des conteneurs."
-        exit 1
-    fi
+    docker-compose restart
     echo "✅ Tous les conteneurs ont été redémarrés!"
     echo "📊 Reprise de l'affichage des logs..."
 }
@@ -91,53 +89,72 @@ handle_signal() {
     esac
 }
 
+# Fonction pour vérifier si le dossier de la base de données existe
+check_database_directory() {
+    log_info "Vérification des dossiers nécessaires..."
+    
+    # Création des dossiers s'ils n'existent pas
+    if [ ! -d "./api/assets/database" ]; then
+        mkdir -p ./api/assets/database || {
+            log_warning "⚠️  Impossible de créer le dossier database. Essai avec sudo..."
+            sudo mkdir -p ./api/assets/database
+        }
+    fi
+    
+    if [ ! -d "./api/assets/img" ]; then
+        mkdir -p ./api/assets/img || {
+            log_warning "⚠️  Impossible de créer le dossier img. Essai avec sudo..."
+            sudo mkdir -p ./api/assets/img
+        }
+    fi
+
+    # Modification des permissions
+    if ! chmod -R 777 ./api/assets 2>/dev/null; then
+        log_warning "⚠️  Impossible de modifier les permissions. Essai avec sudo..."
+        sudo chmod -R 777 ./api/assets
+    fi
+    
+    # Création de la base de données si elle n'existe pas
+    if [ ! -f "./api/assets/database/arosaje.db" ]; then
+        log_warning "Création de la base de données..."
+        touch ./api/assets/database/arosaje.db || sudo touch ./api/assets/database/arosaje.db
+        chmod 666 ./api/assets/database/arosaje.db || sudo chmod 666 ./api/assets/database/arosaje.db
+        log_success "Base de données créée"
+    fi
+
+    log_success "Configuration des dossiers terminée"
+}
+
 case "$1" in
     "all")
-        echo "🔍 Vérification de l'environnement..."
+        log_info "Vérification de l'environnement..."
         
         check_docker
         check_docker_compose
-        check_directories
-        check_dockerfiles
-
-        # Vérifier si c'est le premier démarrage
-        needs_build=$(check_images)
+        check_database_directory
+        check_images
         
-        echo "🚀 Démarrage de tous les conteneurs..."
+        log_info "Démarrage de tous les conteneurs..."
         
         # Capture des signaux (CTRL+C et CTRL+R)
         trap 'handle_signal SIGINT' SIGINT
         trap 'handle_signal SIGTERM' SIGTERM
         trap 'handle_signal SIGQUIT' SIGQUIT
         
-        if [ "$needs_build" = "true" ]; then
-            echo "📦 Premier démarrage détecté - Construction des images..."
-            if ! docker-compose up -d --build; then
-                echo "❌ Erreur lors de la construction des images."
-                echo "📋 Logs de l'erreur:"
-                docker-compose logs
-                exit 1
-            fi
-            echo "✅ Images construites avec succès!"
-        else
-            echo "📦 Utilisation des images existantes..."
-            if ! docker-compose up -d; then
-                echo "❌ Erreur lors du démarrage des conteneurs."
-                echo "📋 Logs de l'erreur:"
-                docker-compose logs
-                exit 1
-            fi
+        log_info "Démarrage des services..."
+        if ! docker-compose up -d; then
+            echo "❌ Erreur lors du démarrage des conteneurs."
+            echo "📋 Logs de l'erreur:"
+            docker-compose logs
+            exit 1
         fi
 
-        echo "✅ Conteneurs démarrés avec succès!"
-        echo "📊 Affichage des logs..."
+        log_success "Conteneurs démarrés avec succès!"
+        log_info "Affichage des logs..."
         echo "ℹ️  Utilisez CTRL+C pour arrêter ou CTRL+R pour redémarrer la stack"
         
-        while true; do
-            docker-compose logs -f || true
-            # Si on sort des logs sans signal (erreur), on attend un peu
-            sleep 1
-        done
+        # Afficher les logs une seule fois
+        docker-compose logs -f
         ;;
     *)
         echo "Usage: bin/up all"

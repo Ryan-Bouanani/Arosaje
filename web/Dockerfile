@@ -1,5 +1,5 @@
 # Image de base Node.js
-FROM node:18-alpine
+FROM node:20-slim
 
 # Définition du répertoire de travail
 WORKDIR /app
@@ -30,3 +30,6 @@ ENV NODE_OPTIONS='--no-warnings'
 
 # Commande pour démarrer l'application en mode développement
 CMD ["npm", "run", "dev"]
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3000/ || exit 1

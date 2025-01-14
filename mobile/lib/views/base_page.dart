@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/views/chat_list_screen.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'plant_current_list_screen.dart';
 import 'home_after_login_screen.dart';
@@ -39,8 +40,10 @@ class _BasePageState extends State<BasePage> {
         );
         break;
       case 2:
-        // Navigation vers la page Messages
-        // Ajoutez votre logique de navigation ici
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatMenuScreen()),
+        );
         break;
       case 3:
         // Navigation vers la page Profil

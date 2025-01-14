@@ -1,0 +1,102 @@
+test_name: Test authentification
+marks:
+  - usefixtures:
+      - api_url
+      - test_user_email
+      - test_password
+
+stages:
+  - name: Test inscription utilisateur
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        nom: "Dupont"
+        prenom: "Jean"
+        email: "{test_user_email}"
+        telephone: "0612345678"
+        localisation: "Paris"
+        mot_de_passe: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          saved_email: email
+      json:
+        id: !anyint
+        nom: "Dupont"
+        prenom: "Jean"
+        email: "{test_user_email}"
+        telephone: "0612345678"
+        localisation: "Paris"
+
+  - name: Test login
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{saved_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          auth_token: access_token
+      json:
+        access_token: !anything
+        token_type: "bearer"
+
+  - name: Test profil
+    request:
+      url: "{api_url}/auth/me"
+      method: GET
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200
+      json:
+        id: !anyint
+        nom: "Dupont"
+        prenom: "Jean"
+        email: "{saved_email}"
+        telephone: "0612345678"
+        localisation: "Paris"
+
+  - name: Test inscription email existant
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        nom: "Test"
+        prenom: "Test"
+        email: "{saved_email}"
+        mot_de_passe: "test123"
+    response:
+      status_code: 400
+      json:
+        detail: "Cet email est déjà utilisé"
+
+  - name: Test login invalide
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{saved_email}"
+        password: "mauvais_password"
+    response:
+      status_code: 401
+      json:
+        detail: "Email ou mot de passe incorrect"
+
+  - name: Test accès non autorisé
+    request:
+      url: "{api_url}/auth/me"
+      method: GET
+    response:
+      status_code: 401
+      json:
+        detail: "Not authenticated"

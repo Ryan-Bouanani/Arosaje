@@ -3,6 +3,7 @@ version: '3.8'
 services:
   api:
     container_name: arosa-je-api
+    image: arosa-je-api
     build:
       context: ./api
       dockerfile: Dockerfile
@@ -23,6 +24,7 @@ services:
 
   web:
     container_name: arosa-je-web
+    image: arosa-je-web
     build:
       context: ./web
       dockerfile: Dockerfile
@@ -44,6 +46,7 @@ services:
 
   mobile:
     container_name: arosa-je-mobile
+    image: arosa-je-mobile
     build:
       context: ./mobile
       dockerfile: Dockerfile

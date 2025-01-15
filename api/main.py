@@ -16,12 +16,6 @@ Base.metadata.create_all(bind=engine)
 # Middleware de monitoring
 app.middleware("http")(monitoring_middleware)
 
-# Inclure les routers
-app.include_router(auth.router)
-app.include_router(plant.router)
-app.include_router(monitoring.router)
-# app.include_router(other_router.router)
-
 # Configuration du CORS
 app.add_middleware(
     CORSMiddleware,
@@ -29,7 +23,15 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=CORS_ALLOW_METHODS,
     allow_headers=CORS_ALLOW_HEADERS,
+    expose_headers=["*"],
+    max_age=3600,
 )
+
+# Inclure les routers
+app.include_router(auth.router)
+app.include_router(plant.router)
+app.include_router(monitoring.router)
+# app.include_router(other_router.router)
 
 @app.get("/")
 def read_root():

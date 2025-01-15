@@ -16,7 +16,7 @@ stages:
         email: "{test_user_email}"
         telephone: "0612345678"
         localisation: "Paris"
-        mot_de_passe: "{test_password}"
+        password: "{test_password}"
     response:
       status_code: 200
       save:
@@ -72,7 +72,7 @@ stages:
         nom: "Test"
         prenom: "Test"
         email: "{saved_email}"
-        mot_de_passe: "test123"
+        password: "test123"
     response:
       status_code: 400
       json:

@@ -37,59 +37,27 @@ check_docker_compose() {
     fi
 }
 
-# Fonction pour vérifier si les images existent
-check_images() {
-    local missing_images=()
-    local images=("arosa-je-api" "arosa-je-web" "arosa-je-mobile")
+# Fonction pour vérifier si une image existe
+check_image() {
+    local service="$1"
+    local image="arosa-je-$service"
     
-    log_info "Vérification des images Docker..."
-    for image in "${images[@]}"; do
-        if ! docker images -q "$image" >/dev/null 2>&1; then
-            missing_images+=("$image")
+    log_info "Vérification de l'image Docker pour le service '$service'..."
+    if ! docker images --format "{{.Repository}}" | grep -q "^${image}$"; then
+        log_warning "🔍 Image '$image' non trouvée"
+        log_info "🏗️  Construction de l'image..."
+        if docker-compose build "$service"; then
+            log_success "✨ Image construite avec succès"
+        else
+            echo "❌ Erreur lors de la construction de l'image"
+            exit 1
         fi
-    done
-
-    if [ ${#missing_images[@]} -ne 0 ]; then
-        log_warning "Images manquantes détectées"
-        for image in "${missing_images[@]}"; do
-            log_info "Construction de l'image $image..."
-            docker-compose build "$image"
-            log_success "Image $image construite avec succès"
-        done
     else
-        log_success "Toutes les images existent déjà"
+        log_success "📦 Image '$image' trouvée"
     fi
 }
 
-# Fonction pour arrêter proprement les conteneurs
-cleanup() {
-    echo -e "\n\n🛑 Arrêt des conteneurs..."
-    docker-compose down -v --remove-orphans
-    echo "✅ Tous les conteneurs ont été arrêtés et leurs logs supprimés."
-    exit 0
-}
-
-# Fonction pour redémarrer les conteneurs
-restart() {
-    echo -e "\n\n🔄 Redémarrage des conteneurs..."
-    docker-compose restart
-    echo "✅ Tous les conteneurs ont été redémarrés!"
-    echo "📊 Reprise de l'affichage des logs..."
-}
-
-# Fonction pour gérer les signaux
-handle_signal() {
-    case $1 in
-        SIGINT|SIGTERM)
-            cleanup
-            ;;
-        SIGQUIT)  # CTRL+R envoie SIGQUIT
-            restart
-            ;;
-    esac
-}
-
-# Fonction pour vérifier si le dossier de la base de données existe
+# Fonction pour vérifier si le dossier de la base de données existe (uniquement pour l'API)
 check_database_directory() {
     log_info "Vérification des dossiers nécessaires..."
     
@@ -119,23 +87,113 @@ check_database_directory() {
     log_success "Configuration des dossiers terminée"
 }
 
+# Fonction pour arrêter proprement les conteneurs
+cleanup() {
+    echo -e "\n\n🛑 Arrêt des conteneurs..."
+    
+    # Arrêter les conteneurs spécifiés ou tous les conteneurs
+    if [ "$1" = "all" ]; then
+        docker-compose down --remove-orphans
+        echo "✅ Tous les services ont été arrêtés."
+    else
+        # Convertir les arguments en array pour gérer plusieurs services
+        local services=($@)
+        if [ ${#services[@]} -gt 0 ]; then
+            docker-compose rm -fsv "${services[@]}"
+            echo "✅ Services arrêtés : ${services[*]}"
+        else
+            docker-compose down --remove-orphans
+            echo "✅ Tous les services ont été arrêtés."
+        fi
+    fi
+    exit 0
+}
+
+# Fonction pour démarrer des services spécifiques
+start_services() {
+    log_info "Vérification de l'environnement..."
+    check_docker
+    check_docker_compose
+    
+    local services=("$@")
+    local valid_services=1
+    
+    # Vérifier que tous les services sont valides
+    for service in "${services[@]}"; do
+        case "$service" in
+            "api"|"web"|"mobile")
+                continue
+                ;;
+            *)
+                echo "❌ Service invalide: $service"
+                valid_services=0
+                ;;
+        esac
+    done
+    
+    if [ $valid_services -eq 0 ]; then
+        show_help
+        exit 1
+    fi
+    
+    # Configuration spécifique pour l'API si nécessaire
+    if [[ " ${services[@]} " =~ " api " ]]; then
+        check_database_directory
+    fi
+    
+    # Vérifier et construire les images
+    for service in "${services[@]}"; do
+        check_image "$service"
+    done
+    
+    # Capture du signal SIGINT
+    trap "cleanup ${services[*]}" SIGINT SIGTERM
+    
+    log_info "Démarrage des services: ${services[*]}..."
+    if ! docker-compose up -d "${services[@]}"; then
+        echo "❌ Erreur lors du démarrage des services."
+        echo "📋 Logs de l'erreur:"
+        docker-compose logs "${services[@]}"
+        exit 1
+    fi
+
+    log_success "Services démarrés avec succès!"
+    log_info "Affichage des logs..."
+    echo "ℹ️  Utilisez CTRL+C pour arrêter"
+    
+    docker-compose logs -f "${services[@]}"
+}
+
+# Afficher l'aide
+show_help() {
+    echo "Usage: bin/up [services...]"
+    echo ""
+    echo "Options disponibles:"
+    echo "  all               - Démarre tous les services"
+    echo "  api web mobile    - Démarre les services spécifiés (dans n'importe quel ordre)"
+    echo ""
+    echo "Exemples:"
+    echo "  bin/up api web    - Démarre l'API et le frontend web"
+    echo "  bin/up api mobile - Démarre l'API et l'application mobile"
+    echo "  bin/up web       - Démarre uniquement le frontend web"
+    echo ""
+    exit 1
+}
+
 case "$1" in
     "all")
         log_info "Vérification de l'environnement..."
-        
         check_docker
         check_docker_compose
         check_database_directory
-        check_images
+        check_image "api"
+        check_image "web"
+        check_image "mobile"
         
-        log_info "Démarrage de tous les conteneurs..."
+        # Capture du signal SIGINT pour tous les services
+        trap "cleanup all" SIGINT SIGTERM
         
-        # Capture des signaux (CTRL+C et CTRL+R)
-        trap 'handle_signal SIGINT' SIGINT
-        trap 'handle_signal SIGTERM' SIGTERM
-        trap 'handle_signal SIGQUIT' SIGQUIT
-        
-        log_info "Démarrage des services..."
+        log_info "Démarrage de tous les services..."
         if ! docker-compose up -d; then
             echo "❌ Erreur lors du démarrage des conteneurs."
             echo "📋 Logs de l'erreur:"
@@ -143,15 +201,16 @@ case "$1" in
             exit 1
         fi
 
-        log_success "Conteneurs démarrés avec succès!"
+        log_success "Tous les services démarrés avec succès!"
         log_info "Affichage des logs..."
-        echo "ℹ️  Utilisez CTRL+C pour arrêter ou CTRL+R pour redémarrer la stack"
+        echo "ℹ️  Utilisez CTRL+C pour arrêter"
         
-        # Afficher les logs une seule fois
         docker-compose logs -f
         ;;
+    "")
+        show_help
+        ;;
     *)
-        echo "Usage: bin/up all"
-        exit 1
+        start_services "$@"
         ;;
 esac 

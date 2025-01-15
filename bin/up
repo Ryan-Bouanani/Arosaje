@@ -91,18 +91,18 @@ check_database_directory() {
 cleanup() {
     echo -e "\n\n🛑 Arrêt des conteneurs..."
     
-    # Arrêter les conteneurs spécifiés ou tous les conteneurs
+    # Arrêter les conteneurs sans les supprimer
     if [ "$1" = "all" ]; then
-        docker-compose down --remove-orphans
+        docker-compose stop
         echo "✅ Tous les services ont été arrêtés."
     else
         # Convertir les arguments en array pour gérer plusieurs services
         local services=($@)
         if [ ${#services[@]} -gt 0 ]; then
-            docker-compose rm -fsv "${services[@]}"
+            docker-compose stop "${services[@]}"
             echo "✅ Services arrêtés : ${services[*]}"
         else
-            docker-compose down --remove-orphans
+            docker-compose stop
             echo "✅ Tous les services ont été arrêtés."
         fi
     fi
@@ -161,7 +161,8 @@ start_services() {
     log_info "Affichage des logs..."
     echo "ℹ️  Utilisez CTRL+C pour arrêter"
     
-    docker-compose logs -f "${services[@]}"
+    # Utiliser --since pour n'afficher que les nouveaux logs
+    docker-compose logs -f --since 0s "${services[@]}"
 }
 
 # Afficher l'aide
@@ -205,7 +206,8 @@ case "$1" in
         log_info "Affichage des logs..."
         echo "ℹ️  Utilisez CTRL+C pour arrêter"
         
-        docker-compose logs -f
+        # Utiliser --since pour n'afficher que les nouveaux logs
+        docker-compose logs -f --since 0s
         ;;
     "")
         show_help

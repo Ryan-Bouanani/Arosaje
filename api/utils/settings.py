@@ -17,6 +17,15 @@ SECRET_KEY = os.getenv("SECRET_KEY", "root")  # À changer pour la prod
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-CORS_ORIGINS = ["*"] 
-CORS_ALLOW_METHODS = ["*"]
-CORS_ALLOW_HEADERS = ["*"]
+# Configuration CORS
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://web:3000,http://localhost:5000,http://mobile:5000").split(",")
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
+CORS_ALLOW_HEADERS = [
+    "Content-Type",
+    "Authorization",
+    "Accept",
+    "Origin",
+    "X-Requested-With",
+    "Access-Control-Request-Method",
+    "Access-Control-Request-Headers"
+]

@@ -9,7 +9,7 @@ class User(Base):
     prenom = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     telephone = Column(String, nullable=True)
-    mot_de_passe = Column(String, nullable=False)
+    password = Column(String, nullable=False)
     localisation = Column(String, nullable=True)
 
     # Relations

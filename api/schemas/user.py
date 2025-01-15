@@ -10,7 +10,7 @@ class UserBase(BaseSchema):
     localisation: Optional[str] = None
 
 class UserCreate(UserBase):
-    mot_de_passe: str
+    password: str
 
 class UserUpdate(BaseSchema):
     nom: Optional[str] = None
@@ -18,15 +18,15 @@ class UserUpdate(BaseSchema):
     email: Optional[EmailStr] = None
     telephone: Optional[str] = None
     localisation: Optional[str] = None
-    mot_de_passe: Optional[str] = None
+    password: Optional[str] = None
 
 class User(UserBase, IDSchema):
     class Config:
         from_attributes = True
 
 class UserInDB(User):
-    mot_de_passe: str
+    password: str
 
 class UserLogin(BaseModel):
     email: EmailStr
-    mot_de_passe: str
+    password: str

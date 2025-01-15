@@ -13,7 +13,7 @@ from utils.security import (
 )
 from crud.user import user as user_crud
 from schemas.token import Token
-from schemas.user import UserCreate, User, UserLogin
+from schemas.user import UserCreate, User
 
 router = APIRouter(
     prefix="/auth",
@@ -27,7 +27,7 @@ async def login(
 ) -> Any:
     """Login avec OAuth2 form"""
     user = user_crud.get_by_email(db, email=form_data.username)
-    if not user or not verify_password(form_data.password, user.mot_de_passe):
+    if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email ou mot de passe incorrect",
@@ -54,8 +54,8 @@ async def register(
         )
     
     # Hasher le mot de passe
-    hashed_password = get_password_hash(user_in.mot_de_passe)
-    user_in.mot_de_passe = hashed_password
+    hashed_password = get_password_hash(user_in.password)
+    user_in.password = hashed_password
     
     # Créer l'utilisateur
     user = user_crud.create(db, obj_in=user_in)

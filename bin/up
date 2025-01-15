@@ -57,34 +57,34 @@ check_image() {
     fi
 }
 
-# Fonction pour vérifier si le dossier de la base de données existe (uniquement pour l'API)
+# Fonction pour vérifier la base de données
+check_database() {
+    log_info "Vérification de la base de données..."
+    
+    if [ ! -f "./api/assets/database/arosaje.db" ]; then
+        echo "❌ Base de données non trouvée!"
+        echo "➡️  Veuillez exécuter 'bin/setup-api' avant de lancer les services"
+        exit 1
+    fi
+    
+    log_success "Base de données trouvée"
+}
+
+# Fonction pour vérifier si le dossier de la base de données existe
 check_database_directory() {
     log_info "Vérification des dossiers nécessaires..."
     
-    # Création des dossiers s'ils n'existent pas
-    if [ ! -d "./api/assets/database" ]; then
-        mkdir -p ./api/assets/database || {
-            log_warning "⚠️  Impossible de créer le dossier database. Essai avec sudo..."
-            sudo mkdir -p ./api/assets/database
-        }
+    # Vérification des dossiers requis
+    if [ ! -d "./api/assets/database" ] || [ ! -d "./api/assets/img" ]; then
+        echo "❌ Structure de dossiers incomplète!"
+        echo "➡️  Veuillez exécuter 'bin/setup-api' avant de lancer les services"
+        exit 1
     fi
     
-    if [ ! -d "./api/assets/img" ]; then
-        mkdir -p ./api/assets/img || {
-            log_warning "⚠️  Impossible de créer le dossier img. Essai avec sudo..."
-            sudo mkdir -p ./api/assets/img
-        }
-    fi
+    # Vérification de la base de données
+    check_database
     
-    # Création de la base de données si elle n'existe pas
-    if [ ! -f "./api/assets/database/arosaje.db" ]; then
-        log_warning "Création de la base de données..."
-        touch ./api/assets/database/arosaje.db || sudo touch ./api/assets/database/arosaje.db
-        chmod 666 ./api/assets/database/arosaje.db || sudo chmod 666 ./api/assets/database/arosaje.db
-        log_success "Base de données créée"
-    fi
-
-    log_success "Configuration des dossiers terminée"
+    log_success "Configuration des dossiers validée"
 }
 
 # Fonction pour arrêter proprement les conteneurs
@@ -181,11 +181,32 @@ show_help() {
     exit 1
 }
 
+# Fonction pour vérifier les fichiers d'environnement
+check_env_files() {
+    log_info "Vérification des fichiers d'environnement..."
+    
+    if [ ! -d "./env" ] || [ ! -f "./env/.env.api" ] || [ ! -f "./env/.env.web" ] || [ ! -f "./env/.env.mobile" ]; then
+        echo "❌ Fichiers d'environnement manquants!"
+        echo "➡️  Veuillez exécuter 'bin/setup-env' avant de lancer les services"
+        exit 1
+    fi
+    
+    # Vérifier que les fichiers ne sont pas vides
+    if [ ! -s "./env/.env.api" ] || [ ! -s "./env/.env.web" ] || [ ! -s "./env/.env.mobile" ]; then
+        echo "❌ Certains fichiers d'environnement sont vides!"
+        echo "➡️  Veuillez exécuter 'bin/setup-env' pour configurer les variables d'environnement"
+        exit 1
+    fi
+    
+    log_success "Fichiers d'environnement validés"
+}
+
 case "$1" in
     "all")
         log_info "Vérification de l'environnement..."
         check_docker
         check_docker_compose
+        check_env_files
         check_database_directory
         check_image "api"
         check_image "web"
@@ -213,6 +234,10 @@ case "$1" in
         show_help
         ;;
     *)
+        log_info "Vérification de l'environnement..."
+        check_docker
+        check_docker_compose
+        check_env_files
         start_services "$@"
         ;;
 esac 

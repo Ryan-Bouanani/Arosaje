@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Variables pour suivre l'état des actions
+VENV_STATUS="❌"
+DEPS_STATUS="❌"
+REQ_STATUS="❌"
+FOLDERS_STATUS="❌"
+DB_STATUS="❌"
+MIGRATIONS_STATUS="❌"
+
 echo "🚀 Installation et configuration de l'API..."
 
 # Vérifier si nous sommes dans le bon dossier
@@ -34,7 +42,9 @@ fi
 # Activer l'environnement virtuel
 source venv/bin/activate 2>/dev/null || source venv/Scripts/activate 2>/dev/null
 
-if [ $? -ne 0 ]; then
+if [ $? -eq 0 ]; then
+    VENV_STATUS="✅"
+else
     echo "❌ Erreur: Impossible d'activer l'environnement virtuel"
     exit 1
 fi
@@ -42,8 +52,9 @@ fi
 # Installer les dépendances si requirements.txt existe
 if [ -f "requirements.txt" ]; then
     echo "📥 Installation des dépendances existantes..."
-    pip install -r requirements.txt
-    if [ $? -ne 0 ]; then
+    if pip install -r requirements.txt; then
+        DEPS_STATUS="✅"
+    else
         echo "❌ Erreur: Installation des dépendances échouée"
         exit 1
     fi
@@ -51,11 +62,19 @@ fi
 
 # Générer le nouveau requirements.txt
 echo "📝 Génération du nouveau requirements.txt..."
-pip freeze > requirements.txt
+if pip freeze > requirements.txt; then
+    REQ_STATUS="✅"
+else
+    echo "❌ Erreur: Impossible de générer requirements.txt"
+fi
 
 # Créer les dossiers nécessaires
 echo "📁 Création des dossiers nécessaires..."
-mkdir -p assets/database
+if mkdir -p assets/database; then
+    FOLDERS_STATUS="✅"
+else
+    echo "❌ Erreur: Impossible de créer les dossiers"
+fi
 
 # Sauvegarder l'ancienne base de données si elle existe
 if [ -f "assets/database/arosaje.db" ]; then
@@ -65,8 +84,9 @@ fi
 
 # Initialiser la base de données
 echo "🗄️  Initialisation de la base de données..."
-python init_db.py
-if [ $? -ne 0 ]; then
+if python init_db.py; then
+    DB_STATUS="✅"
+else
     echo "❌ Erreur lors de l'initialisation de la base de données"
     # Restaurer la sauvegarde si elle existe
     if [ -f "assets/database/arosaje.db.backup" ]; then
@@ -78,8 +98,9 @@ fi
 
 # Exécuter les migrations Alembic
 echo "🔄 Application des migrations..."
-alembic upgrade head
-if [ $? -ne 0 ]; then
+if alembic upgrade head; then
+    MIGRATIONS_STATUS="✅"
+else
     echo "❌ Erreur lors de l'application des migrations"
     exit 1
 fi
@@ -93,10 +114,12 @@ if [ -f "assets/database/arosaje.db" ]; then
         rm -f assets/database/arosaje.db.backup
     else
         echo "❌ La base de données existe mais semble corrompue"
+        DB_STATUS="❌"
         exit 1
     fi
 else
     echo "❌ Erreur: La base de données n'a pas été créée"
+    DB_STATUS="❌"
     exit 1
 fi
 
@@ -106,11 +129,17 @@ deactivate
 echo "✅ Configuration terminée!"
 echo "📋 Résumé des actions effectuées :"
 echo "----------------------------------------"
-echo "✓ Environnement virtuel configuré"
-echo "✓ Dépendances installées"
-echo "✓ Fichier requirements.txt mis à jour"
-echo "✓ Dossiers créés"
-echo "✓ Base de données initialisée"
-echo "✓ Migrations appliquées"
+echo "${VENV_STATUS} Environnement virtuel configuré"
+echo "${DEPS_STATUS} Dépendances installées"
+echo "${REQ_STATUS} Fichier requirements.txt mis à jour"
+echo "${FOLDERS_STATUS} Dossiers créés"
+echo "${DB_STATUS} Base de données initialisée"
+echo "${MIGRATIONS_STATUS} Migrations appliquées"
 echo "----------------------------------------"
-echo "🚀 L'API est prête à être utilisée!" 
+
+# Vérifier si toutes les actions ont réussi
+if [ "$VENV_STATUS" = "✅" ] && [ "$DEPS_STATUS" = "✅" ] && [ "$REQ_STATUS" = "✅" ] && [ "$FOLDERS_STATUS" = "✅" ] && [ "$DB_STATUS" = "✅" ] && [ "$MIGRATIONS_STATUS" = "✅" ]; then
+    echo "🚀 L'API est prête à être utilisée!"
+else
+    echo "⚠️  Certaines actions ont échoué, vérifiez les erreurs ci-dessus"
+fi 

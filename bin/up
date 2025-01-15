@@ -64,8 +64,8 @@ check_images() {
 # Fonction pour arrêter proprement les conteneurs
 cleanup() {
     echo -e "\n\n🛑 Arrêt des conteneurs..."
-    docker-compose stop
-    echo "✅ Tous les conteneurs ont été arrêtés."
+    docker-compose down -v --remove-orphans
+    echo "✅ Tous les conteneurs ont été arrêtés et leurs logs supprimés."
     exit 0
 }
 
@@ -106,12 +106,6 @@ check_database_directory() {
             log_warning "⚠️  Impossible de créer le dossier img. Essai avec sudo..."
             sudo mkdir -p ./api/assets/img
         }
-    fi
-
-    # Modification des permissions
-    if ! chmod -R 777 ./api/assets 2>/dev/null; then
-        log_warning "⚠️  Impossible de modifier les permissions. Essai avec sudo..."
-        sudo chmod -R 777 ./api/assets
     fi
     
     # Création de la base de données si elle n'existe pas

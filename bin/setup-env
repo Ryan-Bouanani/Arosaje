@@ -1,0 +1,123 @@
+#!/bin/bash
+
+# Couleurs pour les logs
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Variables pour suivre l'état des actions
+ENV_DIR_STATUS="❌"
+ENV_API_STATUS="❌"
+ENV_WEB_STATUS="❌"
+ENV_MOBILE_STATUS="❌"
+GITIGNORE_STATUS="❌"
+
+# Fonction pour les logs
+log_info() {
+    echo -e "${BLUE}ℹ️ $1${NC}"
+}
+
+log_success() {
+    echo -e "${GREEN}✅ $1${NC}"
+}
+
+log_warning() {
+    echo -e "${YELLOW}⚠️  $1${NC}"
+}
+
+# Création du dossier env s'il n'existe pas
+log_info "Création du dossier env..."
+if mkdir -p env; then
+    ENV_DIR_STATUS="✅"
+    log_success "Dossier env créé"
+else
+    log_warning "Erreur lors de la création du dossier env"
+fi
+
+# Configuration de l'API
+log_info "Configuration de l'API..."
+if cat > env/.env.api << EOL
+# Configuration de l'API
+PORT=8000
+HOST=0.0.0.0
+CORS_ORIGINS=http://localhost:3000,http://web:3000
+EOL
+then
+    ENV_API_STATUS="✅"
+    log_success "Fichier .env.api créé"
+else
+    log_warning "Erreur lors de la création du fichier .env.api"
+fi
+
+# Configuration du frontend web
+log_info "Configuration du frontend web..."
+if cat > env/.env.web << EOL
+# Configuration du frontend web
+NUXT_PUBLIC_API_URL=http://api:8000
+PORT=3000
+HOST=0.0.0.0
+EOL
+then
+    ENV_WEB_STATUS="✅"
+    log_success "Fichier .env.web créé"
+else
+    log_warning "Erreur lors de la création du fichier .env.web"
+fi
+
+# Configuration du mobile
+log_info "Configuration du mobile..."
+if cat > env/.env.mobile << EOL
+# Configuration de l'application mobile Flutter
+PORT=5000
+HOST=0.0.0.0
+FLUTTER_API_URL=http://api:8000
+FLUTTER_APP_NAME=Arosa-je Mobile
+FLUTTER_DEBUG=true
+EOL
+then
+    ENV_MOBILE_STATUS="✅"
+    log_success "Fichier .env.mobile créé"
+else
+    log_warning "Erreur lors de la création du fichier .env.mobile"
+fi
+
+# Ajout des fichiers .env au .gitignore s'ils n'y sont pas déjà
+log_info "Mise à jour du .gitignore..."
+if [ -f ".gitignore" ]; then
+    if ! grep -q "^env/\\.env\\." .gitignore; then
+        if echo -e "\n# Variables d'environnement\nenv/.env.*" >> .gitignore; then
+            GITIGNORE_STATUS="✅"
+            log_success "Fichiers .env ajoutés au .gitignore"
+        else
+            log_warning "Erreur lors de la mise à jour du .gitignore"
+        fi
+    else
+        GITIGNORE_STATUS="✅"
+        log_info "Les fichiers .env sont déjà dans le .gitignore"
+    fi
+else
+    if echo -e "# Variables d'environnement\nenv/.env.*" > .gitignore; then
+        GITIGNORE_STATUS="✅"
+        log_success "Nouveau fichier .gitignore créé avec les fichiers .env"
+    else
+        log_warning "Erreur lors de la création du .gitignore"
+    fi
+fi
+
+log_success "Configuration de l'environnement terminée!"
+echo -e "\n📋 Résumé des actions effectuées :"
+echo "----------------------------------------"
+echo "${ENV_DIR_STATUS} Dossier env"
+echo "${ENV_API_STATUS} Fichier .env.api"
+echo "${ENV_WEB_STATUS} Fichier .env.web"
+echo "${ENV_MOBILE_STATUS} Fichier .env.mobile"
+echo "${GITIGNORE_STATUS} Configuration du .gitignore"
+echo "----------------------------------------"
+
+# Vérifier si toutes les actions ont réussi
+if [ "$ENV_DIR_STATUS" = "✅" ] && [ "$ENV_API_STATUS" = "✅" ] && [ "$ENV_WEB_STATUS" = "✅" ] && [ "$ENV_MOBILE_STATUS" = "✅" ] && [ "$GITIGNORE_STATUS" = "✅" ]; then
+    echo "🚀 Tout est configuré ! Vous pouvez maintenant lancer les services avec bin/up all"
+else
+    echo "⚠️  Certaines actions ont échoué, vérifiez les erreurs ci-dessus"
+fi 

@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine
-from routers import auth, plant, monitoring  # et autres routers
+from routers import auth, plant, monitoring, photo  # Ajout du router photo
 from utils.settings import CORS_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
 
@@ -27,11 +28,14 @@ app.add_middleware(
     max_age=3600,
 )
 
+# Monter le dossier static pour les images
+app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+
 # Inclure les routers
 app.include_router(auth.router)
 app.include_router(plant.router)
 app.include_router(monitoring.router)
-# app.include_router(other_router.router)
+app.include_router(photo.router)
 
 @app.get("/")
 def read_root():

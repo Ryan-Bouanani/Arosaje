@@ -3,6 +3,13 @@ import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
   devtools: { enabled: false },  // Désactivation des devtools
+  
+  runtimeConfig: {
+    public: {
+      apiUrl: process.env.NUXT_PUBLIC_API_URL
+    }
+  },
+
   build: {
     transpile: ['vuetify'],
   },

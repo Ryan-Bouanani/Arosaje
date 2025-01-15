@@ -12,9 +12,13 @@ services:
       - ./api/assets/img:/app/assets/img
     ports:
       - "8000:8000"
+    env_file:
+      - ./env/.env.api
     environment:
       - DATABASE_URL=sqlite:///assets/database/arosaje.db
       - PYTHONUNBUFFERED=1
+    networks:
+      - arosa-je-network
     restart: "no"
 
   web:
@@ -27,8 +31,14 @@ services:
       - /app/node_modules
     ports:
       - "3000:3000"
+    env_file:
+      - ./env/.env.web
     environment:
       - NODE_ENV=development
+    networks:
+      - arosa-je-network
+    depends_on:
+      - api
     restart: "no"
     command: npm run dev
 
@@ -45,4 +55,10 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=5000
+    networks:
+      - arosa-je-network
     restart: "no"
+
+networks:
+  arosa-je-network:
+    name: arosa-je-network

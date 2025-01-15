@@ -98,7 +98,10 @@ L’application inclut :
 git clone <repository-url>
 
 # Rendre les scripts exécutables
-chmod +x bin/up bin/update bin/setup-api
+chmod +x bin/up bin/update bin/setup-api bin/setup-env
+
+# Configurer les variables d'environnement
+bin/setup-env
 
 # Configurer l'environnement Python pour l'API
 bin/setup-api
@@ -109,6 +112,13 @@ bin/up all
 # Mettre à jour tous les dépôts
 bin/update
 ```
+
+### **⚠️ Important**
+Avant de lancer `bin/up`, assurez-vous d'avoir :
+1. Configuré les variables d'environnement avec `bin/setup-env`
+2. Initialisé l'API avec `bin/setup-api`
+
+Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 
 ### **🌐 Services & Ports**
 
@@ -128,7 +138,6 @@ bin/update
 
 #### Commandes Spéciales
 - `CTRL+C` : Arrêter proprement tous les conteneurs
-- `CTRL+R` : Redémarrer tous les conteneurs
 
 ### **📝 Documentation API**
 - Swagger UI: http://localhost:8000/docs

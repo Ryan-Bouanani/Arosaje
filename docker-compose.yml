@@ -2,62 +2,47 @@ version: '3.8'
 
 services:
   api:
+    container_name: arosa-je-api
     build:
       context: ./api
       dockerfile: Dockerfile
-    container_name: arosa-je-api
-    ports:
-      - "8000:8000"
     volumes:
       - ./api:/app
+      - ./api/assets/database:/app/assets/database
+      - ./api/assets/img:/app/assets/img
+    ports:
+      - "8000:8000"
     environment:
-      - ENVIRONMENT=development
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - DATABASE_URL=sqlite:///assets/database/arosaje.db
+      - PYTHONUNBUFFERED=1
+    restart: "no"
 
   web:
+    container_name: arosa-je-web
     build:
       context: ./web
       dockerfile: Dockerfile
-    container_name: arosa-je-web
-    ports:
-      - "3000:3000"
     volumes:
       - ./web:/app
       - /app/node_modules
+    ports:
+      - "3000:3000"
     environment:
       - NODE_ENV=development
-      - PORT=3000
-    depends_on:
-      - api
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:3000"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    restart: "no"
+    command: npm run dev
 
   mobile:
+    container_name: arosa-je-mobile
     build:
       context: ./mobile
       dockerfile: Dockerfile
-    container_name: arosa-je-mobile
-    ports:
-      - "5000:80"
     volumes:
       - ./mobile:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
     environment:
-      - ENVIRONMENT=development
-    depends_on:
-      - api
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - NODE_ENV=development
+      - PORT=5000
+    restart: "no"

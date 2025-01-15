@@ -1,17 +1,26 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from utils.database import Base, engine
-from routers import user_router
-from utils.settings import CORS_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS
+from routers import auth, plant, monitoring  # et autres routers
+from utils.settings import CORS_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
+from utils.monitoring import monitoring_middleware
 
-app = FastAPI()
+app = FastAPI(
+    title=PROJECT_NAME,
+    version=VERSION
+)
 
 # Créer les tables
 Base.metadata.create_all(bind=engine)
 
+# Middleware de monitoring
+app.middleware("http")(monitoring_middleware)
 
 # Inclure les routers
-app.include_router(user_router.router)
+app.include_router(auth.router)
+app.include_router(plant.router)
+app.include_router(monitoring.router)
+# app.include_router(other_router.router)
 
 # Configuration du CORS
 app.add_middleware(

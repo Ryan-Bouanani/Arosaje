@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'home_after_login_screen.dart';
+import 'login_screen.dart';
+import 'register_screen.dart';
 
 class AccueilPage extends StatelessWidget {
   const AccueilPage({super.key});
@@ -62,7 +63,7 @@ class AccueilPage extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const HomeAfterLogin(),
+                              builder: (context) => const LoginScreen(),
                             ),
                           );
                         },
@@ -86,7 +87,12 @@ class AccueilPage extends StatelessWidget {
                       const SizedBox(height: 15),
                       ElevatedButton(
                         onPressed: () {
-                          // Navigation vers la page de connexion
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const InscriptionPage(),
+                            ),
+                          );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.transparent,

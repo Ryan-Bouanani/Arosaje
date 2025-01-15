@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "nuxt build",
-    "dev": "NODE_OPTIONS='--no-warnings' nuxt dev",
+    "dev": "cross-env NODE_OPTIONS='--no-warnings' nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare"
@@ -16,6 +16,7 @@
     "vue-router": "latest"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "vite-plugin-vuetify": "^2.0.4",
     "vuetify": "^3.7.6"
   }

@@ -5,7 +5,7 @@ FROM node:20-slim
 WORKDIR /app
 
 # Installation des dépendances globales nécessaires
-RUN npm install -g nuxt
+RUN npm install -g nuxt cross-env
 
 # Copie des fichiers de configuration des dépendances
 COPY package*.json ./

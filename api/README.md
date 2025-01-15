@@ -78,7 +78,16 @@ Pour exécuter les tests de l'API, suivez ces étapes :
    pip install -r requirements-test.txt
    ```
 
-3. Lancez les tests :
+3. Lancez le serveur FastAPI :
+   ```bash
+   uvicorn main:app --reload
+   ```
+   ou via script bin/up
+   ```bash
+   bin/up all
+   ```
+
+4. Lancez les tests :
    ```bash
    pytest tests/test_auth.tavern.yaml -v
    ```

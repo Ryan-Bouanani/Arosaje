@@ -1,5 +1,5 @@
 from utils.database import Base, engine
-from models import user, plant, advice, garde, photo_history
+from models import user, plant, advice, garde, photo
 import os
 from pathlib import Path
 from utils.settings import DATABASE_URL

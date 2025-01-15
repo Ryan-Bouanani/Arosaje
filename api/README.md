@@ -84,12 +84,12 @@ Pour exécuter les tests de l'API, suivez ces étapes :
    ```
    ou via script bin/up
    ```bash
-   bin/up all
+   bin/up api
    ```
 
 4. Lancez les tests :
    ```bash
-   pytest tests/test_auth.tavern.yaml -v
+   pytest tests/<test_name>.tavern.yaml -v
    ```
 
 Les tests utilisent Tavern, un framework de test d'API qui permet de tester facilement les endpoints HTTP. Les tests vérifient :

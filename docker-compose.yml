@@ -42,7 +42,24 @@ services:
     depends_on:
       - api
     restart: "no"
-    command: npm run dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: >
+      sh -c '
+        cleanup() {
+          echo "Cleaning up..."
+          pkill -f "node" || true
+          rm -rf /tmp/nitro/worker-*.sock || true
+          exit 0
+        }
+        trap cleanup SIGTERM SIGINT
+        rm -rf .nuxt /tmp/nitro/worker-*.sock
+        npm run dev & wait
+      '
 
   mobile:
     container_name: arosa-je-mobile

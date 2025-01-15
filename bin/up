@@ -93,20 +93,70 @@ cleanup() {
     
     # Arrêter les conteneurs sans les supprimer
     if [ "$1" = "all" ]; then
-        docker-compose stop
+        docker-compose down
         echo "✅ Tous les services ont été arrêtés."
     else
         # Convertir les arguments en array pour gérer plusieurs services
         local services=($@)
         if [ ${#services[@]} -gt 0 ]; then
             docker-compose stop "${services[@]}"
+            # Vérifier si les ports sont toujours utilisés
+            for service in "${services[@]}"; do
+                case "$service" in
+                    "api")
+                        port=8000
+                        ;;
+                    "web")
+                        port=3000
+                        # Nettoyer les sockets Nitro
+                        docker exec arosa-je-web rm -f /tmp/nitro/worker-*.sock 2>/dev/null || true
+                        ;;
+                    "mobile")
+                        port=5000
+                        ;;
+                esac
+                # Attendre que le port soit libéré
+                timeout=5
+                while lsof -i :$port >/dev/null 2>&1 && [ $timeout -gt 0 ]; do
+                    sleep 1
+                    ((timeout--))
+                done
+            done
             echo "✅ Services arrêtés : ${services[*]}"
         else
-            docker-compose stop
+            docker-compose down
             echo "✅ Tous les services ont été arrêtés."
         fi
     fi
+    
+    # Vérification finale des ports
+    ports=(8000 3000 5000)
+    for port in "${ports[@]}"; do
+        if lsof -i :$port >/dev/null 2>&1; then
+            echo "⚠️  Le port $port est toujours utilisé, forçage de la libération..."
+            fuser -k $port/tcp >/dev/null 2>&1
+        fi
+    done
+
+    # Nettoyage final des sockets Nitro si le service web était en cours d'exécution
+    if docker ps -q -f name=arosa-je-web >/dev/null 2>&1; then
+        echo "🧹 Nettoyage des sockets Nitro..."
+        docker exec arosa-je-web rm -f /tmp/nitro/worker-*.sock 2>/dev/null || true
+    fi
+    
+    echo "✅ Tous les ports et sockets ont été libérés"
     exit 0
+}
+
+# Fonction pour vérifier si un port est disponible
+check_port() {
+    local port=$1
+    if lsof -i :$port >/dev/null 2>&1; then
+        echo "❌ Le port $port est déjà utilisé"
+        echo "➡️  Arrêt du processus utilisant le port $port..."
+        fuser -k $port/tcp >/dev/null 2>&1
+        sleep 2
+    fi
 }
 
 # Fonction pour démarrer des services spécifiques
@@ -135,6 +185,21 @@ start_services() {
         show_help
         exit 1
     fi
+    
+    # Vérifier les ports avant de démarrer
+    for service in "${services[@]}"; do
+        case "$service" in
+            "api")
+                check_port 8000
+                ;;
+            "web")
+                check_port 3000
+                ;;
+            "mobile")
+                check_port 5000
+                ;;
+        esac
+    done
     
     # Configuration spécifique pour l'API si nécessaire
     if [[ " ${services[@]} " =~ " api " ]]; then

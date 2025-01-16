@@ -1,0 +1,202 @@
+test_name: Test du workflow complet des conseils botaniques
+
+marks:
+  - usefixtures:
+      - api_url
+      - test_password
+      - test_user_email
+
+stages:
+  # 1. Création d'un botaniste
+  - name: Créer un compte botaniste
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "botanist_{test_user_email}"
+        password: "{test_password}"
+        nom: "Dubois"
+        prenom: "Pierre"
+        telephone: "0123456789"
+        localisation: "Paris"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist_id: id
+
+  # 2. Création d'un propriétaire de plante
+  - name: Créer un compte propriétaire
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "owner_{test_user_email}"
+        password: "{test_password}"
+        nom: "Martin"
+        prenom: "Julie"
+        telephone: "0987654321"
+        localisation: "Lyon"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_id: id
+
+  # 3. Login du propriétaire
+  - name: Login propriétaire
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "owner_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_token: access_token
+
+  # 4. Création d'une plante
+  - name: Créer une plante
+    request:
+      url: "{api_url}/plants/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        nom: "Orchidée"
+        espece: "Phalaenopsis"
+        description: "Orchidée d'intérieur"
+        owner_id: !int "{owner_id}"
+    response:
+      status_code: 200
+      save:
+        json:
+          plant_id: id
+
+  # 5. Login du botaniste
+  - name: Login botaniste
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "botanist_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist_token: access_token
+
+  # 6. Définir le rôle botaniste
+  - name: Mettre à jour le rôle en botaniste
+    request:
+      url: "{api_url}/auth/users/{botanist_id}/role"
+      method: PUT
+      headers:
+        Authorization: "Bearer {botanist_token}"
+      json:
+        role: "botanist"
+    response:
+      status_code: 200
+
+  # 7. Création d'un conseil
+  - name: Créer un conseil
+    request:
+      url: "{api_url}/advices/"
+      method: POST
+      headers:
+        Authorization: "Bearer {botanist_token}"
+      json:
+        texte: "Arroser une fois par semaine avec de l'eau tempérée"
+        plant_id: !int "{plant_id}"
+    response:
+      status_code: 200
+      save:
+        json:
+          advice_id: id
+      verify_response_with:
+        function: misc:validate_advice_response
+        extra_kwargs:
+          expected_status: "pending"
+
+  # 8. Création d'un second botaniste pour validation
+  - name: Créer un compte second botaniste
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "botanist2_{test_user_email}"
+        password: "{test_password}"
+        nom: "Petit"
+        prenom: "Marie"
+        telephone: "0123456780"
+        localisation: "Bordeaux"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist2_id: id
+
+  # 9. Login du second botaniste
+  - name: Login second botaniste
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "botanist2_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist2_token: access_token
+
+  # 10. Définir le rôle du second botaniste
+  - name: Mettre à jour le rôle en botaniste pour le second botaniste
+    request:
+      url: "{api_url}/auth/users/{botanist2_id}/role"
+      method: PUT
+      headers:
+        Authorization: "Bearer {botanist2_token}"
+      json:
+        role: "botanist"
+    response:
+      status_code: 200
+
+  # 11. Validation du conseil par le second botaniste
+  - name: Valider le conseil
+    request:
+      url: "{api_url}/advices/{advice_id}/validate"
+      method: PUT
+      headers:
+        Authorization: "Bearer {botanist2_token}"
+      params:
+        status: "validated"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: misc:validate_advice_response
+        extra_kwargs:
+          expected_status: "validated"
+
+  # 12. Vérification finale
+  - name: Vérifier l'état final du conseil
+    request:
+      url: "{api_url}/advices/{advice_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: misc:validate_advice_response
+        extra_kwargs:
+          expected_status: "validated" 

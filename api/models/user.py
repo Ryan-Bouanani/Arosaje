@@ -1,6 +1,11 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Enum
 from sqlalchemy.orm import relationship
+import enum
 from utils.database import Base
+
+class UserRole(str, enum.Enum):
+    USER = "user"
+    BOTANIST = "botanist"
 
 class User(Base):
     __tablename__ = "users"
@@ -11,6 +16,7 @@ class User(Base):
     telephone = Column(String, nullable=True)
     password = Column(String, nullable=False)
     localisation = Column(String, nullable=True)
+    role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)
 
     # Relations
     owned_plants = relationship("Plant", back_populates="owner", cascade="all, delete-orphan")  # Propriétaire

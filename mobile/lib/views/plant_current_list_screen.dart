@@ -85,7 +85,19 @@ class PlantHistoryScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(16, 40, 16, 20),
+              child: const Text(
+                'Mes Plantes',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+                textAlign: TextAlign.left,
+              ),
+            ),
             _buildPlantList(
                 'Liste des Plantes Gardées En Cours', plantsGardees),
             const SizedBox(height: 8),
@@ -94,8 +106,7 @@ class PlantHistoryScreen extends StatelessWidget {
           ],
         ),
       ),
-      currentIndex:
-          1, // Set this to the appropriate index for your navigation bar
+      currentIndex: 1,
     );
   }
 }

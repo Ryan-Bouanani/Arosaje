@@ -92,7 +92,7 @@ class HomeAfterLogin extends StatelessWidget {
               const Text(
                 'Plantes à proximité',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -112,7 +112,7 @@ class HomeAfterLogin extends StatelessWidget {
               const Text(
                 'Plantes à garder proche de vous',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),

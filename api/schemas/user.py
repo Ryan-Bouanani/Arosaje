@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from .base import BaseSchema, IDSchema
+from models.user import UserRole
 
 class UserBase(BaseSchema):
     nom: str
@@ -20,7 +21,13 @@ class UserUpdate(BaseSchema):
     localisation: Optional[str] = None
     password: Optional[str] = None
 
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
 class User(UserBase, IDSchema):
+    id: int
+    role: UserRole
+
     class Config:
         from_attributes = True
 

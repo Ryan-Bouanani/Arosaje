@@ -5,15 +5,12 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
 from utils.database import get_db
-from utils.security import (
-    verify_password,
-    create_access_token,
-    get_current_user,
-    get_password_hash
-)
+from utils.security import create_access_token, get_current_user
+from utils.password import verify_password, get_password_hash
 from crud.user import user as user_crud
 from schemas.token import Token
-from schemas.user import UserCreate, User
+from schemas.user import UserCreate, User, UserRoleUpdate
+from models.user import UserRole
 
 router = APIRouter(
     prefix="/auth",
@@ -52,12 +49,6 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cet email est déjà utilisé"
         )
-    
-    # Hasher le mot de passe
-    hashed_password = get_password_hash(user_in.password)
-    user_in.password = hashed_password
-    
-    # Créer l'utilisateur
     user = user_crud.create(db, obj_in=user_in)
     return user
 
@@ -66,4 +57,31 @@ async def read_users_me(
     current_user = Depends(get_current_user)
 ):
     """Renvoie les informations de l'utilisateur connecté"""
-    return current_user 
+    return current_user
+
+@router.put("/users/{user_id}/role", response_model=User)
+async def update_user_role(
+    user_id: int,
+    role_update: UserRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """Mettre à jour le rôle d'un utilisateur"""
+    # Vérifier que l'utilisateur existe
+    user = user_crud.get(db, id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Pour l'instant, on permet à l'utilisateur de modifier son propre rôle
+    # Dans un environnement de production, il faudrait ajouter une vérification d'admin
+    if user.id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Vous ne pouvez pas modifier le rôle d'un autre utilisateur"
+        )
+    
+    # Mettre à jour le rôle
+    return user_crud.update_role(db, db_obj=user, role=role_update.role) 

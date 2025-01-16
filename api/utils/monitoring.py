@@ -15,6 +15,8 @@ log_dir.mkdir(exist_ok=True)
 # Configuration du logging pour les métriques
 metrics_logger = logging.getLogger("metrics")
 metrics_logger.setLevel(logging.INFO)
+# Empêcher la propagation des logs vers le logger parent (qui affiche dans la console)
+metrics_logger.propagate = False
 
 # Handler pour le fichier de log des métriques
 metrics_file = logging.FileHandler(log_dir / "metrics.log")

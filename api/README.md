@@ -92,6 +92,8 @@ Pour exécuter les tests de l'API, suivez ces étapes :
    pytest tests/<test_name>.tavern.yaml -v
    ```
 
+Ou alors, utilisez simplement l'IDE de votre choix, comme VSCode par exemple, et lancez les tests avec le bouton Run Tests.
+
 Les tests utilisent Tavern, un framework de test d'API qui permet de tester facilement les endpoints HTTP. Les tests vérifient :
 - L'inscription des utilisateurs
 - L'authentification

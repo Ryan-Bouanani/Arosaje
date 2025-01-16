@@ -18,7 +18,7 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Configuration CORS
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://web:3000,http://localhost:5000,http://mobile:5000").split(",")
+CORS_ALLOW_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://web:3000,http://localhost:5000,http://mobile:5000").split(",")
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
 CORS_ALLOW_HEADERS = [
     "Content-Type",

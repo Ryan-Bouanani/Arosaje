@@ -1,23 +1,28 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from pathlib import Path
 
-from utils.settings import DATABASE_URL
+# Chemin de base du projet
+ROOT_DIR = Path(__file__).resolve().parent.parent
 
-# Crée le moteur SQLAlchemy
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Nécessaire pour SQLite
-)
+# Configuration de la base de données
+DB_PATH = ROOT_DIR / "assets" / "database" / "arosaje.db"
 
-# Configuration des sessions
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base pour les modèles
+# Base pour les modèles SQLAlchemy
 Base = declarative_base()
 
-# Fonction pour obtenir une session (gestion des dépendances FastAPI)
+# Création du moteur
+engine = create_engine(
+    f"sqlite:///{DB_PATH}",
+    connect_args={"check_same_thread": False}
+)
+
+# Session pour la base de données
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 def get_db():
+    """Crée une nouvelle session de base de données"""
     db = SessionLocal()
     try:
         yield db

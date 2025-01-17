@@ -99,7 +99,12 @@ cleanup() {
         # Convertir les arguments en array pour gérer plusieurs services
         local services=($@)
         if [ ${#services[@]} -gt 0 ]; then
-            docker-compose stop "${services[@]}"
+            # S'assurer que Redis est arrêté si l'API est arrêtée
+            if [[ " ${services[@]} " =~ " api " ]]; then
+                docker-compose stop api-redis api "${services[@]}"
+            else
+                docker-compose stop "${services[@]}"
+            fi
             # Vérifier si les ports sont toujours utilisés
             for service in "${services[@]}"; do
                 case "$service" in

@@ -7,11 +7,23 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Variables pour suivre l'état des actions
+REDIS_DIR_STATUS="❌"
+REDIS_ACL_STATUS="❌"
 ENV_DIR_STATUS="❌"
 ENV_API_STATUS="❌"
 ENV_WEB_STATUS="❌"
 ENV_MOBILE_STATUS="❌"
 GITIGNORE_STATUS="❌"
+
+# Fonction pour générer un mot de passe aléatoire
+generate_password() {
+    length=${1:-32}
+    tr -dc 'A-Za-z0-9' </dev/urandom | head -c $length
+}
+
+# Génération des mots de passe
+JWT_SECRET=$(generate_password 64)
+REDIS_PASSWORD=$(generate_password 32)
 
 # Fonction pour les logs
 log_info() {
@@ -25,6 +37,38 @@ log_success() {
 log_warning() {
     echo -e "${YELLOW}⚠️  $1${NC}"
 }
+
+# Configuration de Redis
+log_info "Configuration de Redis..."
+
+# Création du dossier redis s'il n'existe pas
+if [ ! -d "redis" ]; then
+    log_info "Création du dossier redis..."
+    if mkdir -p redis; then
+        REDIS_DIR_STATUS="✅"
+        log_success "Dossier redis créé"
+    else
+        log_warning "Erreur lors de la création du dossier redis"
+        exit 1
+    fi
+else
+    REDIS_DIR_STATUS="✅"
+    log_success "Dossier redis existe déjà"
+fi
+
+# Création/Mise à jour du fichier ACL Redis
+log_info "Configuration des utilisateurs Redis..."
+if cat > redis/users.acl << EOL
+user default off
+user arosaje on >$REDIS_PASSWORD allcommands allkeys
+EOL
+then
+    REDIS_ACL_STATUS="✅"
+    log_success "Fichier users.acl créé/mis à jour avec succès"
+else
+    log_warning "Erreur lors de la création/mise à jour du fichier users.acl"
+    exit 1
+fi
 
 # Création du dossier env s'il n'existe pas
 log_info "Création du dossier env..."
@@ -47,23 +91,23 @@ CORS_ORIGINS=http://localhost:3000,http://web:3000
 DATABASE_URL=sqlite:///assets/database/arosaje.db
 
 # Configuration JWT
-SECRET_KEY=arosaje
+SECRET_KEY=${JWT_SECRET}
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 # Configuration Redis
-REDIS_HOST=redis
+REDIS_HOST=api-redis
 REDIS_PORT=6379
 REDIS_DB=0
 REDIS_USERNAME=arosaje
-REDIS_PASSWORD=arosaje
+REDIS_PASSWORD=${REDIS_PASSWORD}
 
 # Configuration du serveur
 DEBUG=True
 EOL
 then
     ENV_API_STATUS="✅"
-    log_success "Fichier .env.api créé"
+    log_success "Fichier .env.api créé avec des mots de passe sécurisés"
 else
     log_warning "Erreur lors de la création du fichier .env.api"
 fi

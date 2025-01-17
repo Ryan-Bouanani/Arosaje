@@ -47,7 +47,7 @@ CORS_ORIGINS=http://localhost:3000,http://web:3000
 DATABASE_URL=sqlite:///assets/database/arosaje.db
 
 # Configuration JWT
-SECRET_KEY=your-secret-key-here
+SECRET_KEY=arosaje
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 

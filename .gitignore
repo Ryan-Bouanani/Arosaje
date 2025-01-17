@@ -172,3 +172,6 @@ api/assets/img/
 api/assets/database/
 api/tests/assets/img/
 api/tests/assets/database/
+
+# Redis
+redis/

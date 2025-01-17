@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from utils.database import get_db
@@ -6,6 +6,7 @@ from utils.security import get_current_user
 from utils.image_handler import ImageHandler
 from crud.photo import photo as photo_crud
 from schemas.photo import PhotoResponse, PhotoCreate
+from models.photo import Photo
 from datetime import datetime
 
 router = APIRouter(
@@ -45,7 +46,7 @@ async def upload_photo(
         }
         
         photo_in = PhotoCreate(**photo_data)
-        photo = photo_crud.create(db=db, obj_in=photo_in)
+        photo = photo_crud.create_photo(db=db, photo=photo_in)
 
         # Convertir en réponse
         return PhotoResponse(
@@ -64,15 +65,13 @@ async def upload_photo(
             ImageHandler.delete_image(filename)
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/plant/{plant_id}", response_model=List[PhotoResponse])
+@router.get("/plant/{plant_id}", response_model=Dict[str, List[PhotoResponse]])
 def get_plant_photos(
     plant_id: int,
-    skip: int = 0,
-    limit: int = 100,
     db: Session = Depends(get_db)
-):
+) -> Dict[str, List[PhotoResponse]]:
     """Récupère toutes les photos d'une plante"""
-    return photo_crud.get_by_plant(db=db, plant_id=plant_id, skip=skip, limit=limit)
+    return photo_crud.get_plant_photos(db=db, plant_id=plant_id)
 
 @router.delete("/{photo_id}")
 def delete_photo(

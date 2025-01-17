@@ -97,7 +97,7 @@ stages:
         json:
           care_id: id
       verify_response_with:
-        function: misc:validate_care_response
+        function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "pending"
 
@@ -129,7 +129,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_care_response
+        function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "accepted"
 
@@ -145,7 +145,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_care_response
+        function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "in_progress"
           check_start_photo: true
@@ -162,7 +162,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_care_response
+        function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "completed"
           check_end_photo: true
@@ -177,7 +177,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_care_response
+        function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "completed"
           check_start_photo: true

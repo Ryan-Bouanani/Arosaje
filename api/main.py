@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine
-from routers import auth, plant, monitoring, photo, plant_care, advice
+from routers import auth, plant, monitoring, photo, plant_care, advice, message
+
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
 
@@ -38,6 +39,7 @@ app.include_router(monitoring.router)
 app.include_router(photo.router)
 app.include_router(plant_care.router)
 app.include_router(advice.router)
+app.include_router(message.router)
 
 @app.get("/")
 def read_root():

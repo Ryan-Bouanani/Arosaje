@@ -29,6 +29,7 @@ stages:
         email: "{test_user_email}"
         telephone: "0612345678"
         localisation: "Paris"
+        role: "user"
 
   - name: Test login
     request:
@@ -63,6 +64,7 @@ stages:
         email: "{saved_email}"
         telephone: "0612345678"
         localisation: "Paris"
+        role: "user"
 
   - name: Test inscription email existant
     request:

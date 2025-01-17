@@ -18,6 +18,9 @@ services:
       - PYTHONUNBUFFERED=1
     networks:
       - arosa-je-network
+    depends_on:
+      api-redis:
+        condition: service_healthy
     restart: "no"
 
   web:
@@ -77,6 +80,31 @@ services:
       - arosa-je-network
     restart: "no"
 
+  api-redis:
+    image: redis:7-alpine
+    container_name: arosa-je-api-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/users.acl:/data/users.acl:ro
+    networks:
+      - arosa-je-network
+    env_file:
+      - ./env/.env.api
+    command: >
+      sh -c '
+        redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}" --aclfile /data/users.acl'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
 networks:
   arosa-je-network:
     name: arosa-je-network
+
+volumes:
+  redis_data:

@@ -7,6 +7,14 @@ from pathlib import Path
 ROOT_DIR = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_DIR))
 
+# Ajouter le dossier des tests au PYTHONPATH
+TEST_DIR = Path(__file__).parent
+sys.path.insert(0, str(TEST_DIR))
+
+# Ajouter le dossier workflows au PYTHONPATH
+WORKFLOWS_DIR = TEST_DIR / "workflows"
+sys.path.insert(0, str(WORKFLOWS_DIR))
+
 from PIL import Image
 
 @pytest.fixture
@@ -17,7 +25,8 @@ def api_url():
 @pytest.fixture
 def test_user_email():
     """Email de test"""
-    return f"test_{os.urandom(4).hex()}@example.com"
+    import uuid
+    return f"test_{uuid.uuid4().hex[:8]}@example.com"
 
 @pytest.fixture
 def test_password():
@@ -27,25 +36,9 @@ def test_password():
 @pytest.fixture
 def test_image_path():
     """Chemin vers une image de test"""
-    test_assets = ROOT_DIR / "tests" / "assets"
-    test_assets.mkdir(parents=True, exist_ok=True)
-    
-    test_image = test_assets / "test_plant.jpg"
-    if not test_image.exists():
-        img = Image.new('RGB', (100, 100), color='green')
-        img.save(test_image)
-    
-    return str(test_image)
+    return str(TEST_DIR / "assets" / "test_plant.jpg")
 
 @pytest.fixture
 def invalid_file_path():
     """Chemin vers un fichier texte invalide pour les tests"""
-    test_assets = ROOT_DIR / "tests" / "assets"
-    test_assets.mkdir(parents=True, exist_ok=True)
-    
-    invalid_file = test_assets / "invalid_file.txt"
-    if not invalid_file.exists():
-        with open(invalid_file, "w") as f:
-            f.write("Ceci n'est pas une image")
-    
-    return str(invalid_file) 
+    return str(TEST_DIR / "assets" / "invalid_file.txt") 

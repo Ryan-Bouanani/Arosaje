@@ -11,6 +11,9 @@ from models.plant_care import CareStatus
 from models.user import User as UserModel
 from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareUpdate
 from schemas.user import User
+from crud.message import message
+from models.message import ConversationType
+from schemas.message import MessageCreate
 
 router = APIRouter(
     prefix="/plant-care",
@@ -103,6 +106,38 @@ def update_care_status(
     elif status == CareStatus.CANCELLED:
         if db_care.owner_id != current_user.id:
             raise HTTPException(status_code=403, detail="Seul le propriétaire peut annuler")
+    
+    # Si la garde est acceptée, créer une conversation entre le propriétaire et le gardien
+    if status == CareStatus.ACCEPTED:
+        try:
+            conversation = message.create_conversation(
+                db=db,
+                participant_ids=[db_care.owner_id, db_care.caretaker_id],
+                conversation_type=ConversationType.PLANT_CARE,
+                related_id=care_id,
+                initiator_id=db_care.caretaker_id
+            )
+            
+            # Envoyer un message automatique pour démarrer la conversation
+            message_create = MessageCreate(
+                content=f"J'ai accepté de garder votre plante du {db_care.start_date.strftime('%d/%m/%Y')} au {db_care.end_date.strftime('%d/%m/%Y')}. N'hésitez pas si vous avez des questions !",
+                conversation_id=conversation.id
+            )
+            message.create_message(
+                db=db,
+                message=message_create,
+                sender_id=db_care.caretaker_id
+            )
+            
+            # Mettre à jour l'objet de garde avec l'ID de la conversation
+            db_care.conversation_id = conversation.id
+            
+        except Exception as e:
+            logging.error(f"Erreur lors de la création de la conversation: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Erreur lors de la création de la conversation"
+            )
     
     return plant_care.update_status(db, db_obj=db_care, status=status)
 

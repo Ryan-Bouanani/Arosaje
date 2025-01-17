@@ -121,7 +121,7 @@ stages:
         json:
           advice_id: id
       verify_response_with:
-        function: misc:validate_advice_response
+        function: validators.advice_validators:validate_advice_response
         extra_kwargs:
           expected_status: "pending"
 
@@ -183,7 +183,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_advice_response
+        function: validators.advice_validators:validate_advice_response
         extra_kwargs:
           expected_status: "validated"
 
@@ -197,6 +197,6 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: misc:validate_advice_response
+        function: validators.advice_validators:validate_advice_response
         extra_kwargs:
           expected_status: "validated" 

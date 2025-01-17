@@ -23,6 +23,7 @@ class PlantCareUpdate(BaseModel):
     care_instructions: Optional[str] = None
     start_photo_url: Optional[str] = None
     end_photo_url: Optional[str] = None
+    conversation_id: Optional[int] = None
 
 class PlantCareInDB(PlantCareBase):
     id: int
@@ -31,6 +32,7 @@ class PlantCareInDB(PlantCareBase):
     status: CareStatus = CareStatus.PENDING
     start_photo_url: Optional[str] = None
     end_photo_url: Optional[str] = None
+    conversation_id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

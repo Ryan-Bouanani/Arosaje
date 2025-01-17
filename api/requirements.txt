@@ -44,6 +44,7 @@ python-dotenv==1.0.1
 python-jose==3.3.0
 python-multipart==0.0.19
 PyYAML==6.0.2
+redis==5.0.1
 referencing==0.35.1
 requests==2.32.3
 rpds-py==0.22.3

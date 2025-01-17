@@ -19,6 +19,7 @@ class PlantCare(Base):
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     caretaker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True)
     
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
@@ -35,3 +36,4 @@ class PlantCare(Base):
     plant = relationship("Plant", back_populates="cares")
     owner = relationship("User", foreign_keys=[owner_id], back_populates="plants_given_for_care")
     caretaker = relationship("User", foreign_keys=[caretaker_id], back_populates="plants_taken_for_care")
+    conversation = relationship("Conversation", back_populates="plant_care")

@@ -1,0 +1,371 @@
+test_name: Test du workflow complet de messagerie
+
+marks:
+  - usefixtures:
+      - api_url
+      - test_password
+      - test_user_email
+
+stages:
+  # 1. Création des utilisateurs (propriétaire, gardien et botaniste)
+  - name: Créer compte propriétaire
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "owner_{test_user_email}"
+        password: "{test_password}"
+        nom: "Dupont"
+        prenom: "Jean"
+        telephone: "0123456789"
+        localisation: "Paris"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_id: id
+
+  - name: Créer compte gardien
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "caretaker_{test_user_email}"
+        password: "{test_password}"
+        nom: "Martin"
+        prenom: "Sophie"
+        telephone: "0987654321"
+        localisation: "Lyon"
+    response:
+      status_code: 200
+      save:
+        json:
+          caretaker_id: id
+
+  - name: Créer compte botaniste
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "botanist_{test_user_email}"
+        password: "{test_password}"
+        nom: "Petit"
+        prenom: "Marie"
+        telephone: "0634567890"
+        localisation: "Bordeaux"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist_id: id
+
+  # 2. Login des utilisateurs
+  - name: Login propriétaire
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "owner_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_token: access_token
+
+  - name: Login gardien
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "caretaker_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          caretaker_token: access_token
+
+  - name: Login botaniste
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "botanist_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          botanist_token: access_token
+
+  # 3. Définir le rôle botaniste
+  - name: Mettre à jour le rôle en botaniste
+    request:
+      url: "{api_url}/auth/users/{botanist_id}/role"
+      method: PUT
+      headers:
+        Authorization: "Bearer {botanist_token}"
+      json:
+        role: "botanist"
+    response:
+      status_code: 200
+
+  # 4. Créer une plante pour le test
+  - name: Créer une plante
+    request:
+      url: "{api_url}/plants/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        nom: "Ficus"
+        espece: "Ficus benjamina"
+        description: "Belle plante d'intérieur"
+        owner_id: !int "{owner_id}"
+    response:
+      status_code: 200
+      save:
+        json:
+          plant_id: id
+
+  # 5. Créer une demande de garde
+  - name: Créer une demande de garde
+    request:
+      url: "{api_url}/plant-care/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        plant_id: !int "{plant_id}"
+        caretaker_id: !int "{caretaker_id}"
+        start_date: "2024-03-01T00:00:00"
+        end_date: "2024-03-15T00:00:00"
+        care_instructions: "Arroser deux fois par semaine"
+    response:
+      status_code: 200
+      save:
+        json:
+          care_id: id
+
+  # 6. Accepter la demande de garde (crée automatiquement une conversation PLANT_CARE)
+  - name: Accepter la garde
+    request:
+      url: "{api_url}/plant-care/{care_id}/status"
+      method: PUT
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+      params:
+        status: "accepted"
+    response:
+      status_code: 200
+      save:
+        json:
+          conversation_id: conversation_id
+
+  # 7. Vérifier la création automatique de la conversation
+  - name: Vérifier la conversation
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.conversation_validators:validate_conversation_response
+        extra_kwargs:
+          conversation_type: "plant_care"
+          expected_participants_count: 2
+
+  # 8. Vérifier le message de bienvenue automatique
+  - name: Vérifier les messages
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.message_validators:validate_messages_list_response
+        extra_kwargs:
+          expected_count: 1
+          expected_content: "La demande de garde a été acceptée"
+
+  # 9. Test de la limite de taille des messages
+  - name: Tester message trop long
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: |
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+    response:
+      status_code: 422
+      json:
+        detail:
+          - type: "string_too_long"
+            loc: ["body", "content"]
+            msg: "String should have at most 2000 characters"
+            input: !anything
+            ctx:
+              max_length: 2000
+
+  # 10. Test de la pagination - Création de plusieurs messages
+  - name: Envoyer message 1
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Message de test 1"
+    response:
+      status_code: 200
+
+  - name: Envoyer message 2
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Message de test 2"
+    response:
+      status_code: 200
+
+  - name: Envoyer message 3
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Message de test 3"
+    response:
+      status_code: 200
+
+  - name: Envoyer message 4
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Message de test 4"
+    response:
+      status_code: 200
+
+  - name: Envoyer message 5
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Message de test 5"
+    response:
+      status_code: 200
+
+  # Test de la pagination
+  - name: Vérifier la pagination - première page
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+      params:
+        skip: 0
+        limit: 5
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.message_validators:validate_messages_list_response
+        extra_kwargs:
+          expected_count: 5
+
+  - name: Vérifier la pagination - deuxième page
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/messages"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+      params:
+        skip: 5
+        limit: 5
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.message_validators:validate_messages_list_response
+        extra_kwargs:
+          expected_count: 1
+
+  # 11. Test des messages non lus
+  - name: Vérifier le compteur de messages non lus
+    request:
+      url: "{api_url}/messages/unread-count"
+      method: GET
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+    response:
+      status_code: 200
+      json:
+        unread_count: !anyint
+
+  # 12. Marquer comme lu
+  - name: Marquer la conversation comme lue
+    request:
+      url: "{api_url}/messages/conversations/{conversation_id}/read"
+      method: POST
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+    response:
+      status_code: 200
+      json:
+        status: "success"
+
+  # 13. Créer une conversation avec le botaniste
+  - name: Créer une conversation avec le botaniste
+    request:
+      url: "{api_url}/messages/conversations"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        type: "botanical_advice"
+        participant_ids: [!int "{owner_id}", !int "{botanist_id}"]
+    response:
+      status_code: 200
+      save:
+        json:
+          botanical_conversation_id: id
+
+  # 14. Vérifier le type de conversation
+  - name: Vérifier la conversation botanique
+    request:
+      url: "{api_url}/messages/conversations/{botanical_conversation_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.conversation_validators:validate_conversation_response
+        extra_kwargs:
+          conversation_type: "botanical_advice"
+          expected_participants_count: 2 

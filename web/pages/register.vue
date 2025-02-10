@@ -4,9 +4,12 @@ import { useRouter } from 'vue-router';
 import { ApiService } from '~/services/api';
 
 const router = useRouter();
-const username = ref('');
+const nom = ref('');
+const prenom = ref('');
 const email = ref('');
 const password = ref('');
+const telephone = ref('');
+const localisation = ref('');
 const error = ref('');
 const loading = ref(false);
 
@@ -19,10 +22,19 @@ const submitRegister = async () => {
     loading.value = true;
     error.value = '';
 
+    // Vérification des champs obligatoires
+    if (!nom.value || !prenom.value || !email.value || !password.value) {
+      error.value = 'Veuillez remplir tous les champs obligatoires';
+      return;
+    }
+
     const response = await ApiService.register({
-      username: username.value,
+      nom: nom.value,
+      prenom: prenom.value,
       email: email.value,
-      password: password.value
+      password: password.value,
+      telephone: telephone.value || undefined,
+      localisation: localisation.value || undefined
     });
 
     if (response.success) {
@@ -48,25 +60,54 @@ const submitRegister = async () => {
           <v-card-text>
             <v-form @submit.prevent="submitRegister">
               <v-text-field
-                v-model="username"
-                label="Nom d'utilisateur"
+                v-model="nom"
+                label="Nom*"
                 required
+                :rules="[v => !!v || 'Le nom est obligatoire']"
+                :disabled="loading"
+              ></v-text-field>
+              
+              <v-text-field
+                v-model="prenom"
+                label="Prénom*"
+                required
+                :rules="[v => !!v || 'Le prénom est obligatoire']"
                 :disabled="loading"
               ></v-text-field>
               
               <v-text-field
                 v-model="email"
-                label="Email"
+                label="Email*"
                 type="email"
                 required
+                :rules="[
+                  v => !!v || 'L\'email est obligatoire',
+                  v => /.+@.+\..+/.test(v) || 'L\'email doit être valide'
+                ]"
                 :disabled="loading"
               ></v-text-field>
               
               <v-text-field
                 v-model="password"
-                label="Mot de passe"
+                label="Mot de passe*"
                 type="password"
                 required
+                :rules="[
+                  v => !!v || 'Le mot de passe est obligatoire',
+                  v => v.length >= 8 || 'Le mot de passe doit contenir au moins 8 caractères'
+                ]"
+                :disabled="loading"
+              ></v-text-field>
+
+              <v-text-field
+                v-model="telephone"
+                label="Téléphone (optionnel)"
+                :disabled="loading"
+              ></v-text-field>
+
+              <v-text-field
+                v-model="localisation"
+                label="Localisation (optionnel)"
                 :disabled="loading"
               ></v-text-field>
 
@@ -77,6 +118,10 @@ const submitRegister = async () => {
               >
                 {{ error }}
               </v-alert>
+
+              <div class="text-caption mb-4 text-grey">
+                * Champs obligatoires
+              </div>
 
               <v-btn
                 @click="submitRegister"

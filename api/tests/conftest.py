@@ -17,6 +17,7 @@ sys.path.insert(0, str(WORKFLOWS_DIR))
 
 from PIL import Image
 
+# Fixtures pour les tests
 @pytest.fixture
 def api_url():
     """URL de base de l'API pour les tests"""

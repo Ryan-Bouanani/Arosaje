@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
 from jose import JWTError, jwt
-from fastapi import HTTPException, Security, Depends
+from fastapi import HTTPException, Security, Depends, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
@@ -55,3 +55,25 @@ async def get_current_active_user(
 ):
     """Vérifie que l'utilisateur est actif"""
     return current_user
+
+async def get_current_user_ws(token: str, db: Session) -> dict:
+    """
+    Authentifie un utilisateur via son token JWT pour les WebSockets
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = user_crud.get(db, id=int(user_id))
+    if user is None:
+        raise credentials_exception
+    return user

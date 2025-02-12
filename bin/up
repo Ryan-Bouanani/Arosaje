@@ -74,9 +74,25 @@ check_database() {
 check_database_directory() {
     log_info "Vérification des dossiers nécessaires..."
     
+    local missing_dirs=()
+    
     # Vérification des dossiers requis
-    if [ ! -d "./api/assets/database" ] || [ ! -d "./api/assets/img" ]; then
+    if [ ! -d "./api/assets" ]; then
+        missing_dirs+=("./api/assets")
+    fi
+    if [ ! -d "./api/assets/database" ]; then
+        missing_dirs+=("./api/assets/database")
+    fi
+    if [ ! -d "./api/assets/img" ]; then
+        missing_dirs+=("./api/assets/img")
+    fi
+    
+    if [ ${#missing_dirs[@]} -ne 0 ]; then
         echo "❌ Structure de dossiers incomplète!"
+        echo "📁 Dossiers manquants:"
+        for dir in "${missing_dirs[@]}"; do
+            echo "   - $dir"
+        done
         echo "➡️  Veuillez exécuter 'bin/setup-api' avant de lancer les services"
         exit 1
     fi

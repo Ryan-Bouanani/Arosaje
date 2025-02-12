@@ -11,11 +11,15 @@ from crud.user import user as user_crud
 from schemas.token import Token
 from schemas.user import UserCreate, User, UserRoleUpdate
 from models.user import UserRole
+from services.email.email_service import EmailService
 
 router = APIRouter(
     prefix="/auth",
     tags=["authentication"]
 )
+
+# Initialisation du service d'email
+email_service = EmailService()
 
 @router.post("/login", response_model=Token)
 async def login(
@@ -49,7 +53,20 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cet email est déjà utilisé"
         )
+    
+    # Création de l'utilisateur
     user = user_crud.create(db, obj_in=user_in)
+    
+    # Envoi de l'email de bienvenue
+    try:
+        await email_service.send_welcome_email(
+            recipient_email=user.email,
+            user_name=f"{user.prenom} {user.nom}"
+        )
+    except Exception as e:
+        # Log l'erreur mais ne pas bloquer l'inscription
+        print(f"Erreur lors de l'envoi de l'email de bienvenue: {e}")
+    
     return user
 
 @router.get("/me", response_model=User)

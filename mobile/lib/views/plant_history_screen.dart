@@ -86,11 +86,9 @@ class PlantHistoryScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 16),
-            _buildPlantList(
-                'Liste des Plantes Gardées En Cours', plantsGardees),
+            _buildPlantList('Liste des Plantes Gardées', plantsGardees),
             const SizedBox(height: 8),
-            _buildPlantList(
-                'Liste des Plantes Confiées En Cours', plantsConfiees),
+            _buildPlantList('Liste des Plantes Confiées', plantsConfiees),
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 from typing import List
 import logging
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status, Query
 from sqlalchemy.orm import Session
 from utils.database import get_db
 from utils.security import get_current_user
@@ -87,59 +87,73 @@ def read_plant_care(
         raise HTTPException(status_code=404, detail="Garde non trouvée")
     return db_care
 
-@router.put("/{care_id}/status", response_model=PlantCare)
-def update_care_status(
+@router.put("/{care_id}/status")
+async def update_care_status(
     care_id: int,
-    status: CareStatus,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    status: str = Query(..., regex="^(accepted|rejected)$"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Met à jour le statut d'une garde"""
-    db_care = plant_care.get(db, id=care_id)
-    if not db_care:
-        raise HTTPException(status_code=404, detail="Garde non trouvée")
-    
-    # Vérifier les permissions selon le statut
-    if status == CareStatus.ACCEPTED or status == CareStatus.REFUSED:
+    try:
+        print(f"Mise à jour du statut de garde {care_id} à {status} par l'utilisateur {current_user.id}")
+        
+        # Récupérer la demande de garde
+        db_care = plant_care.get(db, id=care_id)
+        if not db_care:
+            raise HTTPException(status_code=404, detail="Demande de garde non trouvée")
+            
+        # Vérifier que l'utilisateur est bien le gardien
         if db_care.caretaker_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Seul le gardien peut accepter ou refuser")
-    elif status == CareStatus.CANCELLED:
-        if db_care.owner_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Seul le propriétaire peut annuler")
-    
-    # Si la garde est acceptée, créer une conversation entre le propriétaire et le gardien
-    if status == CareStatus.ACCEPTED:
-        try:
+            raise HTTPException(status_code=403, detail="Seul le gardien peut accepter ou refuser la demande")
+            
+        # Mettre à jour le statut
+        db_care = plant_care.update_status(db, db_obj=db_care, status=status)
+        print(f"Statut de garde mis à jour avec succès")
+        
+        # Créer une conversation si la demande est acceptée
+        if status == "accepted":
+            print(f"Création d'une conversation pour la garde {care_id}")
             conversation = message.create_conversation(
                 db=db,
                 participant_ids=[db_care.owner_id, db_care.caretaker_id],
                 conversation_type=ConversationType.PLANT_CARE,
-                related_id=care_id,
-                initiator_id=db_care.caretaker_id
+                related_id=care_id
             )
+            print(f"Conversation créée avec l'ID {conversation.id}")
             
-            # Envoyer un message automatique pour démarrer la conversation
-            message_create = MessageCreate(
-                content=f"J'ai accepté de garder votre plante du {db_care.start_date.strftime('%d/%m/%Y')} au {db_care.end_date.strftime('%d/%m/%Y')}. N'hésitez pas si vous avez des questions !",
-                conversation_id=conversation.id
-            )
-            message.create_message(
+            # Créer un message automatique
+            message_content = "La demande de garde a été acceptée"
+            print(f"Création du message automatique: {message_content}")
+            
+            new_message = message.create_message(
                 db=db,
-                message=message_create,
-                sender_id=db_care.caretaker_id
+                message=MessageCreate(
+                    conversation_id=conversation.id,
+                    content=message_content
+                ),
+                sender_id=None  # Message automatique, pas d'expéditeur
             )
+            print(f"Message automatique créé avec l'ID {new_message.id}")
             
-            # Mettre à jour l'objet de garde avec l'ID de la conversation
+            # Mettre à jour l'ID de la conversation dans la garde
             db_care.conversation_id = conversation.id
+            db.add(db_care)
             
-        except Exception as e:
-            logging.error(f"Erreur lors de la création de la conversation: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail="Erreur lors de la création de la conversation"
-            )
-    
-    return plant_care.update_status(db, db_obj=db_care, status=status)
+            # Commit explicite pour s'assurer que tout est sauvegardé
+            db.commit()
+            
+            return {
+                "status": "success",
+                "care_status": status,
+                "conversation_id": conversation.id
+            }
+            
+        return {"status": "success", "care_status": status}
+        
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour du statut: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/{care_id}/photos/start", response_model=PlantCare)
 async def upload_start_photo(

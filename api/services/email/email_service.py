@@ -88,19 +88,19 @@ class EmailService:
             }
         )
 
-    async def send_email_verification(
+    async def send_welcome_email(
         self,
         recipient_email: str,
-        verification_token: str
+        user_name: str
     ) -> None:
         """
-        Envoie un email de vérification de compte.
+        Envoie un email de bienvenue après l'inscription.
         """
         await self.send_email(
             recipients=[recipient_email],
-            subject="Vérification de votre compte",
-            template_name="email_verification",
+            subject="Bienvenue sur A'rosa-je !",
+            template_name="welcome",
             template_data={
-                "verification_link": f"/verify-email?token={verification_token}"
+                "user_name": user_name
             }
         ) 

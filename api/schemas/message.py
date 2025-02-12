@@ -15,7 +15,7 @@ class MessageCreate(MessageBase):
 
 class Message(MessageBase):
     id: int
-    sender_id: int
+    sender_id: Optional[int] = None
     conversation_id: int
     created_at: datetime
     updated_at: datetime

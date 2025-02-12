@@ -42,8 +42,8 @@ class CustomBottomNavBar extends StatelessWidget {
             label: 'Messages',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profil',
+            icon: Icon(Icons.settings),
+            label: 'Paramètres',
           ),
         ],
       ),

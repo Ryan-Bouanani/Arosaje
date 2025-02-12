@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/register_screen.dart';
 import 'home_after_login_screen.dart';
+import 'home_after_login_admin.dart';
 import 'home_screen.dart';
+import 'inscription_validation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,6 +15,42 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  void _handleLogin() {
+    final username = _usernameController.text.trim().toLowerCase();
+
+    if (username == 'bota') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeAfterLoginAdmin(),
+        ),
+      );
+    } else if (username == 'admin') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const InscriptionValidationScreen(),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HomeAfterLogin(),
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +58,14 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Image section avec courbe
             Stack(
               children: [
                 Image.asset(
-                  'assets/background.jpg', // Assurez-vous d'avoir cette image
+                  'assets/background.jpg',
                   height: 300,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
-                // Bouton retour
                 Positioned(
                   top: 40,
                   left: 10,
@@ -38,7 +74,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                // Courbe blanche
                 Positioned(
                   bottom: -1,
                   left: 0,
@@ -56,8 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
-
-            // Contenu du formulaire
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Form(
@@ -70,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1B4332), // Vert foncé
+                        color: Color(0xFF1B4332),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -82,14 +115,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 32),
-
-                    // Champ Nom complet
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextFormField(
+                        controller: _usernameController,
                         decoration: InputDecoration(
                           hintText: 'Nom complet',
                           border: OutlineInputBorder(
@@ -104,14 +136,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-
-                    // Champ Mot de passe
                     Container(
                       decoration: BoxDecoration(
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextFormField(
+                        controller: _passwordController,
                         obscureText: _obscurePassword,
                         decoration: InputDecoration(
                           hintText: 'Mot de passe',
@@ -139,8 +170,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-
-                    // Options supplémentaires
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -164,17 +193,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-                    // Bouton Connexion
                     ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const HomeAfterLogin(),
-                          ),
-                        );
-                      },
+                      onPressed: _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -216,7 +236,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    // Lien d'inscription
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [

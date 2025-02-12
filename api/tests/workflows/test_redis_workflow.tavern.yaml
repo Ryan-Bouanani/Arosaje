@@ -1,0 +1,159 @@
+test_name: Test du cache Redis
+
+marks:
+  - usefixtures:
+      - api_url
+      - test_user_email
+      - test_password
+      - test_image_path
+
+stages:
+  # 1. Création d'un utilisateur et connexion
+  - name: Créer un utilisateur
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        nom: "Test"
+        prenom: "User"
+        email: "{test_user_email}"
+        password: "{test_password}"
+        telephone: "0612345678"
+        localisation: "Paris"
+        role: "user"
+    response:
+      status_code: 200
+      save:
+        json:
+          user_id: id
+
+  - name: Connexion
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          auth_token: access_token
+
+  # 2. Création d'une plante
+  - name: Créer une plante
+    request:
+      url: "{api_url}/plants/"
+      method: POST
+      headers:
+        Authorization: "Bearer {auth_token}"
+      json:
+        nom: "Ficus Test Redis"
+        espece: "Ficus benjamina"
+        description: "Plante test pour Redis"
+        owner_id: !int "{user_id}"
+    response:
+      status_code: 200
+      save:
+        json:
+          plant_id: id
+
+  # 3. Upload d'une photo et vérification du cache
+  - name: Upload première photo
+    request:
+      url: "{api_url}/photos/upload/{plant_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {auth_token}"
+      files:
+        file: "{test_image_path}"
+      params:
+        type: "plant"
+        description: "Test Redis Photo 1"
+    response:
+      status_code: 200
+      save:
+        json:
+          photo_id_1: id
+
+  # 4. Première requête pour charger les photos (devrait mettre en cache)
+  - name: Premier chargement des photos
+    request:
+      url: "{api_url}/photos/plant/{plant_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.photo_validators:verify_photo_list
+        extra_kwargs:
+          expected_count: 1
+
+  # 5. Deuxième requête (devrait utiliser le cache)
+  - name: Deuxième chargement des photos (depuis le cache)
+    delay_before: 0.5
+    request:
+      url: "{api_url}/photos/plant/{plant_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.photo_validators:verify_photo_list
+        extra_kwargs:
+          expected_count: 1
+
+  # 6. Upload d'une nouvelle photo (devrait invalider le cache)
+  - name: Upload deuxième photo
+    request:
+      url: "{api_url}/photos/upload/{plant_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {auth_token}"
+      files:
+        file: "{test_image_path}"
+      params:
+        type: "plant"
+        description: "Test Redis Photo 2"
+    response:
+      status_code: 200
+      save:
+        json:
+          photo_id_2: id
+
+  # 7. Troisième requête (devrait recharger depuis la DB)
+  - name: Troisième chargement des photos (après invalidation du cache)
+    request:
+      url: "{api_url}/photos/plant/{plant_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.photo_validators:verify_photo_list
+        extra_kwargs:
+          expected_count: 2  # Maintenant 2 photos
+
+  # 8. Nettoyage - Suppression des photos
+  - name: Supprimer photo 1
+    request:
+      url: "{api_url}/photos/{photo_id_1}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200
+
+  - name: Supprimer photo 2
+    request:
+      url: "{api_url}/photos/{photo_id_2}"
+      method: DELETE
+      headers:
+        Authorization: "Bearer {auth_token}"
+    response:
+      status_code: 200 

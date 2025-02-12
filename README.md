@@ -88,17 +88,103 @@ L’application inclut :
 ## 📦 Installation et Déploiement
 
 ### **Prérequis**
-- TODO
+- Docker & Docker Compose
+- Git
+- Python 3.11+ (pour l'API)
 
-### **Étapes d’installation**
-- TODO
+### **Étapes d'installation**
+```bash
+# Cloner le dépôt
+git clone <repository-url>
 
----
+# Rendre les scripts exécutables
+chmod +x bin/up bin/update bin/setup-api bin/setup-env
+
+# Configurer les variables d'environnement
+bin/setup-env
+
+# Configurer l'environnement Python pour l'API
+bin/setup-api
+
+# Démarrer tous les services
+bin/up all
+
+# Mettre à jour tous les dépôts
+bin/update
+```
+
+### **⚠️ Important**
+Avant de lancer `bin/up`, assurez-vous d'avoir :
+1. Configuré les variables d'environnement avec `bin/setup-env`
+2. Initialisé l'API avec `bin/setup-api`
+
+Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
+
+### **🌐 Services & Ports**
+
+| Service | Description | URL Locale | Technologies |
+|---------|------------|------------|--------------|
+| API | Backend API | http://localhost:8000 | FastAPI (Python) |
+| Web | Interface Web | http://localhost:3000 | Vue.js (Nuxt.js) |
+| Mobile | App Flutter (Web) | http://localhost:5000 | Flutter |
+
+### **🛠️ Scripts Utilitaires**
+
+| Script | Description | Utilisation |
+|--------|------------|-------------|
+| `bin/up` | Gestion des conteneurs | `bin/up all` pour démarrer la stack |
+| `bin/update` | Mise à jour des dépôts | `bin/update` pour synchroniser avec main |
+| `bin/setup-api` | Configuration de l'API | `bin/setup-api` pour gérer les dépendances Python |
+
+#### Commandes Spéciales
+- `CTRL+C` : Arrêter proprement tous les conteneurs
+
+### **📝 Documentation API**
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### **🛠️ Commandes Utiles**
+
+```bash
+# S'attacher à un conteneur spécifique pour le debug
+docker attach arosa-je-api    # Pour débugger l'API
+docker attach arosa-je-web    # Pour débugger le frontend
+docker attach arosa-je-mobile # Pour débugger l'app mobile
+
+# Note: Utilisez CTRL+P CTRL+Q pour se détacher sans arrêter le conteneur
+```
+
+### **⚠️ Résolution des Problèmes**
+
+Si `bin/up all` échoue, vérifiez :
+1. Que Docker est en cours d'exécution
+2. Que les ports requis (8000, 3000, 5000) sont disponibles
+3. Que tous les dossiers nécessaires existent (api, web, mobile)
+4. Que les Dockerfiles sont présents dans chaque dossier
+5. Que les dépendances Python sont correctement installées (`bin/setup-api`)
+
+Pour un debug détaillé :
+- Utilisez `docker attach` pour vous connecter directement au conteneur
+- Les logs en temps réel s'afficheront dans votre terminal
+- CTRL+P CTRL+Q permet de se détacher sans arrêter le conteneur
+- CTRL+C arrêtera le conteneur si vous ne vous détachez pas proprement
+
+### **📝 Gestion des Dépendances**
+
+#### API (Python)
+```bash
+# Installation d'une nouvelle dépendance
+cd api
+source venv/bin/activate  # ou `source venv/Scripts/activate` sur Windows
+pip install nouvelle_dependance
+cd ..
+bin/setup-api  # Met à jour requirements.txt
+```
 
 ### **🤝 Contributeurs**
 
 - EL HAIMER Wacim
 - ANNAJAR Mohamed
-- AMIRI Mohamed
+- AMIRI Mohammed EL-FATEH 
 - BOUANANI Ryan
 - AKAY Omer

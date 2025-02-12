@@ -1,4 +1,3 @@
-
 # 🚀 API A'rosa-je
 
 ---
@@ -63,5 +62,42 @@ Pendant le développement, utilisez l'environnement virtuel pour garantir que to
    ```bash
    deactivate
    ```
+
+## 🧪 Tests
+
+Pour exécuter les tests de l'API, suivez ces étapes :
+
+1. Activez l'environnement virtuel si ce n'est pas déjà fait :
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # Sur Windows : venv\Scripts\activate
+   ```
+
+2. Installez les dépendances de test :
+   ```bash
+   pip install -r requirements-test.txt
+   ```
+
+3. Lancez le serveur FastAPI :
+   ```bash
+   uvicorn main:app --reload
+   ```
+   ou via script bin/up
+   ```bash
+   bin/up api
+   ```
+
+4. Lancez les tests :
+   ```bash
+   pytest tests/<test_name>.tavern.yaml -v
+   ```
+
+Ou alors, utilisez simplement l'IDE de votre choix, comme VSCode par exemple, et lancez les tests avec le bouton Run Tests.
+
+Les tests utilisent Tavern, un framework de test d'API qui permet de tester facilement les endpoints HTTP. Les tests vérifient :
+- L'inscription des utilisateurs
+- L'authentification
+- La gestion des erreurs
+- La validation des données
 
 ---

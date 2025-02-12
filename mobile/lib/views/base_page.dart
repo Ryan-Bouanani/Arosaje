@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/views/chat_list_screen.dart';
 import 'package:mobile/views/settings/settings_page.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import 'plant_current_list_screen.dart';

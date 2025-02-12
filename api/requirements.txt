@@ -1,8 +1,10 @@
+aiosmtplib==3.0.2
 alembic==1.14.0
 annotated-types==0.7.0
 anyio==4.6.2.post1
 attrs==23.2.0
 bcrypt==4.2.1
+blinker==1.9.0
 certifi==2024.12.14
 cffi==1.17.1
 charset-normalizer==3.4.1
@@ -13,12 +15,14 @@ docopt==0.6.2
 ecdsa==0.19.0
 email_validator==2.2.0
 fastapi==0.115.5
+fastapi-mail==1.4.2
 greenlet==3.1.1
 h11==0.14.0
 httpcore==0.17.3
 httpx==0.24.1
 idna==3.10
 iniconfig==2.0.0
+Jinja2==3.1.5
 jmespath==1.0.1
 jsonschema==4.23.0
 jsonschema-specifications==2024.10.1
@@ -33,6 +37,7 @@ pluggy==1.5.0
 pyasn1==0.6.1
 pycparser==2.22
 pydantic==2.10.2
+pydantic-settings==2.7.1
 pydantic_core==2.27.1
 PyJWT==2.10.1
 pykwalify==1.8.0
@@ -60,5 +65,3 @@ tavern==2.10.0
 typing_extensions==4.12.2
 urllib3==2.3.0
 uvicorn==0.32.1
-fastapi-mail
-python-dotenv==1.0.1

@@ -13,6 +13,7 @@ from schemas.message import (
     ConversationCreate
 )
 from schemas.user import User
+from services.email.email_service import EmailService
 
 router = APIRouter(
     prefix="/messages",
@@ -21,6 +22,8 @@ router = APIRouter(
 
 MESSAGE_RATE_LIMIT = 10  # messages par minute
 TIME_WINDOW = 60  # secondes
+
+email_service = EmailService()
 
 @router.post("/conversations", response_model=Conversation)
 async def create_conversation(
@@ -85,11 +88,25 @@ async def create_message(
             status_code=400,
             detail="L'ID de conversation dans l'URL ne correspond pas à celui du message"
         )
-    return message.create_message(
+    new_message = message.create_message(
         db=db,
         message=message_in,
         sender_id=current_user.id
     )
+    
+    # Récupérer les autres participants de la conversation
+    participants = await get_conversation_participants(conversation_id)
+    
+    # Envoyer une notification par email à chaque participant (sauf l'expéditeur)
+    for participant in participants:
+        if participant.id != current_user.id:
+            await email_service.send_new_message_notification(
+                recipient_email=participant.email,
+                sender_name=current_user.username,
+                conversation_id=conversation_id
+            )
+    
+    return new_message
 
 @router.post("/conversations/{conversation_id}/read", response_model=dict)
 async def mark_conversation_as_read(

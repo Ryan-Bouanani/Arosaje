@@ -6,9 +6,12 @@ interface LoginData {
 }
 
 interface RegisterData {
-  username: string
+  nom: string
+  prenom: string
   email: string
   password: string
+  telephone?: string
+  localisation?: string
 }
 
 interface ApiResponse<T> {
@@ -59,26 +62,36 @@ export class ApiService {
 
   static async register(data: RegisterData): Promise<ApiResponse<any>> {
     try {
+      const requestData = {
+        nom: data.nom,
+        prenom: data.prenom,
+        email: data.email,
+        password: data.password,
+        telephone: data.telephone,
+        localisation: data.localisation
+      };
+
       const response = await fetch(`${this.getBaseUrl()}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(data),
-      })
+        body: JSON.stringify(requestData),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.detail || 'Erreur lors de l\'inscription')
+        throw new Error(result.detail || 'Erreur lors de l\'inscription');
       }
 
-      return { success: true, data: result }
+      return { success: true, data: result };
     } catch (error: any) {
       return {
         success: false,
         error: error.message || 'Une erreur est survenue lors de l\'inscription'
-      }
+      };
     }
   }
 

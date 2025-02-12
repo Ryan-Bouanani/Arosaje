@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Vérification de votre email{% endblock %}
+
+{% block content %}
+<h2>Bienvenue sur A'rosa-je !</h2>
+
+<p>Bonjour,</p>
+
+<p>Merci de vous être inscrit sur A'rosa-je. Pour finaliser votre inscription et accéder à toutes les fonctionnalités, veuillez vérifier votre adresse email en cliquant sur le bouton ci-dessous :</p>
+
+<p style="text-align: center;">
+    <a href="{{ verification_link }}" class="button">Vérifier mon email</a>
+</p>
+
+<p>Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :</p>
+<p style="word-break: break-all;">{{ verification_link }}</p>
+
+<p><strong>Important :</strong> Ce lien est valable pendant 24 heures. Après ce délai, vous devrez demander un nouveau lien de vérification.</p>
+
+<p>À bientôt sur A'rosa-je !</p>
+{% endblock %} 

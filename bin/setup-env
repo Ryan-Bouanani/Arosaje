@@ -79,6 +79,23 @@ else
     log_warning "Erreur lors de la création du dossier env"
 fi
 
+# Chargement des secrets SMTP
+if [ -f "secrets/smtp.env" ]; then
+    set -a  # Marque automatiquement les variables comme exportées
+    source secrets/smtp.env
+    set +a
+    log_success "Secrets SMTP chargés avec succès"
+else
+    log_warning "Le fichier secrets/smtp.env n'existe pas. Exécutez bin/setup-secrets d'abord"
+    exit 1
+fi
+
+# Vérification des variables SMTP
+if [ -z "$MAIL_USERNAME" ] || [ -z "$MAIL_PASSWORD" ]; then
+    log_warning "Les variables SMTP ne sont pas correctement définies dans secrets/smtp.env"
+    exit 1
+fi
+
 # Configuration de l'API
 log_info "Configuration de l'API..."
 if cat > env/.env.api << EOL
@@ -102,6 +119,14 @@ REDIS_DB=0
 REDIS_USERNAME=arosaje
 REDIS_PASSWORD=${REDIS_PASSWORD}
 
+# Configuration Email
+MAIL_USERNAME="${MAIL_USERNAME}"
+MAIL_PASSWORD="${MAIL_PASSWORD}"
+MAIL_FROM="${MAIL_USERNAME}"
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_FROM_NAME="A'rosa-je"
+
 # Configuration du serveur
 DEBUG=True
 EOL
@@ -116,7 +141,7 @@ fi
 log_info "Configuration du frontend web..."
 if cat > env/.env.web << EOL
 # Configuration du frontend web
-NUXT_PUBLIC_API_URL=http://api:8000
+NUXT_PUBLIC_API_URL=http://localhost:8000
 PORT=3000
 HOST=0.0.0.0
 EOL
@@ -133,7 +158,7 @@ if cat > env/.env.mobile << EOL
 # Configuration de l'application mobile Flutter
 PORT=5000
 HOST=0.0.0.0
-FLUTTER_API_URL=http://api:8000
+FLUTTER_API_URL=http://localhost:8000
 FLUTTER_APP_NAME=Arosa-je Mobile
 FLUTTER_DEBUG=true
 EOL

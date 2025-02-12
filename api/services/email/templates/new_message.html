@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Nouveau Message{% endblock %}
+
+{% block content %}
+<h2>Vous avez reçu un nouveau message !</h2>
+
+<p>Bonjour,</p>
+
+<p><strong>{{ sender_name }}</strong> vous a envoyé un nouveau message sur A'rosa-je.</p>
+
+<p>Pour lire ce message et y répondre, cliquez sur le bouton ci-dessous :</p>
+
+<p style="text-align: center;">
+    <a href="{{ conversation_link }}" class="button">Voir le message</a>
+</p>
+
+<p>Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :</p>
+<p style="word-break: break-all;">{{ conversation_link }}</p>
+
+<p>À bientôt sur A'rosa-je !</p>
+{% endblock %} 

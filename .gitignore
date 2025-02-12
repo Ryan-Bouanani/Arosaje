@@ -175,3 +175,6 @@ api/tests/assets/database/
 
 # Redis
 redis/
+
+# Dossier des secrets
+secrets/

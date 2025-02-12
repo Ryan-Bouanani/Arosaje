@@ -1,0 +1,184 @@
+test_name: Test du workflow complet d'une garde de plante
+
+marks:
+  - usefixtures:
+      - api_url
+      - test_password
+      - test_image_path
+      - test_user_email
+
+stages:
+  # 1. Création du propriétaire
+  - name: Créer un compte propriétaire
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "owner_{test_user_email}"
+        password: "{test_password}"
+        nom: "Dupont"
+        prenom: "Jean"
+        telephone: "0123456789"
+        localisation: "Paris"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_id: id
+
+  # 2. Création du gardien
+  - name: Créer un compte gardien
+    request:
+      url: "{api_url}/auth/register"
+      method: POST
+      json:
+        email: "caretaker_{test_user_email}"
+        password: "{test_password}"
+        nom: "Martin"
+        prenom: "Sophie"
+        telephone: "0987654321"
+        localisation: "Lyon"
+    response:
+      status_code: 200
+      save:
+        json:
+          caretaker_id: id
+
+  # 3. Login du propriétaire
+  - name: Login propriétaire
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "owner_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          owner_token: access_token
+
+  # 4. Création d'une plante
+  - name: Créer une plante
+    request:
+      url: "{api_url}/plants/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        nom: "Ficus"
+        espece: "Ficus benjamina"
+        description: "Belle plante d'intérieur"
+        owner_id: !int "{owner_id}"
+    response:
+      status_code: 200
+      save:
+        json:
+          plant_id: id
+
+  # 5. Création d'une demande de garde
+  - name: Créer une demande de garde
+    request:
+      url: "{api_url}/plant-care/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        plant_id: !int "{plant_id}"
+        caretaker_id: !int "{caretaker_id}"
+        start_date: "2024-03-01T00:00:00"
+        end_date: "2024-03-15T00:00:00"
+        care_instructions: "Arroser deux fois par semaine"
+    response:
+      status_code: 200
+      save:
+        json:
+          care_id: id
+      verify_response_with:
+        function: validators.care_validators:validate_care_response
+        extra_kwargs:
+          expected_status: "pending"
+
+  # 6. Login du gardien
+  - name: Login gardien
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "caretaker_{test_user_email}"
+        password: "{test_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          caretaker_token: access_token
+
+  # 7. Acceptation de la garde
+  - name: Accepter la garde
+    request:
+      url: "{api_url}/plant-care/{care_id}/status"
+      method: PUT
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+      params:
+        status: "accepted"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.care_validators:validate_care_response
+        extra_kwargs:
+          expected_status: "accepted"
+
+  # 8. Upload photo de début
+  - name: Upload photo de début de garde
+    request:
+      url: "{api_url}/plant-care/{care_id}/photos/start"
+      method: POST
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+      files:
+        photo: "{test_image_path}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.care_validators:validate_care_response
+        extra_kwargs:
+          expected_status: "in_progress"
+          check_start_photo: true
+
+  # 9. Upload photo de fin
+  - name: Upload photo de fin de garde
+    request:
+      url: "{api_url}/plant-care/{care_id}/photos/end"
+      method: POST
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+      files:
+        photo: "{test_image_path}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.care_validators:validate_care_response
+        extra_kwargs:
+          expected_status: "completed"
+          check_end_photo: true
+
+  # 10. Vérification finale
+  - name: Vérifier l'état final de la garde
+    request:
+      url: "{api_url}/plant-care/{care_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {owner_token}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: validators.care_validators:validate_care_response
+        extra_kwargs:
+          expected_status: "completed"
+          check_start_photo: true
+          check_end_photo: true 

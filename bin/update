@@ -1,0 +1,55 @@
+#!/bin/bash
+
+echo "🔄 Mise à jour du projet..."
+
+# Fonction pour gérer les erreurs
+handle_error() {
+    echo "❌ Erreur: $1"
+    exit 1
+}
+
+# Fonction pour mettre à jour un dépôt
+update_repo() {
+    local dir=$1
+    echo "📂 Mise à jour de $dir..."
+    
+    # Vérifier si on est dans un dépôt git
+    if [ ! -d ".git" ]; then
+        return 0  # Skip si pas de dépôt git
+    fi
+
+    # Fetch depuis main
+    echo "⬇️  Récupération des modifications depuis main..."
+    if ! git fetch origin main; then
+        handle_error "Impossible de récupérer depuis main"
+    fi
+
+    # Tenter le merge
+    echo "🔄 Fusion avec main..."
+    if ! git merge origin/main; then
+        echo "⚠️  Conflits détectés!"
+        echo "➡️  Veuillez résoudre les conflits manuellement:"
+        echo "  1. Corrigez les fichiers en conflit"
+        echo "  2. git add <fichiers>"
+        echo "  3. git commit -m 'Résolution des conflits'"
+        echo "  4. Relancez bin/update"
+        exit 1
+    fi
+
+    echo "✅ Mise à jour terminée"
+}
+
+# Mise à jour du dépôt principal
+update_repo "dépôt principal"
+
+# Mise à jour des sous-dossiers si nécessaire
+for dir in api web mobile; do
+    if [ -d "$dir" ]; then
+        echo "📂 Entrée dans $dir..."
+        cd $dir
+        update_repo "$dir"
+        cd ..
+    fi
+done
+
+echo "✅ Mise à jour globale terminée!" 

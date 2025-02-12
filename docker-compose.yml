@@ -1,22 +1,110 @@
-version: "3.8"
-
 services:
   api:
+    container_name: arosa-je-api
+    image: arosa-je-api
     build:
       context: ./api
-    ports:
-      - "8000:8000"          # API accessible sur localhost:8000
+      dockerfile: Dockerfile
     volumes:
-      - ./api:/app           # Montre le code local pour le développement
+      - ./api:/app
+      - ./api/assets/database:/app/assets/database
+      - ./api/assets/img:/app/assets/img
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./env/.env.api
     environment:
-      - ENV=production
+      - DATABASE_URL=sqlite:///assets/database/arosaje.db
+      - PYTHONUNBUFFERED=1
+    networks:
+      - arosa-je-network
+    depends_on:
+      api-redis:
+        condition: service_healthy
+    restart: "no"
 
   web:
+    container_name: arosa-je-web
+    image: arosa-je-web
     build:
       context: ./web
-    ports:
-      - "8080:8080"          # Frontend accessible sur localhost:8080
+      dockerfile: Dockerfile
     volumes:
-      - ./web:/app           # Montre le code local pour le développement
+      - ./web:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./env/.env.web
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+    networks:
+      - arosa-je-network
+    depends_on:
+      - api
+    restart: "no"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    command: >
+      sh -c '
+        cleanup() {
+          echo "Cleaning up..."
+          pkill -f "node" || true
+          rm -rf /tmp/nitro/worker-*.sock || true
+          exit 0
+        }
+        trap cleanup SIGTERM SIGINT
+        rm -rf .nuxt /tmp/nitro/worker-*.sock
+        npm run dev & wait
+      '
+
+  mobile:
+    container_name: arosa-je-mobile
+    image: arosa-je-mobile
+    build:
+      context: ./mobile
+      dockerfile: Dockerfile
+    volumes:
+      - ./mobile:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+    networks:
+      - arosa-je-network
+    restart: "no"
+
+  api-redis:
+    image: redis:7-alpine
+    container_name: arosa-je-api-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./redis/users.acl:/data/users.acl:ro
+    networks:
+      - arosa-je-network
+    env_file:
+      - ./env/.env.api
+    command: >
+      sh -c '
+        redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}" --aclfile /data/users.acl'
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+networks:
+  arosa-je-network:
+    name: arosa-je-network
+
+volumes:
+  redis_data:

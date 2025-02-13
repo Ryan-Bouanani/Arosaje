@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import BackButton from '@/components/buttons/BackButton.vue';
 
 const router = useRouter();
 
@@ -27,10 +28,7 @@ const goTo = (page) => {
   <v-container>
 
     <!-- Bouton Retour au Dashboard -->
-    <v-btn color="green" @click="goTo('dashboard')" class="mb-4">
-      <v-icon left>mdi-arrow-left</v-icon>
-      Retour au Dashboard
-    </v-btn>
+    <BackButton class="mb-4" />
 
     <!-- Messagerie -->
     <v-card>

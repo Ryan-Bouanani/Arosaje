@@ -22,7 +22,7 @@ const logout = () => {
 <template>
   <v-app>
     <!-- Barre de navigation latérale -->
-    <v-navigation-drawer app color="white">
+    <v-navigation-drawer app >
       <v-list dense>
         <v-list-item>
           <v-list-item-title class="text-h6">Menu</v-list-item-title>
@@ -61,7 +61,7 @@ const logout = () => {
             <v-card>
               <v-card-title class="d-flex justify-space-between align-center">
                 <span>Plantes à faire garder</span>
-                <v-btn color="green" @click="goTo('ajouter-plante')">
+                <v-btn color="green" @click="goTo('ajouter-plant')">
                   <v-icon left>mdi-plus</v-icon>
                   Ajouter une plante
                 </v-btn>

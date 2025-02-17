@@ -1,127 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/views/base_page.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Paramètre"),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
+    return BasePage(
+      currentIndex: 3, // Index correspondant à l'onglet "Paramètres" dans la barre de navigation
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // User Info Section
-            Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            color: const Color(0xFFF8FBF8), 
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-              child: Column(
-                children: [
-                  buildListTile(
-                    title: "Email",
-                    subtitle: "m.yasir.k.2001@gmail.com",
-                    onTap: () => _showChangeEmailDialog(context),
-                  ),
-                  buildListTile(
-                    title: "Nom complet",
-                    subtitle: "Muhammad Yasir",
-                    onTap: () => _showChangeFullNameDialog(context),
-                  ),
-                  buildListTile(
-                    title: "Numéro de téléphone",
-                    subtitle: "+33622853074",
-                    onTap: () => _showChangePhoneDialog(context),
-                  ),
-                  buildListTile(
-                    title: "Ville",
-                    subtitle: "Rillieux-la-Pape",
-                    onTap: () => _showChangeCityDialog(context),
-                  ),
-                ],
+            AppBar(
+              title: const Text("Paramètres"),
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
               ),
             ),
-
-            // Account Information Section
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              color: const Color(0xFFF8FBF8), 
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: Column(
-                children: [
-                  buildListTile(
-                    title: "Plantes enregistrées",
-                    onTap: () {},
-                  ),
-                  buildListTile(
-                    title: "Historique des Gardes",
-                    onTap: () {},
-                  ),
-                  buildListTile(
-                    title: "Rate Us",
-                    onTap: () {},
-                  ),
-                  buildListTile(
-                    title: "Privacy policy",
-                    onTap: () {},
-                  ),
-                  buildListTile(
-                    title: "Terms of use",
-                    onTap: () {},
-                  ),
-                  buildListTile(
-                    title: "Contact us",
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
-            
-            // Change Password Section
-            Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              color: const Color(0xFFF8FBF8), 
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0), 
-              ),
-              child: buildListTile(
-                title: "Changer de mot de passe",
-                onTap: () => _showChangePasswordDialog(context),
-              ),
-            ),
-            
-            // Logout Section
-            Padding(
-            padding: const EdgeInsets.only(top: 24.0),
-            child: Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12.0),
-              ),
-              child: buildListTile(
-                title: "Déconnexion",
-                subtitle: "m.yasir.k.2001@gmail.com",
-                onTap: () {},
-              ),
-            ),
-          ),
+            // Contenu des paramètres
           ],
         ),
       ),
     );
   }
+
+
 
   ListTile buildListTile({
     required String title,

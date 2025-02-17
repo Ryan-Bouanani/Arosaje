@@ -3,7 +3,8 @@ import 'package:mobile/views/add_report_screen.dart';
 import 'chat_screen.dart';
 
 class PlantCareDetailsScreen extends StatelessWidget {
-  const PlantCareDetailsScreen({super.key});
+  final bool isCurrentPlant;
+  const PlantCareDetailsScreen({super.key, required this.isCurrentPlant});
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +69,8 @@ class PlantCareDetailsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => const ChatScreen()),
+                            builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: true),
+                          ),
                         );
                       },
                       icon: const Icon(Icons.message, color: Colors.black),
@@ -210,7 +212,8 @@ class PlantCareDetailsScreen extends StatelessWidget {
           ),
         ),
       ),
-      bottomNavigationBar: Padding(
+      bottomNavigationBar: isCurrentPlant
+    ? Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
           onPressed: () {
@@ -237,7 +240,8 @@ class PlantCareDetailsScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
+      )
+    : null,
     );
   }
 }

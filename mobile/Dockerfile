@@ -1,4 +1,4 @@
-FROM ghcr.io/cirruslabs/flutter:3.5.4
+FROM instrumentisto/flutter:latest
 
 
 WORKDIR /app

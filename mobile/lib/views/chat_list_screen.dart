@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'base_page.dart';
 import 'chat_screen.dart';
 
 class ChatMenuScreen extends StatelessWidget {

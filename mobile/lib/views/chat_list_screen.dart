@@ -34,106 +34,105 @@ class ChatMenuScreen extends StatelessWidget {
     ];
 
     return Scaffold(
-  appBar: AppBar(
-    title: const Text(
-      'Messages',
-      style: TextStyle(color: Colors.black),
-    ),
-    backgroundColor: Colors.white,
-    elevation: 1,
-  ),
-  body: ListView.separated(
-    itemCount: conversations.length,
-    separatorBuilder: (context, index) => const Divider(height: 1),
-    itemBuilder: (context, index) {
-      final conversation = conversations[index];
-      return ListTile(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ChatScreen(),
-            ),
-          );
-        },
-        leading: CircleAvatar(
-          backgroundColor: Colors.green,
-          radius: 25,
-          child: Text(
-            conversation['plantName'].substring(0, 1),
-            style: const TextStyle(color: Colors.white),
-          ),
+      appBar: AppBar(
+        title: const Text(
+          'Messages',
+          style: TextStyle(color: Colors.black),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: RichText(
-                text: TextSpan(
-                  children: [
-                    TextSpan(
-                      text: conversation['plantName'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        fontSize: 16,
-                      ),
-                    ),
-                    TextSpan(
-                      text: ' - ${conversation['userName']}',
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.normal,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
+        backgroundColor: Colors.white,
+        elevation: 1,
+      ),
+      body: ListView.separated(
+        itemCount: conversations.length,
+        separatorBuilder: (context, index) => const Divider(height: 1),
+        itemBuilder: (context, index) {
+          final conversation = conversations[index];
+          return ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChatScreen(),
                 ),
+              );
+            },
+            leading: CircleAvatar(
+              backgroundColor: Colors.green,
+              radius: 25,
+              child: Text(
+                conversation['plantName'].substring(0, 1),
+                style: const TextStyle(color: Colors.white),
               ),
             ),
-            Text(
-              conversation['time'],
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
-            ),
-          ],
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Text(
-              conversation['lastMessage'],
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-        trailing: conversation['unreadCount'] > 0
-            ? Container(
-                padding: const EdgeInsets.all(6),
-                decoration: const BoxDecoration(
-                  color: Colors.green,
-                  shape: BoxShape.circle,
-                ),
-                child: Text(
-                  conversation['unreadCount'].toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
+            title: Row(
+              children: [
+                Expanded(
+                  child: RichText(
+                    text: TextSpan(
+                      children: [
+                        TextSpan(
+                          text: conversation['plantName'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 16,
+                          ),
+                        ),
+                        TextSpan(
+                          text: ' - ${conversation['userName']}',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.normal,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              )
-            : null,
-      );
-    },
-  ),
-);
-
+                Text(
+                  conversation['time'],
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  conversation['lastMessage'],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+            trailing: conversation['unreadCount'] > 0
+                ? Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: const BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      conversation['unreadCount'].toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                      ),
+                    ),
+                  )
+                : null,
+          );
+        },
+      ),
+    );
   }
 }

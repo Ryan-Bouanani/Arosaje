@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
-import 'base_page.dart';
-import 'add_plant_screen.dart';
-import 'plant_care_details_screen.dart'; // N'oubliez pas d'ajouter cette importation
+import 'base_page_botaniste.dart';
+import 'plant_detail_botaniste.dart';
 
-class HomeAfterLogin extends StatelessWidget {
-  const HomeAfterLogin({super.key});
+class HomeAfterLoginAdmin extends StatefulWidget {
+  const HomeAfterLoginAdmin({super.key});
+
+  @override
+  State<HomeAfterLoginAdmin> createState() => _HomeAfterLoginAdminState();
+}
+
+class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
+  final TextEditingController _searchController = TextEditingController();
 
   Widget _buildPlantCard(BuildContext context, int index) {
     return GestureDetector(
@@ -12,7 +18,7 @@ class HomeAfterLogin extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: false),
+            builder: (context) => const PlantDetailBotaniste(),
           ),
         );
       },
@@ -82,7 +88,7 @@ class HomeAfterLogin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BasePage(
+    return BasePageBotaniste(
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -90,7 +96,7 @@ class HomeAfterLogin extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Plantes à proximité',
+                'Gestion des plantes',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -108,13 +114,64 @@ class HomeAfterLogin extends StatelessWidget {
                   child: Text('Carte des plantes à proximité'),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
-                'Plantes à garder proche de vous',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+              const SizedBox(height: 16),
+              // Barre de recherche
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
+                child: TextField(
+                  controller: _searchController,
+                  decoration: InputDecoration(
+                    hintText: 'Rechercher une plante...',
+                    border: InputBorder.none,
+                    icon: Icon(Icons.search, color: Colors.grey[600]),
+                    suffixIcon: IconButton(
+                      icon: Icon(Icons.filter_list, color: Colors.grey[600]),
+                      onPressed: () {
+                        // Ajouter la logique de filtrage ici
+                      },
+                    ),
+                  ),
+                  onChanged: (value) {
+                    // Ajouter la logique de recherche ici
+                    setState(() {
+                      // Mettre à jour la liste des plantes en fonction de la recherche
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Plantes enregistrées',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Ajouter la logique pour voir toutes les plantes
+                    },
+                    child: const Text(
+                      'Voir tout',
+                      style: TextStyle(color: Colors.green),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 16),
               GridView.count(
@@ -129,40 +186,17 @@ class HomeAfterLogin extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddPlantScreen(),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                  ),
-                  child: const Text(
-                    'Créer une annonce de garde',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
             ],
           ),
         ),
       ),
       currentIndex: 0,
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }

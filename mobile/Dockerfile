@@ -1,4 +1,5 @@
-FROM ghcr.io/cirruslabs/flutter:stable
+FROM instrumentisto/flutter:latest
+
 
 WORKDIR /app
 
@@ -18,6 +19,6 @@ RUN apt-get update && apt-get install -y nginx \
 # Copier les fichiers buildés dans le dossier nginx
 RUN cp -r build/web/* /var/www/html/
 
-EXPOSE 80
+EXPOSE 80   
 
 CMD ["nginx", "-g", "daemon off;"] 

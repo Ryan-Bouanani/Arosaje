@@ -24,6 +24,11 @@ def api_url():
     return "http://localhost:8000"
 
 @pytest.fixture
+def ws_url():
+    """URL de base WebSocket pour les tests"""
+    return "ws://localhost:8000"
+
+@pytest.fixture
 def test_user_email():
     """Email de test"""
     import uuid

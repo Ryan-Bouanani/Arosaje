@@ -1,0 +1,15 @@
+name: Configuration commune pour les tests
+
+variables:
+  timeout: 3
+  client_id: tavern-tester
+
+mqtt_headers:
+  Authorization: "Bearer {owner_token}"
+
+strict:
+  - json:arrays
+  - status_code:successes
+
+verify_response_with:
+  function: tavern.testutils.helpers:validate_content 

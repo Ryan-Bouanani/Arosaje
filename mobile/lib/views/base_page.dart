@@ -30,10 +30,7 @@ class _BasePageState extends State<BasePage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => BasePage(
-            body: const HomeAfterLogin(),
-            currentIndex: 0,
-          ),
+          builder: (context) => const HomeAfterLogin(),
         ),
       );
       break;

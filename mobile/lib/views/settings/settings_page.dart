@@ -4,25 +4,53 @@ import 'package:mobile/views/base_page.dart';
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  @override
+    @override
   Widget build(BuildContext context) {
-    return BasePage(
-      currentIndex: 3, // Index correspondant à l'onglet "Paramètres" dans la barre de navigation
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            AppBar(
-              title: const Text("Paramètres"),
-              leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-              ),
-            ),
-            // Contenu des paramètres
-          ],
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Paramètres"),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16.0),
+        children: [
+          buildListTile(
+            title: "Email",
+            subtitle: "m.yasir.k.2001@gmail.com",
+            onTap: () => _showChangeEmailDialog(context),
+          ),
+          buildListTile(
+            title: "Nom complet",
+            subtitle: "Muhammad Yasir",
+            onTap: () => _showChangeFullNameDialog(context),
+          ),
+          buildListTile(
+            title: "Numéro de téléphone",
+            subtitle: "+33622853074",
+            onTap: () => _showChangePhoneDialog(context),
+          ),
+          buildListTile(
+            title: "Ville/Région",
+            subtitle: "Rillieux-la-Pape",
+            onTap: () => _showChangeCityDialog(context),
+          ),
+          const SizedBox(height: 16),
+          buildListTile(
+            title: "Changer de mot de passe",
+            onTap: () => _showChangePasswordDialog(context),
+          ),
+          buildListTile(
+            title: "Déconnexion",
+            onTap: () {
+              // Ajouter ici la logique de déconnexion
+            },
+          ),
+        ],
       ),
     );
   }

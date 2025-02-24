@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-class CustomBottomNavBar extends StatelessWidget {
+class CustomBottomNavBarBotaniste extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const CustomBottomNavBar({
+  const CustomBottomNavBarBotaniste({
     super.key,
     required this.currentIndex,
     required this.onTap,
@@ -34,16 +34,12 @@ class CustomBottomNavBar extends StatelessWidget {
             label: 'Accueil',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.add_circle_outline),
-            label: 'Liste',
+            icon: Icon(Icons.comment),
+            label: 'Commentaires',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.message),
-            label: 'Messages',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Paramètres',
+            icon: Icon(Icons.person),
+            label: 'Profil',
           ),
         ],
       ),

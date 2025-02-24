@@ -6,12 +6,16 @@ from models.plant_care import PlantCare
 from models.photo import Photo
 from models.advice import Advice
 from models.message import Conversation, ConversationParticipant, Message
+from scripts.seed_data import seed_plants
 
 def init_database():
     """Initialise la base de données avec les tables"""
     print("🔧 Création des tables dans la base de données...")
     Base.metadata.create_all(bind=engine)
     print("✅ Base de données initialisée avec succès!")
+    
+    print("🌱 Ajout des données de test...")
+    seed_plants()
 
 if __name__ == "__main__":
     init_database() 

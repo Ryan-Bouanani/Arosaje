@@ -16,6 +16,7 @@ services:
     environment:
       - DATABASE_URL=sqlite:///assets/database/arosaje.db
       - PYTHONUNBUFFERED=1
+      - GIT_DISCOVERY_ACROSS_FILESYSTEM=1
     networks:
       - arosa-je-network
     depends_on:
@@ -44,7 +45,7 @@ services:
       - api
     restart: "no"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      test: [ "CMD", "curl", "-f", "http://localhost:3000" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -96,7 +97,7 @@ services:
       sh -c '
         redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}" --aclfile /data/users.acl'
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 3

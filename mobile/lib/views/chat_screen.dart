@@ -9,6 +9,11 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+  String? _startDateError;
+  String? _endDateError;
+
   final List<Map<String, dynamic>> _messages = [
     {
       'sender': 'Moi',
@@ -38,6 +43,73 @@ class _ChatScreenState extends State<ChatScreen> {
     },
   ];
 
+  bool isValidDate(String input) {
+    RegExp dateFormat = RegExp(r'^\d{2}/\d{2}/\d{4}$');
+    if (!dateFormat.hasMatch(input)) return false;
+
+    try {
+      List<String> parts = input.split('/');
+      int day = int.parse(parts[0]);
+      int month = int.parse(parts[1]);
+      int year = int.parse(parts[2]);
+
+      DateTime inputDate = DateTime(year, month, day);
+      DateTime today = DateTime(
+        DateTime.now().year,
+        DateTime.now().month,
+        DateTime.now().day,
+      );
+
+      if (inputDate.isBefore(today)) {
+        return false;
+      }
+
+      if (month < 1 || month > 12) return false;
+
+      int daysInMonth = DateTime(year, month + 1, 0).day;
+      if (day < 1 || day > daysInMonth) return false;
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void validateDates() {
+    setState(() {
+      _startDateError = null;
+      _endDateError = null;
+
+      if (!isValidDate(_startDateController.text)) {
+        _startDateError =
+            'La date doit être égale ou postérieure à aujourd\'hui';
+      }
+      if (!isValidDate(_endDateController.text)) {
+        _endDateError = 'La date doit être égale ou postérieure à aujourd\'hui';
+      }
+
+      if (_startDateError == null && _endDateError == null) {
+        List<String> startParts = _startDateController.text.split('/');
+        List<String> endParts = _endDateController.text.split('/');
+
+        DateTime startDate = DateTime(
+          int.parse(startParts[2]),
+          int.parse(startParts[1]),
+          int.parse(startParts[0]),
+        );
+        DateTime endDate = DateTime(
+          int.parse(endParts[2]),
+          int.parse(endParts[1]),
+          int.parse(endParts[0]),
+        );
+
+        if (endDate.isBefore(startDate)) {
+          _endDateError = 'La date de fin doit être après la date de début';
+        }
+      }
+    });
+  }
+
   void _handleSendMessage() {
     if (_messageController.text.trim().isNotEmpty) {
       setState(() {
@@ -49,6 +121,101 @@ class _ChatScreenState extends State<ChatScreen> {
       });
       _messageController.clear();
     }
+  }
+
+  void _showInvitationDialog() {
+    _startDateController.clear();
+    _endDateController.clear();
+    _startDateError = null;
+    _endDateError = null;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setStateDialog) {
+          return AlertDialog(
+            title: const Text('Envoyer une invitation'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _startDateController,
+                  decoration: InputDecoration(
+                    labelText: 'Date de début (JJ/MM/AAAA)',
+                    border: const OutlineInputBorder(),
+                    errorText: _startDateError,
+                  ),
+                  keyboardType: TextInputType.datetime,
+                  onChanged: (value) {
+                    if (value.length == 10) {
+                      validateDates();
+                      setStateDialog(() {});
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _endDateController,
+                  decoration: InputDecoration(
+                    labelText: 'Date de fin (JJ/MM/AAAA)',
+                    border: const OutlineInputBorder(),
+                    errorText: _endDateError,
+                  ),
+                  keyboardType: TextInputType.datetime,
+                  onChanged: (value) {
+                    if (value.length == 10) {
+                      validateDates();
+                      setStateDialog(() {});
+                    }
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: (_startDateError == null &&
+                        _endDateError == null &&
+                        _startDateController.text.isNotEmpty &&
+                        _endDateController.text.isNotEmpty)
+                    ? () {
+                        setState(() {
+                          _messages.add({
+                            'sender': 'Moi',
+                            'message': '',
+                            'isInvitation': true,
+                            'invitationStartDate': _startDateController.text,
+                            'invitationEndDate': _endDateController.text,
+                            'plantName': 'Orchidée',
+                            'time': '12h à 15h',
+                          });
+                        });
+                        Navigator.of(context).pop();
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                ),
+                child: const Text('Valider'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,7 +235,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             SizedBox(width: 8),
             Text(
-              'Utilisateur',
+              'Nom plante + nom post',
               style: TextStyle(color: Colors.black),
             ),
           ],
@@ -185,6 +352,11 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             child: Row(
               children: [
+                IconButton(
+                  icon: const Icon(Icons.calendar_today),
+                  onPressed: _showInvitationDialog,
+                  color: Colors.green,
+                ),
                 Expanded(
                   child: TextField(
                     controller: _messageController,

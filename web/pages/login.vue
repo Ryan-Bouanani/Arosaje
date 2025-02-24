@@ -25,7 +25,7 @@ const submitLogin = async () => {
 
     if (response.success) {
       // Rediriger vers la page d'accueil après connexion réussie
-      router.push('/');
+      router.push('/dashboard');
     } else {
       error.value = response.error || 'Une erreur est survenue';
     }

@@ -6,6 +6,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Demander le nom d'utilisateur Windows
+read -p "Entrez votre nom d'utilisateur Windows : " windows_user
+if [ -z "$windows_user" ]; then
+    echo "❌ Aucun nom d'utilisateur fourni. Le script ne peut pas continuer."
+    exit 1
+fi
+
 # Fonction pour les logs
 log_info() {
     echo -e "${BLUE}ℹ️ $1${NC}"
@@ -103,9 +110,24 @@ check_database_directory() {
     log_success "Configuration des dossiers validée"
 }
 
+# Fonction pour arrêter l'émulateur Android
+stop_android_emulator() {
+    local adb_path_wsl="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/platform-tools/adb.exe"
+    local adb_path_windows=$(wslpath -w "$adb_path_wsl")
+    
+    if cmd.exe /c "$adb_path_windows" devices | grep -q "emulator-"; then
+        log_info "Arrêt de l'émulateur Android..."
+        cmd.exe /c "$adb_path_windows" emu kill >/dev/null 2>&1 || true
+        log_success "Émulateur Android arrêté"
+    fi
+}
+
 # Fonction pour arrêter proprement les conteneurs
 cleanup() {
     echo -e "\n\n🛑 Arrêt des conteneurs..."
+    
+    # Arrêter l'émulateur Android s'il est en cours d'exécution
+    stop_android_emulator
     
     # Arrêter les conteneurs sans les supprimer
     if [ "$1" = "all" ]; then
@@ -243,6 +265,11 @@ start_services() {
         exit 1
     fi
 
+    # Démarrer l'émulateur Android si le service mobile est inclus
+    if [[ " ${services[@]} " =~ " mobile " ]]; then
+        start_android_emulator
+    fi
+
     log_success "Services démarrés avec succès!"
     log_info "Affichage des logs..."
     echo "ℹ️  Utilisez CTRL+C pour arrêter"
@@ -265,6 +292,185 @@ show_help() {
     echo "  bin/up web       - Démarre uniquement le frontend web"
     echo ""
     exit 1
+}
+
+# Fonction pour lancer l'émulateur Android
+start_android_emulator() {
+    log_info "Démarrage de l'émulateur Android..."
+    local avd_name="Pixel_6_API_35"
+    
+    # Chemins Windows
+    local emulator_path_wsl="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/emulator/emulator.exe"
+    local adb_path_wsl="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/platform-tools/adb.exe"
+    
+    # Convertir les chemins WSL en chemins Windows
+    local emulator_path_windows=$(wslpath -w "$emulator_path_wsl")
+    local adb_path_windows=$(wslpath -w "$adb_path_wsl")
+    
+    # Vérifier si l'émulateur existe
+    if [ ! -f "$emulator_path_wsl" ]; then
+        log_warning "❌ Émulateur non trouvé à l'emplacement : $emulator_path_wsl"
+        log_warning "➡️  Assurez-vous que le chemin est correct et que Android Studio est installé sur Windows."
+        return
+    fi
+
+    # Fonction pour exécuter adb.exe de Windows
+    adb_windows() {
+        cmd.exe /c "$adb_path_windows" "$@" 2>/dev/null
+    }
+
+    # Tuer tout émulateur existant
+    adb_windows kill-server
+    sleep 2
+    adb_windows start-server
+    
+    # Lancer l'émulateur avec des options optimisées
+    log_info "Chemin de l'émulateur (Windows) : $emulator_path_windows"
+    cmd.exe /c "$emulator_path_windows" -avd "$avd_name" \
+        -gpu host \
+        -no-snapshot-load \
+        -no-audio \
+        -no-boot-anim \
+        -no-snapshot-save \
+        -qemu -no-reboot &
+    
+    # Attendre que l'émulateur soit connecté
+    log_info "Attente de la connexion de l'émulateur..."
+    timeout=90
+    while [ $timeout -gt 0 ]; do
+        # Afficher l'état des appareils pour le debug
+        echo "État des appareils ADB:"
+        adb_windows devices
+        
+        devices_output=$(adb_windows devices)
+        if echo "$devices_output" | grep -q "emulator-.*device\|emulator-.*offline\|emulator-.*unauthorized"; then
+            log_success "Émulateur Android détecté (statut: $(echo "$devices_output" | grep "emulator-" | awk '{print $2}'))"
+            break
+        fi
+        
+        # Afficher le statut de l'émulateur pour le debug
+        if [ $((timeout % 10)) -eq 0 ]; then
+            log_info "Attente de l'émulateur... ($timeout secondes restantes)"
+        fi
+        
+        sleep 1
+        ((timeout--))
+    done
+
+    if [ $timeout -eq 0 ]; then
+        devices_output=$(adb_windows devices)
+        if echo "$devices_output" | grep -q "emulator-"; then
+            log_warning "⚠️  L'émulateur est présent mais pas encore prêt"
+            log_info "État actuel: $(echo "$devices_output" | grep "emulator-" | awk '{print $2}')"
+            # On continue quand même
+        else
+            log_warning "⚠️  Aucun émulateur détecté après 90 secondes"
+            return
+        fi
+    fi
+
+    # Attendre que le système soit complètement démarré
+    log_info "Attente du démarrage complet du système..."
+    timeout=180  # Augmentation du timeout à 3 minutes
+    while [ $timeout -gt 0 ]; do
+        # Afficher l'état du système pour le debug tous les 10 secondes
+        if [ $((timeout % 10)) -eq 0 ]; then
+            echo "État du système:"
+            adb_windows shell getprop sys.boot_completed
+            adb_windows shell getprop init.svc.bootanim
+            adb_windows shell getprop dev.bootcomplete
+        fi
+        
+        # Vérifier plusieurs propriétés système en gérant les retours chariot Windows
+        boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')
+        boot_animation=$(adb_windows shell getprop init.svc.bootanim | tr -d '\r')
+        dev_complete=$(adb_windows shell getprop dev.bootcomplete | tr -d '\r')
+        
+        if [ "$boot_completed" = "1" ] && [ "$boot_animation" = "stopped" ]; then
+            log_success "Système Android complètement démarré"
+            break
+        fi
+        sleep 2
+        ((timeout-=2))
+    done
+
+    if [ $timeout -eq 0 ]; then
+        # Vérifier une dernière fois l'état
+        boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')
+        if [ "$boot_completed" = "1" ]; then
+            log_success "Système démarré (détecté lors de la dernière vérification)"
+        else
+            log_warning "⚠️  Timeout atteint, mais on continue quand même..."
+        fi
+    fi
+
+    # Attendre un peu plus pour s'assurer que le système est vraiment prêt
+    log_info "Attente supplémentaire pour s'assurer que le système est stable..."
+    sleep 15
+
+    # Installer et lancer l'application
+    log_info "Installation de l'application..."
+    
+    # Se déplacer dans le dossier mobile
+    if ! cd mobile; then
+        log_warning "❌ Dossier mobile non trouvé"
+        return 1
+    fi
+    
+    # Récupérer l'ID de l'émulateur
+    emulator_id=$(adb_windows devices | grep "emulator-" | cut -f1)
+    if [ -z "$emulator_id" ]; then
+        log_warning "❌ Émulateur non trouvé"
+        cd ..
+        return 1
+    fi
+    
+    # Construire et installer l'application avec Flutter
+    log_info "Construction et installation de l'application avec Flutter..."
+    if flutter build apk --debug; then
+        log_success "APK construit avec succès"
+        
+        # Chemin de l'APK (conversion en chemin Windows)
+        local apk_path_wsl="$(pwd)/build/app/outputs/flutter-apk/app-debug.apk"
+        local apk_path_windows=$(wslpath -w "$apk_path_wsl")
+        
+        log_info "Chemin de l'APK: $apk_path_windows"
+        
+        # Installer l'APK avec ADB
+        log_info "Installation de l'APK..."
+        install_output=$(adb_windows install -r "$apk_path_windows" 2>&1)
+        install_status=$?
+        
+        echo "Résultat de l'installation:"
+        echo "$install_output"
+        
+        if [ $install_status -eq 0 ] && echo "$install_output" | grep -q "Success"; then
+            log_success "Application installée avec succès"
+            
+            # Lancer l'application
+            log_info "Lancement de l'application..."
+            if adb_windows shell am start -n "com.example.mobile/.MainActivity"; then
+                log_success "Application lancée avec succès"
+            else
+                log_warning "⚠️  Impossible de lancer l'application"
+                log_info "Vérification du package..."
+                adb_windows shell pm list packages | grep -i "com.example.mobile"
+            fi
+        else
+            log_warning "❌ Erreur lors de l'installation de l'APK"
+            log_info "Détails de l'erreur:"
+            echo "$install_output"
+            cd ..
+            return 1
+        fi
+    else
+        log_warning "❌ Erreur lors de la construction de l'application"
+        cd ..
+        return 1
+    fi
+    
+    # Retourner au dossier précédent
+    cd ..
 }
 
 # Fonction pour vérifier les fichiers d'environnement

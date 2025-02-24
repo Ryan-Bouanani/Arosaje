@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
 
+
 const router = useRouter();
 const theme = useTheme();
 
@@ -17,11 +18,85 @@ const plantes = ref([
     nom: "Ficus", 
     photo: "/ficus.jpg", 
     description: "Besoin d'arrosage régulier",
-    dernierArrosage: "2024-02-10",
-    prochainArrosage: "2024-02-17",
-    santé: 85
+    dernierArrosage: "2024-01-10",
+    prochainArrosage: "2024-02-28",
+    santé: 85,
+    type: "Plante d'intérieur",
+    besoins: "Un sol légèrement humide",
+    soins: "Arrosage une fois par semaine, lumière indirecte"
   },
-  // ... autres plantes avec données similaires
+  { 
+    id: 2, 
+    nom: "Cactus", 
+    photo: "/cactus.jpg",
+    description: "Besoin d'arrosage régulier",
+    dernierArrosage: "2024-01-10",
+    prochainArrosage: "2024-02-27",
+    santé: 10,
+    type: "Plante succulente",
+    besoins: "Sol sec entre les arrosages",
+    soins: "Arrosage toutes les 2-3 semaines, lumière directe"
+  },
+  { 
+    id: 3, 
+    nom: "Monstera", 
+    photo: "/monstera.jpg", 
+    description: "Aime l'humidité et la lumière indirecte", 
+    dernierArrosage: "2024-02-12", 
+    prochainArrosage: "2024-02-18", 
+    santé: 90, 
+    type: "Plante tropicale",
+    besoins: "Un sol humide mais bien drainé",
+    soins: "Arrosage modéré, lumière indirecte"
+  },
+  { 
+    id: 4, 
+    nom: "Aloe Vera", 
+    photo: "/aloe-vera.jpg", 
+    description: "Plante résistante nécessitant peu d'eau", 
+    dernierArrosage: "2024-02-05", 
+    prochainArrosage: "2024-02-25", 
+    santé: 80, 
+    type: "Plante succulente",
+    besoins: "Un sol bien drainé, sec entre les arrosages",
+    soins: "Arrosage tous les 2 mois, plein soleil ou mi-ombre"
+  },
+  { 
+    id: 5, 
+    nom: "Pothos", 
+    photo: "/pothos.jpg", 
+    description: "Facile à entretenir, supporte peu de lumière", 
+    dernierArrosage: "2024-02-14", 
+    prochainArrosage: "2024-02-21", 
+    santé: 92, 
+    type: "Plante grimpante",
+    besoins: "Un sol humide mais pas détrempé",
+    soins: "Arrosage hebdomadaire, lumière faible à moyenne"
+  },
+  { 
+    id: 6, 
+    nom: "Orchidée", 
+    photo: "/orchidee.jpg", 
+    description: "Besoins spécifiques en humidité et lumière", 
+    dernierArrosage: "2024-02-08", 
+    prochainArrosage: "2024-02-15", 
+    santé: 85, 
+    type: "Plante exotique",
+    besoins: "Un substrat aéré, arrosage espacé",
+    soins: "Tremper les racines une fois par semaine, lumière indirecte"
+  },
+  { 
+    id: 7, 
+    nom: "Lavande", 
+    photo: "/lavande.jpg", 
+    description: "Apprécie le soleil et un sol bien drainé", 
+    dernierArrosage: "2024-02-01", 
+    prochainArrosage: "2024-02-28", 
+    santé: 88, 
+    type: "Plante aromatique",
+    besoins: "Sol sec et bien drainé",
+    soins: "Arrosage tous les 2 mois, exposition plein soleil"
+  }
 ]);
 
 // Statistiques
@@ -41,6 +116,9 @@ const notifications = ref([
   }
 ]);
 
+// Plante sélectionnée pour la vue détaillée
+const selectedPlante = ref(null);
+
 // Méthodes
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value;
@@ -59,22 +137,48 @@ const needsWater = (plante) => {
   return new Date(plante.prochainArrosage) <= new Date();
 };
 
+const arroserPlante = (plante) => {
+  const index = plantes.value.findIndex(p => p.id === plante.id);
+  if (index !== -1) {
+    plantes.value[index].dernierArrosage = new Date().toLocaleDateString();
+    
+    // Calcul de la prochaine date d'arrosage
+    const nextWateringDate = new Date();
+    nextWateringDate.setDate(nextWateringDate.getDate() + 7); // +7 jours
+    plantes.value[index].prochainArrosage = nextWateringDate.toLocaleDateString();
+    
+    // Augmentation de la santé de 20 %, mais max 100 %
+    plantes.value[index].santé = Math.min(plantes.value[index].santé + 20, 100);
+
+    // Ajouter une notification
+    notifications.value.push({
+      id: Date.now(),
+      message: `Plante ${plante.nom} arrosée (+20% santé)`,
+      type: 'info',
+      date: new Date()
+    });
+  }
+};
+
+const voirDetails = (plante) => {
+  selectedPlante.value = plante; // Ouvre la vue détaillée
+};
+
 onMounted(() => {
   // Animation de chargement des données
 });
 </script>
 
 <template>
-  
   <v-app :theme="isDarkMode ? 'dark' : 'light'">
     <!-- Navigation drawer avec effet de transition -->
     <v-navigation-drawer
-  v-model="drawer"
-  app
-  class="rounded-tr-xl"
-  elevation="4"
-  :rail="!drawer"
->
+      v-model="drawer"
+      app
+      class="rounded-tr-xl"
+      elevation="4"
+      :rail="!drawer"
+    >
       <v-list-item
         title="Mon Dashboard"
         subtitle="Gestion des plantes"
@@ -91,26 +195,24 @@ onMounted(() => {
       <v-divider></v-divider>
 
       <!-- Menu avec animations au survol -->
-      <v-list density="compact" nav>
-        <v-list-item
-          v-for="(item, index) in [
-            { title: 'Plantes', icon: 'mdi-leaf', route: 'plantes' },
-            { title: 'Messagerie', icon: 'mdi-message', route: 'messagerie' },
-            { title: 'Historique', icon: 'mdi-history', route: 'historique' },
-            { title: 'Paramètres', icon: 'mdi-cog', route: 'parametre' }
-          ]"
-          :key="index"
-          :value="item"
-          :to="item.route"
-          @click="goTo(item.route)"
-          class="menu-item"
-        >
-          <template v-slot:prepend>
-            <v-icon :icon="item.icon"></v-icon>
-          </template>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item>
-      </v-list>
+      <v-list-item
+  v-for="(item, index) in [
+    { title: 'Plantes', icon: 'mdi-leaf', route: 'plants' },
+    { title: 'Messagerie', icon: 'mdi-message', route: 'MessagerieDialog' },
+    { title: 'Historique', icon: 'mdi-history', route: 'historique' },
+    { title: 'Paramètres', icon: 'mdi-cog', route: 'parametre' }
+  ]"
+  :key="index"
+  :value="item"
+  :to="item.route"
+  @click="item.route === 'messagerie' ? dialog.value = true : goTo(item.route)"
+  class="menu-item"
+>
+  <template v-slot:prepend>
+    <v-icon :icon="item.icon"></v-icon>
+  </template>
+  <v-list-item-title>{{ item.title }}</v-list-item-title>
+</v-list-item>
 
       <template v-slot:append>
         <v-list density="compact" nav>
@@ -176,7 +278,7 @@ onMounted(() => {
                 <v-btn
                   color="primary"
                   prepend-icon="mdi-plus"
-                  @click="goTo('')"
+                  @click="goTo('plants')"
                   variant="elevated"
                 >
                   Ajouter une plante
@@ -187,7 +289,7 @@ onMounted(() => {
                 <v-row>
                   <v-col v-for="plante in plantes" :key="plante.id" cols="12" sm="6" lg="4">
                     <v-card
-                      elevation="2"
+                      elevation="4"
                       class="h-100 plant-card"
                       :class="{ 'needs-water': needsWater(plante) }"
                     >
@@ -215,11 +317,22 @@ onMounted(() => {
                         ></v-progress-linear>
                       </v-card-text>
 
-                      <v-card-actions>
-                        <v-btn variant="text" color="primary">
+                      <v-card-actions class="d-flex justify-space-between">
+                        <v-btn 
+                          variant="elevated" 
+                          color="primary"
+                          prepend-icon="mdi-information"
+                          @click="voirDetails(plante)"
+                        >
                           Détails
                         </v-btn>
-                        <v-btn variant="text" color="primary">
+
+                        <v-btn 
+                          variant="elevated" 
+                          :color="needsWater(plante) ? 'error' : 'success'"
+                          prepend-icon="mdi-water"
+                          @click="arroserPlante(plante)"
+                        >
                           Arroser
                         </v-btn>
                       </v-card-actions>
@@ -230,58 +343,30 @@ onMounted(() => {
             </v-card>
           </v-col>
 
-          <!-- Panel latéral avec notifications -->
-          <v-col cols="12" md="4">
-            <v-card elevation="2" class="rounded-lg">
-              <v-card-title class="pa-4">
-                <span class="text-h6">Notifications</span>
+          <!-- Modal de détails de la plante -->
+          <v-dialog v-model="selectedPlante" max-width="600px">
+            <v-card>
+              <v-card-title>
+                <span class="text-h5">Détails de {{ selectedPlante?.nom }}</span>
               </v-card-title>
 
-              <v-list>
-                <v-list-item
-                  v-for="notif in notifications"
-                  :key="notif.id"
-                  :subtitle="new Date(notif.date).toLocaleDateString()"
-                >
-                  <template v-slot:prepend>
-                    <v-icon :color="notif.type === 'warning' ? 'warning' : 'info'">
-                      {{ notif.type === 'warning' ? 'mdi-alert' : 'mdi-information' }}
-                    </v-icon>
-                  </template>
-                  {{ notif.message }}
-                </v-list-item>
-              </v-list>
+              <v-card-text>
+                <v-img :src="selectedPlante?.photo" height="200" class="mb-4"></v-img>
+                <div><strong>Description:</strong> {{ selectedPlante?.description }}</div>
+                <div><strong>Type:</strong> {{ selectedPlante?.type }}</div>
+                <div><strong>Besoins:</strong> {{ selectedPlante?.besoins }}</div>
+                <div><strong>Soins:</strong> {{ selectedPlante?.soins }}</div>
+                <div><strong>Dernier arrosage:</strong> {{ selectedPlante?.dernierArrosage }}</div>
+                <div><strong>Prochain arrosage:</strong> {{ selectedPlante?.prochainArrosage }}</div>
+              </v-card-text>
+
+              <v-card-actions>
+                <v-btn color="primary" @click="selectedPlante = null">Fermer</v-btn>
+              </v-card-actions>
             </v-card>
-          </v-col>
+          </v-dialog>
         </v-row>
       </v-container>
     </v-main>
   </v-app>
 </template>
-
-<style scoped>
-.menu-item {
-  transition: background-color 0.3s ease;
-}
-
-.menu-item:hover {
-  background-color: rgba(var(--v-theme-primary), 0.1);
-}
-
-.logout-item:hover {
-  background-color: rgba(var(--v-theme-error), 0.1);
-}
-
-.plant-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.plant-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-.needs-water {
-  border: 2px solid var(--v-theme-warning);
-}
-</style>

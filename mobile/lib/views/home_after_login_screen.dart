@@ -12,7 +12,7 @@ class HomeAfterLogin extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const PlantCareDetailsScreen(),
+            builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: false),
           ),
         );
       },

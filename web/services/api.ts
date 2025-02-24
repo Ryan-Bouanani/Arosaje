@@ -102,4 +102,41 @@ export class ApiService {
   static isAuthenticated(): boolean {
     return !!localStorage.getItem('token')
   }
+
+  static async createPlant(data: PlantCreateData): Promise<ApiResponse<any>> {
+    try {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('type', data.type);
+      formData.append('location', data.location);
+      formData.append('needs', data.needs);
+
+      // Si la photo existe, ajouter l'image au FormData
+      if (data.photo) {
+        formData.append('photo', data.photo);
+      }
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${this.getBaseUrl()}/plants/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.detail || 'Erreur lors de l\'ajout de la plante');
+      }
+
+      return { success: true, data: result };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || 'Une erreur est survenue lors de l\'ajout de la plante'
+      };
+    }
+  }
 } 

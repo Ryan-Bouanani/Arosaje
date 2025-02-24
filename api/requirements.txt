@@ -65,3 +65,4 @@ tavern==2.10.0
 typing_extensions==4.12.2
 urllib3==2.3.0
 uvicorn==0.32.1
+websockets==15.0

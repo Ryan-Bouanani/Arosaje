@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import '../models/user.dart';
 
 class InscriptionValidationScreen extends StatefulWidget {
   const InscriptionValidationScreen({super.key});
@@ -10,28 +12,56 @@ class InscriptionValidationScreen extends StatefulWidget {
 
 class _InscriptionValidationScreenState
     extends State<InscriptionValidationScreen> {
-  // Liste simulée des utilisateurs en attente de validation
-  final List<Map<String, String>> pendingUsers = [
-    {
-      'name': 'Utilisateur 1',
-      'info': 'info sur l\'utilisateur',
-      'role': 'botaniste'
-    },
-    {
-      'name': 'Utilisateur 2',
-      'info': 'info sur l\'utilisateur',
-      'role': 'botaniste'
-    },
-    {
-      'name': 'Utilisateur 3',
-      'info': 'info sur l\'utilisateur',
-      'role': 'botaniste'
-    },
-  ];
+  late Future<AuthService> _authServiceFuture;
+  List<User> _pendingAccounts = [];
+  bool _isLoading = true;
+  String? _error;
 
-  void _handleValidation(int index, bool isApproved) {
-    setState(() {
-      pendingUsers.removeAt(index);
+  @override
+  void initState() {
+    super.initState();
+    _authServiceFuture = AuthService.getInstance();
+    _loadPendingAccounts();
+  }
+
+  Future<void> _loadPendingAccounts() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+      
+      final authService = await _authServiceFuture;
+      final accounts = await authService.getPendingAccounts();
+      
+      if (mounted) {
+        setState(() {
+          _pendingAccounts = accounts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = "Erreur lors du chargement des comptes : $e";
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _handleValidation(User user, bool isApproved) async {
+    try {
+      final authService = await _authServiceFuture;
+      
+      if (isApproved) {
+        await authService.verifyAccount(user.id);
+      } else {
+        await authService.rejectAccount(user.id);
+      }
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -42,7 +72,18 @@ class _InscriptionValidationScreenState
           backgroundColor: isApproved ? Colors.green : Colors.red,
         ),
       );
-    });
+
+      await _loadPendingAccounts();
+    } catch (e) {
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Erreur lors de l'action : $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -81,69 +122,108 @@ class _InscriptionValidationScreenState
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: pendingUsers.length,
-                  itemBuilder: (context, index) {
-                    final user = pendingUsers[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user['name']!,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(user['info']!),
-                                  Text('Role : ${user['role']!}'),
-                                ],
-                              ),
-                            ),
-                            Row(
+              if (_isLoading)
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_error != null)
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _loadPendingAccounts,
+                          child: const Text("Réessayer"),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+              else if (_pendingAccounts.isEmpty)
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      "Aucun compte en attente de validation",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                )
+              else
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _loadPendingAccounts,
+                    child: ListView.builder(
+                      itemCount: _pendingAccounts.length,
+                      itemBuilder: (context, index) {
+                        final user = _pendingAccounts[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          elevation: 2,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
                               children: [
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      _handleValidation(index, true),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    padding: const EdgeInsets.all(12),
-                                    minimumSize: const Size(50, 50),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "${user.prenom} ${user.nom}",
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(user.email),
+                                      if (user.telephone != null)
+                                        Text("Tél : ${user.telephone}"),
+                                      Text("Rôle : ${user.role}"),
+                                    ],
                                   ),
-                                  child: const Icon(Icons.check,
-                                      color: Colors.white),
                                 ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () =>
-                                      _handleValidation(index, false),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    padding: const EdgeInsets.all(12),
-                                    minimumSize: const Size(50, 50),
-                                  ),
-                                  child: const Icon(Icons.close,
-                                      color: Colors.white),
+                                Row(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _handleValidation(user, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.green,
+                                        padding: const EdgeInsets.all(12),
+                                        minimumSize: const Size(50, 50),
+                                      ),
+                                      child: const Icon(Icons.check,
+                                          color: Colors.white),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _handleValidation(user, false),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                        padding: const EdgeInsets.all(12),
+                                        minimumSize: const Size(50, 50),
+                                      ),
+                                      child: const Icon(Icons.close,
+                                          color: Colors.white),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),

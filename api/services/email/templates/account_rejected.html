@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Compte non validé - A'rosa-je{% endblock %}
+
+{% block content %}
+<h2>Décision concernant votre compte</h2>
+
+<p>Bonjour {{ user_name }},</p>
+
+<p>Nous vous informons que votre demande de compte sur A'rosa-je n'a malheureusement pas été validée par notre équipe d'administration.</p>
+
+<p>Cette décision peut être due à plusieurs raisons :</p>
+<ul>
+    <li>Informations incomplètes ou incorrectes</li>
+    <li>Non-respect des conditions d'utilisation</li>
+    <li>Doublon avec un compte existant</li>
+</ul>
+
+<p>Si vous pensez qu'il s'agit d'une erreur ou si vous souhaitez soumettre une nouvelle demande avec des informations complètes, vous pouvez créer un nouveau compte en vous assurant de respecter nos conditions d'utilisation.</p>
+
+<p style="text-align: center;">
+    <a href="http://localhost:3000/register" class="button">Créer un nouveau compte</a>
+</p>
+
+<p>Nous vous remercions de votre compréhension.</p>
+
+<p>L'équipe A'rosa-je</p>
+{% endblock %} 

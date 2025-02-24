@@ -2,7 +2,9 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTheme } from 'vuetify';
+import PlantCard from '~/components/PlantCard.vue';
 
+const showAddPlantModal = ref(false);
 
 const router = useRouter();
 const theme = useTheme();
@@ -125,11 +127,18 @@ const toggleTheme = () => {
   theme.global.name.value = isDarkMode.value ? 'dark' : 'light';
 };
 
+// Méthode de navigation
 const goTo = (page) => {
-  router.push(`/${page}`);
+  if (page === 'ajouter-plante') {
+    router.push({ name: 'AddPlant' }); // Utilisation du name de la route
+  } else {
+    router.push(`/${page}`);
+  }
 };
 
+// Méthode de déconnexion
 const logout = () => {
+  // Ici vous pouvez ajouter la logique de déconnexion (supprimer le token, etc.)
   router.push('/login');
 };
 
@@ -275,12 +284,8 @@ onMounted(() => {
             <v-card elevation="2" class="rounded-lg">
               <v-card-title class="d-flex justify-space-between align-center pa-4">
                 <span class="text-h6">Mes plantes</span>
-                <v-btn
-                  color="primary"
-                  prepend-icon="mdi-plus"
-                  @click="goTo('plants')"
-                  variant="elevated"
-                >
+                <v-btn color="green" @click="showAddPlantModal = true">
+                  <v-icon class="mr-2">mdi-plus</v-icon>
                   Ajouter une plante
                 </v-btn>
               </v-card-title>
@@ -368,5 +373,9 @@ onMounted(() => {
         </v-row>
       </v-container>
     </v-main>
+    <v-dialog v-model="showAddPlantModal" max-width="600px" persistent overlay-opacity="0.5">
+  <PlantCard @close="showAddPlantModal = false" />
+</v-dialog>
+
   </v-app>
 </template>

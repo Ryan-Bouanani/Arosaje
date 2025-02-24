@@ -392,15 +392,8 @@ start_android_emulator() {
 
     # Attendre que le système soit complètement démarré
     log_info "Attente du démarrage complet du système..."
-    timeout=180  # Augmentation du timeout à 3 minutes
+    timeout=180
     while [ $timeout -gt 0 ]; do
-        # Afficher l'état du système pour le debug tous les 10 secondes
-        if [ $((timeout % 10)) -eq 0 ]; then
-            echo "État du système:"
-            adb_windows shell getprop sys.boot_completed
-            adb_windows shell getprop init.svc.bootanim
-            adb_windows shell getprop dev.bootcomplete
-        fi
         
         # Vérifier plusieurs propriétés système en gérant les retours chariot Windows
         boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Compte validé - A'rosa-je{% endblock %}
+
+{% block content %}
+<h2>Votre compte a été validé !</h2>
+
+<p>Bonjour {{ user_name }},</p>
+
+<p>Nous avons le plaisir de vous informer que votre compte A'rosa-je a été validé par notre équipe d'administration.</p>
+
+<p>Vous pouvez maintenant profiter pleinement de toutes les fonctionnalités de l'application :</p>
+<ul>
+    <li>Proposer vos plantes à garder</li>
+    <li>Devenir gardien de plantes</li>
+    <li>Échanger avec la communauté</li>
+    <li>Recevoir des conseils d'experts</li>
+</ul>
+
+<p style="text-align: center;">
+    <a href="http://localhost:3000/login" class="button">Se connecter à A'rosa-je</a>
+</p>
+
+<p>Nous vous souhaitons une excellente expérience sur notre plateforme !</p>
+
+<p>L'équipe A'rosa-je</p>
+{% endblock %} 

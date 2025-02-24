@@ -35,6 +35,13 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Vérifier si le compte est vérifié (sauf pour l'admin)
+    if user.role != UserRole.ADMIN and not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Votre compte est en attente de vérification par un administrateur"
+        )
+    
     access_token = create_access_token(data={"sub": str(user.id)})
     return {
         "access_token": access_token,

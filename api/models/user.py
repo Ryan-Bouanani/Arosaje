@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Enum, Boolean
 from sqlalchemy.orm import relationship
 import enum
 from utils.database import Base
@@ -19,6 +19,7 @@ class User(Base):
     telephone = Column(String)
     localisation = Column(String)
     role = Column(Enum(UserRole), default=UserRole.USER)
+    is_verified = Column(Boolean, default=False)  # Par défaut, les comptes ne sont pas vérifiés
 
     # Relations
     owned_plants = relationship("Plant", back_populates="owner")

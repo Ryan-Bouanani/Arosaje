@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/home/eiki/epsi/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/home/eiki/Android/Sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/home/eiki/epsi/EPSI-MSPR6.1/mobile/android/app/.cxx/Debug/2tl6w175/armeabi-v7a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/home/eiki/Android/Sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/home/eiki/epsi/EPSI-MSPR6.1/mobile/android/app/.cxx/Debug/2tl6w175/armeabi-v7a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

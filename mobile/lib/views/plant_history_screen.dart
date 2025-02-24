@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/plant_care_details_screen.dart';
 
-class PlantCurrentListScreen extends StatefulWidget {
-  const PlantCurrentListScreen({super.key});
+class PlantHistoryScreen extends StatefulWidget {
+  const PlantHistoryScreen({super.key});
 
   @override
-  _PlantCurrentListScreenState createState() => _PlantCurrentListScreenState();
+  _PlantHistoryScreenState createState() => _PlantHistoryScreenState();
 }
 
-class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with SingleTickerProviderStateMixin {
+class _PlantHistoryScreenState extends State<PlantHistoryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
-  final List<Map<String, String>> plantsConfieesEnCours = [
-    {'name': 'Plante X', 'type': 'Rose blanche', 'date': '02/12/2024', 'gardien': 'Alice', 'image': 'assets/monstera.webp'},
-    {'name': 'Plante Y', 'type': 'Tulipe jaune', 'date': '15/11/2024', 'gardien': 'Bob', 'image': 'assets/ficus.png'},
+  final List<Map<String, String>> plantsConfiees = [
+    {'name': 'Plante A', 'type': 'Rose rouge', 'date': '10/15/2021', 'gardien': 'Marie', 'image': 'assets/monstera.webp'},
+    {'name': 'Plante B', 'type': 'Lys blanc', 'date': '09/27/2021', 'gardien': 'Jean', 'image': 'assets/ficus.png'},
+    {'name': 'Plante C', 'type': 'Orchidée violette', 'date': '08/02/2021', 'gardien': 'Sophie', 'image': 'assets/monstera.webp'},
   ];
 
-  final List<Map<String, String>> plantsGardeesEnCours = [
-    {'name': 'Plante Z', 'type': 'Palmier', 'date': '20/10/2024', 'gardien': 'Lucas', 'image': 'assets/monstera.webp'},
-    {'name': 'Plante W', 'type': 'Lavande', 'date': '08/09/2024', 'gardien': 'Emma', 'image': 'assets/ficus.png'},
+  final List<Map<String, String>> plantsGardees = [
+    {'name': 'Plante D', 'type': 'Ficus', 'date': '11/05/2021', 'gardien': 'Paul', 'image': 'assets/ficus.png'},
+    {'name': 'Plante E', 'type': 'Cactus', 'date': '07/19/2021', 'gardien': 'Emma', 'image': 'assets/monstera.webp'},
   ];
 
   @override
@@ -40,7 +41,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Plantes en cours"),
+        title: const Text("Historique"),
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -85,8 +86,8 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildPlantList(plantsConfieesEnCours),
-                _buildPlantList(plantsGardeesEnCours),
+                _buildPlantList(plantsConfiees),
+                _buildPlantList(plantsGardees),
               ],
             ),
           ),
@@ -107,44 +108,36 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
         final plant = filteredPlants[index];
         return Column(
           children: [
-           ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.grey[200],
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(50),
-                child: Image.asset(
-                  plant['image']!,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
-                ),
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: AssetImage(plant['image']!),
+                backgroundColor: Colors.grey[200],
               ),
+              title: Text(
+                plant['name']!,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(plant['type']!),
+              trailing: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    "Date: ${plant['date']}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text("Gardien: ${plant['gardien']}"),
+                ],
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: false),
+                  ),
+                );
+              },
             ),
-            title: Text(
-              plant['name']!,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(plant['type']!),
-            trailing: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  "Date: ${plant['date']}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                Text("Gardien: ${plant['gardien']}"),
-              ],
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: true),
-                ),
-              );
-            },
-          ),
-          const Divider(),
+            const Divider(),
           ],
         );
       },

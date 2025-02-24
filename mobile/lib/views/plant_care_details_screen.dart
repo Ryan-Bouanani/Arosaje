@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/add_report_screen.dart';
-import 'chat_screen.dart';
 
 class PlantCareDetailsScreen extends StatelessWidget {
   final bool isCurrentPlant;

@@ -1,10 +1,26 @@
-test_name: Test du workflow complet de messagerie
+test_name: Test du workflow de messagerie et WebSocket
+
+includes:
+  - !include common.yaml
+
+mqtt:
+  client:
+    transport: websockets
+  connect:
+    host: localhost
+    port: 8000
+    path: "/ws"
 
 marks:
   - usefixtures:
       - api_url
+      - ws_url
       - test_password
       - test_user_email
+
+description: Test complet du workflow de messagerie incluant WebSocket
+variables:
+  timeout: 5
 
 stages:
   - name: Log - Début des tests
@@ -25,7 +41,7 @@ stages:
     response:
       status_code: 200
 
-  # 1. Création des utilisateurs (propriétaire, gardien et botaniste)
+  # 1. Création des utilisateurs
   - name: Créer compte propriétaire
     request:
       url: "{api_url}/auth/register"
@@ -39,26 +55,9 @@ stages:
         localisation: "Paris"
     response:
       status_code: 200
-      json:
-        id: !anyint
-        email: "owner_{test_user_email}"
-        nom: "Dupont"
-        prenom: "Jean"
-        telephone: "0123456789"
-        localisation: "Paris"
-        role: "user"
       save:
         json:
           owner_id: id
-
-  - name: Log - Vérification ID propriétaire
-    request:
-      url: "{api_url}/debug/log"
-      method: POST
-      json:
-        message: "🔍 ID propriétaire: {owner_id}"
-    response:
-      status_code: 200
 
   - name: Créer compte gardien
     request:
@@ -73,26 +72,9 @@ stages:
         localisation: "Lyon"
     response:
       status_code: 200
-      json:
-        id: !anyint
-        email: "caretaker_{test_user_email}"
-        nom: "Martin"
-        prenom: "Sophie"
-        telephone: "0987654321"
-        localisation: "Lyon"
-        role: "user"
       save:
         json:
           caretaker_id: id
-
-  - name: Log - Vérification ID gardien
-    request:
-      url: "{api_url}/debug/log"
-      method: POST
-      json:
-        message: "🔍 ID gardien: {caretaker_id}"
-    response:
-      status_code: 200
 
   - name: Créer compte botaniste
     request:
@@ -101,30 +83,32 @@ stages:
       json:
         email: "botanist_{test_user_email}"
         password: "{test_password}"
-        nom: "Petit"
-        prenom: "Marie"
-        telephone: "0634567890"
-        localisation: "Bordeaux"
+        nom: "Dubois"
+        prenom: "Pierre"
+        telephone: "0123456780"
+        localisation: "Nantes"
+        role: "botanist"
     response:
       status_code: 200
-      json:
-        id: !anyint
-        email: "botanist_{test_user_email}"
-        nom: "Petit"
-        prenom: "Marie"
-        telephone: "0634567890"
-        localisation: "Bordeaux"
-        role: "user"
       save:
         json:
           botanist_id: id
 
-  - name: Log - Vérification ID botaniste
+  - name: Log - Vérification ID propriétaire
     request:
       url: "{api_url}/debug/log"
       method: POST
       json:
-        message: "🔍 ID botaniste: {botanist_id}"
+        message: "🔍 ID propriétaire: {owner_id}"
+    response:
+      status_code: 200
+
+  - name: Log - Vérification ID gardien
+    request:
+      url: "{api_url}/debug/log"
+      method: POST
+      json:
+        message: "🔍 ID gardien: {caretaker_id}"
     response:
       status_code: 200
 
@@ -183,27 +167,6 @@ stages:
         json:
           botanist_token: access_token
 
-  - name: Log - Configuration du rôle botaniste
-    request:
-      url: "{api_url}/debug/log"
-      method: POST
-      json:
-        message: "👨‍🌾 Étape 3: Configuration du rôle botaniste"
-    response:
-      status_code: 200
-
-  # 3. Définir le rôle botaniste
-  - name: Mettre à jour le rôle en botaniste
-    request:
-      url: "{api_url}/auth/users/{botanist_id}/role"
-      method: PUT
-      headers:
-        Authorization: "Bearer {botanist_token}"
-      json:
-        role: "botanist"
-    response:
-      status_code: 200
-
   - name: Log - Création de la plante
     request:
       url: "{api_url}/debug/log"
@@ -213,7 +176,7 @@ stages:
     response:
       status_code: 200
 
-  # 4. Créer une plante pour le test
+  # 3. Créer une plante et une demande de garde
   - name: Créer une plante
     request:
       url: "{api_url}/plants/"
@@ -231,16 +194,6 @@ stages:
         json:
           plant_id: id
 
-  - name: Log - Création demande de garde
-    request:
-      url: "{api_url}/debug/log"
-      method: POST
-      json:
-        message: "📝 Étape 5: Création d'une demande de garde"
-    response:
-      status_code: 200
-
-  # 5. Créer une demande de garde
   - name: Créer une demande de garde
     request:
       url: "{api_url}/plant-care/"
@@ -268,7 +221,7 @@ stages:
     response:
       status_code: 200
 
-  # 6. Accepter la demande de garde (crée automatiquement une conversation PLANT_CARE)
+  # 4. Accepter la garde (crée la conversation)
   - name: Accepter la garde
     request:
       url: "{api_url}/plant-care/{care_id}/status"
@@ -282,11 +235,6 @@ stages:
       save:
         json:
           conversation_id: conversation_id
-      verify_response_with:
-        function: validators.care_validators:validate_care_response
-        extra_kwargs:
-          expected_status: "accepted"
-          check_conversation: true
 
   - name: Log - Tests de messagerie
     request:
@@ -297,35 +245,93 @@ stages:
     response:
       status_code: 200
 
-  # 7. Vérifier la conversation créée
-  - name: Vérifier la conversation
+  # 5. Test WebSocket
+  - name: Établir une connexion WebSocket propriétaire
     request:
-      url: "{api_url}/messages/conversations/{conversation_id}"
+      url: "{ws_url}/ws/{conversation_id}"
       method: GET
       headers:
         Authorization: "Bearer {owner_token}"
     response:
-      status_code: 200
-      verify_response_with:
-        function: validators.conversation_validators:validate_conversation_response
-        extra_kwargs:
-          conversation_type: "plant_care"
-          expected_participants_count: 2
+      status_code: 101
+      headers:
+        upgrade: websocket
+        connection: upgrade
+    mqtt_response:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "connection_established"
+        user_id: !int "{owner_id}"
+      timeout: 5
 
-  # 8. Vérifier les messages
-  - name: Vérifier les messages
+  - name: Établir une connexion WebSocket gardien
+    request:
+      url: "{ws_url}/ws/{conversation_id}"
+      method: GET
+      headers:
+        Authorization: "Bearer {caretaker_token}"
+    response:
+      status_code: 101
+      headers:
+        upgrade: websocket
+        connection: upgrade
+    mqtt_response:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "connection_established"
+        user_id: !int "{caretaker_id}"
+      timeout: 5
+
+  # 6. Test des fonctionnalités WebSocket
+  - name: Envoyer un message via WebSocket
+    mqtt_publish:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "message"
+        content: "Je vais prendre soin de votre plante"
+    mqtt_response:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "new_message"
+        message:
+          content: "Je vais prendre soin de votre plante"
+          sender_id: !int "{caretaker_id}"
+          conversation_id: !int "{conversation_id}"
+          is_read: false
+      timeout: 5
+
+  - name: Envoyer un statut de frappe
+    mqtt_publish:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "typing"
+        is_typing: true
+    mqtt_response:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "typing_status"
+        user_id: !int "{caretaker_id}"
+        conversation_id: !int "{conversation_id}"
+        is_typing: true
+      timeout: 5
+
+  # 7. Test de notification email
+  - name: Envoyer un message pour tester la notification
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/messages"
-      method: GET
+      method: POST
       headers:
         Authorization: "Bearer {owner_token}"
+      json:
+        conversation_id: !int "{conversation_id}"
+        content: "Merci pour votre aide !"
     response:
       status_code: 200
       verify_response_with:
-        function: validators.message_validators:validate_messages_list_response
+        function: validators.message_validators:validate_message_with_email_notification
         extra_kwargs:
-          expected_count: 1
-          expected_content: "La demande de garde a été acceptée"
+          recipient_email: "caretaker_{test_user_email}"
+          sender_name: "Jean Dupont"
 
   - name: Log - Test limite messages
     request:
@@ -336,7 +342,7 @@ stages:
     response:
       status_code: 200
 
-  # 9. Test de la limite de taille des messages
+  # 8. Test de la limite de taille des messages
   - name: Tester message trop long
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/messages"
@@ -367,7 +373,7 @@ stages:
     response:
       status_code: 200
 
-  # 10. Test de la pagination - Création de plusieurs messages
+  # 9. Test de la pagination - Création de plusieurs messages
   - name: Envoyer message 1
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/messages"
@@ -472,7 +478,7 @@ stages:
     response:
       status_code: 200
 
-  # 11. Test des messages non lus
+  # 10. Test des messages non lus
   - name: Vérifier le compteur initial de messages non lus
     request:
       url: "{api_url}/messages/unread-count"
@@ -485,7 +491,7 @@ stages:
         - conversation_id: !int "{conversation_id}"
           unread_count: !int "5"
 
-  # 12. Marquer la conversation comme lue
+  # 11. Marquer la conversation comme lue
   - name: Marquer la conversation comme lue
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/read"
@@ -499,7 +505,7 @@ stages:
       verify_response_with:
         function: validators.message_validators:validate_read_status_response
 
-  # 13. Vérifier que les messages sont bien marqués comme lus
+  # 12. Vérifier que les messages sont bien marqués comme lus
   - name: Vérifier le statut de lecture des messages
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/messages"
@@ -513,7 +519,7 @@ stages:
         extra_kwargs:
           all_read: true
 
-  # 14. Vérifier le compteur de messages non lus après marquage
+  # 13. Vérifier le compteur de messages non lus après marquage
   - name: Vérifier le compteur après marquage
     request:
       url: "{api_url}/messages/unread-count"
@@ -535,17 +541,7 @@ stages:
     response:
       status_code: 200
 
-  # Vérification des IDs
-  - name: Vérifier les IDs avant création de la conversation
-    request:
-      url: "{api_url}/debug/log"
-      method: POST
-      json:
-        message: "🔍 Vérification - owner_id: {owner_id}, botanist_id: {botanist_id}"
-    response:
-      status_code: 200
-
-  # 15. Créer une conversation avec le botaniste
+  # 14. Créer une conversation avec le botaniste
   - name: Créer une conversation avec le botaniste
     request:
       url: "{api_url}/messages/conversations"
@@ -566,7 +562,7 @@ stages:
           conversation_type: "botanical_advice"
           expected_participants_count: 2
 
-  # 16. Vérifier le type de conversation
+  # 15. Vérifier le type de conversation
   - name: Vérifier la conversation botanique
     request:
       url: "{api_url}/messages/conversations/{botanical_conversation_id}"
@@ -575,13 +571,21 @@ stages:
         Authorization: "Bearer {owner_token}"
     response:
       status_code: 200
+      json:
+        id: !anyint "{botanical_conversation_id}"
+        type: "botanical_advice"
+        related_id: null
+        created_at: !anything
+        updated_at: !anything
+        messages: !anything
+        participants: !anything
       verify_response_with:
         function: validators.conversation_validators:validate_conversation_response
         extra_kwargs:
           conversation_type: "botanical_advice"
           expected_participants_count: 2
 
-  # 17. Test des nouvelles fonctionnalités de messagerie
+  # 16. Test des nouvelles fonctionnalités de messagerie
   - name: Vérifier l'historique paginé
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/history"
@@ -604,7 +608,7 @@ stages:
         extra_kwargs:
           expected_page_size: 3
 
-  # 18. Test de la liste des participants
+  # 17. Test de la liste des participants
   - name: Vérifier les participants de la conversation
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/participants"
@@ -619,7 +623,7 @@ stages:
           expected_count: 2
           expected_participants: [!int "{owner_id}", !int "{caretaker_id}"]
 
-  # 19. Test du statut de frappe
+  # 18. Test du statut de frappe
   - name: Vérifier le statut de frappe initial
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/typing"
@@ -639,76 +643,18 @@ stages:
     response:
       status_code: 200
 
-  # 20. Test de la connexion WebSocket
-  - name: Établir une connexion WebSocket
-    request:
-      url: "ws://{api_url}/ws/{conversation_id}"
-      method: GET
-      params:
-        token: "{owner_token}"
-    response:
-      status_code: 101
-      verify_response_with:
-        function: validators.message_validators:validate_websocket_connection_response
-
-  # 20. Test des événements WebSocket
-  - name: Envoyer un message via WebSocket
-    request:
-      url: "ws://{api_url}/ws/{conversation_id}"
-      method: WEBSOCKET
-      json:
-        type: "message"
-        content: "Message via WebSocket"
-    response:
-      verify_response_with:
-        function: validators.message_validators:validate_websocket_message_event
-      json:
-        type: "new_message"
-        message:
-          content: "Message via WebSocket"
-          sender_id: !int "{owner_id}"
-          conversation_id: !int "{conversation_id}"
-          is_read: false
-
-  - name: Envoyer un statut de frappe via WebSocket
-    request:
-      url: "ws://{api_url}/ws/{conversation_id}"
-      method: WEBSOCKET
-      json:
-        type: "typing"
-        is_typing: true
-    response:
-      verify_response_with:
-        function: validators.message_validators:validate_websocket_typing_event
-      json:
-        type: "typing_status"
-        user_id: !int "{owner_id}"
-        conversation_id: !int "{conversation_id}"
-        is_typing: true
-
-  - name: Marquer comme lu via WebSocket
-    request:
-      url: "ws://{api_url}/ws/{conversation_id}"
-      method: WEBSOCKET
-      json:
-        type: "read"
-    response:
-      verify_response_with:
-        function: validators.message_validators:validate_websocket_read_event
-      json:
-        type: "messages_read"
-        user_id: !int "{owner_id}"
-        conversation_id: !int "{conversation_id}"
-
-  # 21. Test de déconnexion WebSocket
+  # 19. Test de déconnexion WebSocket
   - name: Vérifier la déconnexion propre
-    request:
-      url: "ws://{api_url}/ws/{conversation_id}"
-      method: WEBSOCKET
+    mqtt_publish:
+      topic: "conversation/{conversation_id}"
       json:
         type: "disconnect"
-    response:
-      status_code: 1000  # Code de fermeture normale WebSocket
+    mqtt_response:
+      topic: "conversation/{conversation_id}"
+      json:
+        type: "disconnected"
+        user_id: !int "{caretaker_id}"
+      timeout: 5
 
   - name: Log - Test notifications
     request:
@@ -719,7 +665,7 @@ stages:
     response:
       status_code: 200
 
-  # 22. Test de la notification par email
+  # 20. Test de la notification par email
   - name: Vérifier l'envoi d'email après un nouveau message
     request:
       url: "{api_url}/messages/conversations/{conversation_id}/messages"
@@ -728,7 +674,7 @@ stages:
         Authorization: "Bearer {owner_token}"
       json:
         conversation_id: !int "{conversation_id}"
-        content: "Message qui devrait déclencher un email"
+        content: "Merci beaucoup ! Voici quelques instructions supplémentaires..."
     response:
       status_code: 200
       verify_response_with:

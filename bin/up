@@ -6,12 +6,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Demander le nom d'utilisateur Windows
-read -p "Entrez votre nom d'utilisateur Windows : " windows_user
-if [ -z "$windows_user" ]; then
-    echo "❌ Aucun nom d'utilisateur fourni. Le script ne peut pas continuer."
-    exit 1
-fi
+# Variables globales pour l'émulateur
+windows_user=""
+avd_name=""
 
 # Fonction pour les logs
 log_info() {
@@ -228,6 +225,30 @@ start_services() {
         show_help
         exit 1
     fi
+
+    # Si le service mobile est demandé, demander les informations nécessaires
+    if [[ " ${services[@]} " =~ " mobile " ]]; then
+        # Demander le nom d'utilisateur Windows
+        read -p "Entrez votre nom d'utilisateur Windows : " windows_user
+        if [ -z "$windows_user" ]; then
+            echo "❌ Aucun nom d'utilisateur fourni. Le script ne peut pas continuer."
+            exit 1
+        fi
+
+        # Lister les AVD disponibles
+        echo -e "\n📱 Liste des émulateurs Android disponibles :"
+        emulator_path="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/emulator/emulator.exe"
+        emulator_path_windows=$(wslpath -w "$emulator_path")
+        cmd.exe /c "$emulator_path_windows" -list-avds
+
+        # Demander le nom de l'AVD
+        echo -e "\n➡️  Choisissez un émulateur dans la liste ci-dessus"
+        read -p "Entrez le nom de l'émulateur Android (AVD) : " avd_name
+        if [ -z "$avd_name" ]; then
+            echo "❌ Aucun nom d'émulateur fourni. Le script ne peut pas continuer."
+            exit 1
+        fi
+    fi
     
     # Vérifier les ports avant de démarrer
     for service in "${services[@]}"; do
@@ -297,7 +318,7 @@ show_help() {
 # Fonction pour lancer l'émulateur Android
 start_android_emulator() {
     log_info "Démarrage de l'émulateur Android..."
-    local avd_name="Pixel_6_API_35"
+    log_info "Émulateur sélectionné : $avd_name"
     
     # Chemins Windows
     local emulator_path_wsl="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/emulator/emulator.exe"

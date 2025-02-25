@@ -2,7 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine
-from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws
+from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin
+from scripts.init_data import init_data
+import os
 
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
@@ -14,6 +16,9 @@ app = FastAPI(
 
 # Créer les tables
 Base.metadata.create_all(bind=engine)
+
+# Initialiser les données de base
+init_data()
 
 # Middleware de monitoring
 app.middleware("http")(monitoring_middleware)
@@ -30,7 +35,14 @@ app.add_middleware(
 )
 
 # Monter le dossier static pour les images
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+# Utiliser le chemin absolu basé sur la racine de l'application
+assets_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+if not os.path.exists(assets_directory):
+    os.makedirs(assets_directory)
+    os.makedirs(os.path.join(assets_directory, "persisted_img"), exist_ok=True)
+    os.makedirs(os.path.join(assets_directory, "temp_img"), exist_ok=True)
+
+app.mount("/assets", StaticFiles(directory=assets_directory), name="assets")
 
 # Inclure les routers
 app.include_router(auth.router)
@@ -42,6 +54,7 @@ app.include_router(advice.router)
 app.include_router(message.router)
 app.include_router(debug.router)
 app.include_router(ws.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def read_root():

@@ -83,7 +83,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Niveau d\'Hydratation'),
+                    const Text('Santé de la Plante'),
                     const SizedBox(height: 4),
                     DropdownButton<String>(
                       value: _hydratationLevel,
@@ -112,7 +112,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Vitalité Générale'),
+                    const Text('Niveau d\'Hydratation'),              
                     const SizedBox(height: 4),
                     DropdownButton<String>(
                       value: _vitaliteLevel,
@@ -141,7 +141,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Santé de la Plante'),
+                    const Text('Vitalité Générale'),
                     const SizedBox(height: 4),
                     DropdownButton<String>(
                       value: _santePlante,

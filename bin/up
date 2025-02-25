@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Vérifier le format des fins de ligne du script lui-même
+if file "$0" | grep -q "CRLF"; then
+    echo "⚠️  Le script contient des fins de ligne Windows (CRLF)"
+    echo "➡️  Conversion automatique en format Unix (LF)..."
+    if command -v dos2unix >/dev/null 2>&1; then
+        dos2unix "$0"
+        echo "✅ Conversion effectuée. Veuillez relancer le script."
+        exit 0
+    else
+        echo "❌ dos2unix n'est pas installé."
+        echo "➡️  Veuillez installer dos2unix avec : sudo apt-get install dos2unix"
+        exit 1
+    fi
+fi
+
 # Couleurs pour les logs
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -392,15 +407,8 @@ start_android_emulator() {
 
     # Attendre que le système soit complètement démarré
     log_info "Attente du démarrage complet du système..."
-    timeout=180  # Augmentation du timeout à 3 minutes
+    timeout=180
     while [ $timeout -gt 0 ]; do
-        # Afficher l'état du système pour le debug tous les 10 secondes
-        if [ $((timeout % 10)) -eq 0 ]; then
-            echo "État du système:"
-            adb_windows shell getprop sys.boot_completed
-            adb_windows shell getprop init.svc.bootanim
-            adb_windows shell getprop dev.bootcomplete
-        fi
         
         # Vérifier plusieurs propriétés système en gérant les retours chariot Windows
         boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')
@@ -432,10 +440,69 @@ start_android_emulator() {
     # Installer et lancer l'application
     log_info "Installation de l'application..."
     
+    # Vérifier le format des fins de ligne du script Flutter
+    log_info "Vérification du format des fins de ligne..."
+    if file $(which flutter) | grep -q "CRLF"; then
+        log_warning "⚠️  Le script Flutter contient des fins de ligne Windows (CRLF)"
+        log_info "Tentative de correction des fins de ligne..."
+        if command -v dos2unix >/dev/null 2>&1; then
+            dos2unix $(which flutter)
+            log_success "Conversion des fins de ligne effectuée"
+        else
+            log_warning "❌ dos2unix n'est pas installé. Installation recommandée avec : sudo apt-get install dos2unix"
+        fi
+    fi
+    
     # Se déplacer dans le dossier mobile
     if ! cd mobile; then
         log_warning "❌ Dossier mobile non trouvé"
         return 1
+    fi
+    
+    # Afficher des informations de débogage sur l'environnement Flutter
+    log_info "Informations sur l'environnement Flutter :"
+    flutter doctor -v || true
+    
+    # Vérifier la version de Flutter
+    log_info "Version de Flutter :"
+    flutter --version || true
+    
+    # Nettoyer le build précédent pour éviter les problèmes de cache
+    log_info "Nettoyage du build précédent..."
+    flutter clean || true
+    
+    # Vérifier et corriger les fins de ligne des fichiers importants
+    log_info "Vérification des fins de ligne des fichiers Flutter..."
+    
+    # Liste des fichiers à vérifier
+    files_to_check=(
+        "pubspec.yaml"
+        "android/gradlew"
+        "android/gradlew.bat"
+        "android/gradle/wrapper/gradle-wrapper.properties"
+    )
+    
+    for file in "${files_to_check[@]}"; do
+        if [ -f "$file" ]; then
+            log_info "Vérification de $file..."
+            if file "$file" | grep -q "CRLF"; then
+                log_warning "⚠️  $file contient des fins de ligne Windows (CRLF)"
+                log_info "Conversion en format Unix (LF)..."
+                dos2unix "$file"
+                log_success "✅ $file converti"
+            fi
+        fi
+    done
+    
+    # Rendre les scripts gradlew exécutables
+    log_info "Attribution des permissions d'exécution..."
+    chmod +x android/gradlew
+    
+    # Vérifier l'environnement Android
+    log_info "Vérification de l'environnement Android..."
+    if [ -f "android/gradlew" ]; then
+        log_info "Test de Gradle..."
+        (cd android && ./gradlew --version) || log_warning "⚠️  Erreur lors du test Gradle"
     fi
     
     # Récupérer l'ID de l'émulateur
@@ -446,9 +513,45 @@ start_android_emulator() {
         return 1
     fi
     
-    # Construire et installer l'application avec Flutter
+    # Construire et installer l'application avec Flutter avec plus de verbosité
     log_info "Construction et installation de l'application avec Flutter..."
-    if flutter build apk --debug; then
+    
+    # Vérifier et corriger le shebang du script Flutter
+    flutter_bin=$(which flutter)
+    log_info "Vérification du script Flutter à $flutter_bin..."
+    if [ -f "$flutter_bin" ]; then
+        # Vérifier le shebang
+        first_line=$(head -n 1 "$flutter_bin")
+        if [[ "$first_line" == *$'\r' ]]; then
+            log_warning "⚠️  Le shebang du script Flutter contient des retours chariot Windows"
+            log_info "Tentative de correction du shebang..."
+            # Créer un fichier temporaire
+            temp_file=$(mktemp)
+            # Copier le contenu en supprimant les retours chariot
+            tr -d '\r' < "$flutter_bin" > "$temp_file"
+            # Vérifier si nous avons les permissions pour modifier le fichier Flutter
+            if [ -w "$flutter_bin" ]; then
+                mv "$temp_file" "$flutter_bin"
+                chmod +x "$flutter_bin"
+                log_success "✅ Shebang corrigé"
+            else
+                log_warning "❌ Permissions insuffisantes pour corriger le script Flutter"
+                log_info "➡️  Essayez de lancer la commande suivante avec sudo :"
+                echo "sudo tr -d '\r' < $flutter_bin > ${flutter_bin}.tmp && sudo mv ${flutter_bin}.tmp $flutter_bin && sudo chmod +x $flutter_bin"
+                rm "$temp_file"
+            fi
+        fi
+    fi
+    
+    # Tentative de build avec gestion d'erreur détaillée
+    build_output=$(flutter build apk --debug --verbose 2>&1)
+    build_status=$?
+    
+    # Afficher la sortie complète pour le débogage
+    echo "Sortie complète du build:"
+    echo "$build_output"
+    
+    if [ $build_status -eq 0 ]; then
         log_success "APK construit avec succès"
         
         # Chemin de l'APK (conversion en chemin Windows)

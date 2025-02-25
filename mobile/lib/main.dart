@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'views/home_screen.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-  ]);
-  runApp(const MyApp());
+Future<void> main() async {
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+    await dotenv.load(fileName: "assets/.env.mobile");
+    runApp(const MyApp());
+  } catch (e) {
+    print('Erreur lors de l\'initialisation: $e');
+    runApp(const MyApp()); // Démarrer l'app même en cas d'erreur
+  }
 }
 
 class MyApp extends StatelessWidget {

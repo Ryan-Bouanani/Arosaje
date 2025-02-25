@@ -103,4 +103,38 @@ class EmailService:
             template_data={
                 "user_name": user_name
             }
+        )
+
+    async def send_account_validated_email(
+        self,
+        recipient_email: str,
+        user_name: str
+    ) -> None:
+        """
+        Envoie un email de confirmation de validation du compte.
+        """
+        await self.send_email(
+            recipients=[recipient_email],
+            subject="Votre compte A'rosa-je a été validé !",
+            template_name="account_validated",
+            template_data={
+                "user_name": user_name
+            }
+        )
+
+    async def send_account_rejected_email(
+        self,
+        recipient_email: str,
+        user_name: str
+    ) -> None:
+        """
+        Envoie un email de notification de rejet du compte.
+        """
+        await self.send_email(
+            recipients=[recipient_email],
+            subject="Information concernant votre compte A'rosa-je",
+            template_name="account_rejected",
+            template_data={
+                "user_name": user_name
+            }
         ) 

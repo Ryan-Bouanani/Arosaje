@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/register_screen.dart';
+import 'package:mobile/services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile/services/storage_service.dart';
 import 'home_after_login_screen.dart';
 import 'home_after_login_admin.dart';
 import 'home_screen.dart';
 import 'inscription_validation_screen.dart';
+
+// Constantes pour les rôles
+class UserRoles {
+  static const String USER = 'USER';
+  static const String ADMIN = 'ADMIN';
+  static const String BOTANISTE = 'BOTANISTE';
+}
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,39 +25,109 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  late Future<AuthService> _authServiceFuture;
+  StorageService? _storageService;
+  bool _isLoading = false;
 
-  void _handleLogin() {
-    final username = _usernameController.text.trim().toLowerCase();
+  @override
+  void initState() {
+    super.initState();
+    _authServiceFuture = AuthService.getInstance();
+    _initializeStorage();
+  }
 
-    if (username == 'bota') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeAfterLoginAdmin(),
+  Future<void> _initializeStorage() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _storageService = StorageService(prefs);
+      });
+    } catch (e) {
+      print('Erreur lors de l\'initialisation du stockage: $e');
+    }
+  }
+
+  void _navigateBasedOnRole(String role) {
+    if (!mounted) return;
+
+    Widget targetScreen;
+    switch (role.toUpperCase()) {
+      case UserRoles.ADMIN:
+        targetScreen = const InscriptionValidationScreen();
+        break;
+      case UserRoles.BOTANISTE:
+        targetScreen = const HomeAfterLoginAdmin();
+        break;
+      case UserRoles.USER:
+        targetScreen = const HomeAfterLogin();
+        break;
+      default:
+        targetScreen = const HomeAfterLogin();
+        break;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => targetScreen),
+    );
+  }
+
+  void _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_storageService == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Erreur d\'initialisation, veuillez réessayer.'),
+          backgroundColor: Colors.red,
         ),
       );
-    } else if (username == 'admin') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const InscriptionValidationScreen(),
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final authService = await _authServiceFuture;
+      final response = await authService.login(
+        _emailController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (response['access_token'] != null) {
+        await _storageService!.saveToken(response['access_token']);
+        
+        // Récupérer les informations de l'utilisateur
+        final userInfo = await authService.getCurrentUser(response['access_token']);
+        
+        if (!mounted) return;
+
+        // Sauvegarder le rôle de l'utilisateur
+        final userRole = userInfo['role']?.toString().toUpperCase() ?? UserRoles.USER;
+        await _storageService!.saveUserRole(userRole);
+
+        // Rediriger en fonction du rôle
+        _navigateBasedOnRole(userRole);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
         ),
       );
-    } else {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomeAfterLogin(),
-        ),
-      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   void dispose() {
-    _usernameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -108,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Connectez-vous à votre compte ?',
+                      'Connectez-vous à votre compte',
                       style: TextStyle(
                         color: Colors.grey,
                         fontSize: 16,
@@ -121,14 +201,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextFormField(
-                        controller: _usernameController,
+                        controller: _emailController,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez entrer votre email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Veuillez entrer un email valide';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
-                          hintText: 'Nom complet',
+                          hintText: 'Email',
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                             borderSide: BorderSide.none,
                           ),
-                          prefixIcon: const Icon(Icons.person_outline,
+                          prefixIcon: const Icon(Icons.email_outlined,
                               color: Colors.green),
                           filled: true,
                           fillColor: Colors.transparent,
@@ -144,6 +233,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: _obscurePassword,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Veuillez entrer votre mot de passe';
+                          }
+                          if (value.length < 6) {
+                            return 'Le mot de passe doit contenir au moins 6 caractères';
+                          }
+                          return null;
+                        },
                         decoration: InputDecoration(
                           hintText: 'Mot de passe',
                           border: OutlineInputBorder(
@@ -170,31 +268,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            Checkbox(
-                              value: false,
-                              onChanged: (value) {},
-                              activeColor: Colors.green,
-                            ),
-                            const Text('Se rappeler de moi'),
-                          ],
-                        ),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            'Forgot password?',
-                            style: TextStyle(color: Colors.green),
-                          ),
-                        ),
-                      ],
-                    ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _handleLogin,
+                      onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -202,38 +278,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text(
-                        'Connexion',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AccueilPage(),
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Retour',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Connexion',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                     const SizedBox(height: 16),
                     Row(

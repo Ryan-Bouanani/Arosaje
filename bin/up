@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# Vérifier le format des fins de ligne du script lui-même
+if file "$0" | grep -q "CRLF"; then
+    echo "⚠️  Le script contient des fins de ligne Windows (CRLF)"
+    echo "➡️  Conversion automatique en format Unix (LF)..."
+    if command -v dos2unix >/dev/null 2>&1; then
+        dos2unix "$0"
+        echo "✅ Conversion effectuée. Veuillez relancer le script."
+        exit 0
+    else
+        echo "❌ dos2unix n'est pas installé."
+        echo "➡️  Veuillez installer dos2unix avec : sudo apt-get install dos2unix"
+        exit 1
+    fi
+fi
+
 # Couleurs pour les logs
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -425,11 +440,36 @@ start_android_emulator() {
     # Installer et lancer l'application
     log_info "Installation de l'application..."
     
+    # Vérifier le format des fins de ligne du script Flutter
+    log_info "Vérification du format des fins de ligne..."
+    if file $(which flutter) | grep -q "CRLF"; then
+        log_warning "⚠️  Le script Flutter contient des fins de ligne Windows (CRLF)"
+        log_info "Tentative de correction des fins de ligne..."
+        if command -v dos2unix >/dev/null 2>&1; then
+            dos2unix $(which flutter)
+            log_success "Conversion des fins de ligne effectuée"
+        else
+            log_warning "❌ dos2unix n'est pas installé. Installation recommandée avec : sudo apt-get install dos2unix"
+        fi
+    fi
+    
     # Se déplacer dans le dossier mobile
     if ! cd mobile; then
         log_warning "❌ Dossier mobile non trouvé"
         return 1
     fi
+    
+    # Afficher des informations de débogage sur l'environnement Flutter
+    log_info "Informations sur l'environnement Flutter :"
+    flutter doctor -v || true
+    
+    # Vérifier la version de Flutter
+    log_info "Version de Flutter :"
+    flutter --version || true
+    
+    # Nettoyer le build précédent pour éviter les problèmes de cache
+    log_info "Nettoyage du build précédent..."
+    flutter clean || true
     
     # Récupérer l'ID de l'émulateur
     emulator_id=$(adb_windows devices | grep "emulator-" | cut -f1)
@@ -439,9 +479,9 @@ start_android_emulator() {
         return 1
     fi
     
-    # Construire et installer l'application avec Flutter
+    # Construire et installer l'application avec Flutter avec plus de verbosité
     log_info "Construction et installation de l'application avec Flutter..."
-    if flutter build apk --debug; then
+    if flutter build apk --debug --verbose; then
         log_success "APK construit avec succès"
         
         # Chemin de l'APK (conversion en chemin Windows)

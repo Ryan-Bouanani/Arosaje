@@ -137,4 +137,33 @@ class EmailService:
             template_data={
                 "user_name": user_name
             }
+        )
+
+    async def send_care_accepted_notification(
+        self,
+        owner_email: str,
+        owner_name: str,
+        caretaker_name: str,
+        plant_name: str,
+        start_date: str,
+        end_date: str,
+        location: str,
+        conversation_id: str
+    ) -> None:
+        """
+        Envoie un email de notification quand une garde est acceptée.
+        """
+        await self.send_email(
+            recipients=[owner_email],
+            subject=f"Votre plante va être gardée par {caretaker_name} !",
+            template_name="care_accepted",
+            template_data={
+                "owner_name": owner_name,
+                "caretaker_name": caretaker_name,
+                "plant_name": plant_name,
+                "start_date": start_date,
+                "end_date": end_date,
+                "location": location,
+                "conversation_link": f"/conversations/{conversation_id}"
+            }
         ) 

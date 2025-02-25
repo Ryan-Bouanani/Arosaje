@@ -1,5 +1,35 @@
 #!/bin/bash
 
+# Vérifier le format des fins de ligne du script lui-même
+if file "$0" | grep -q "CRLF"; then
+    echo "⚠️  Le script contient des fins de ligne Windows (CRLF)"
+    echo "➡️  Conversion automatique en format Unix (LF)..."
+    if command -v dos2unix >/dev/null 2>&1; then
+        dos2unix "$0"
+        echo "✅ Conversion effectuée. Veuillez relancer le script."
+        exit 0
+    else
+        echo "❌ dos2unix n'est pas installé."
+        echo "➡️  Veuillez installer dos2unix avec : sudo apt-get install dos2unix"
+        exit 1
+    fi
+fi
+
+# Vérifier le format des fins de ligne du script lui-même
+if file "$0" | grep -q "CRLF"; then
+    echo "⚠️  Le script contient des fins de ligne Windows (CRLF)"
+    echo "➡️  Conversion automatique en format Unix (LF)..."
+    if command -v dos2unix >/dev/null 2>&1; then
+        dos2unix "$0"
+        echo "✅ Conversion effectuée. Veuillez relancer le script."
+        exit 0
+    else
+        echo "❌ dos2unix n'est pas installé."
+        echo "➡️  Veuillez installer dos2unix avec : sudo apt-get install dos2unix"
+        exit 1
+    fi
+fi
+
 # Couleurs pour les logs
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -318,7 +348,6 @@ show_help() {
 # Fonction pour lancer l'émulateur Android
 start_android_emulator() {
     log_info "Démarrage de l'émulateur Android..."
-    log_info "Émulateur sélectionné : $avd_name"
     
     # Chemins Windows
     local emulator_path_wsl="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/emulator/emulator.exe"
@@ -331,7 +360,6 @@ start_android_emulator() {
     # Vérifier si l'émulateur existe
     if [ ! -f "$emulator_path_wsl" ]; then
         log_warning "❌ Émulateur non trouvé à l'emplacement : $emulator_path_wsl"
-        log_warning "➡️  Assurez-vous que le chemin est correct et que Android Studio est installé sur Windows."
         return
     fi
 
@@ -340,13 +368,11 @@ start_android_emulator() {
         cmd.exe /c "$adb_path_windows" "$@" 2>/dev/null
     }
 
-    # Tuer tout émulateur existant
-    adb_windows kill-server
-    sleep 2
-    adb_windows start-server
+    # Redémarrer le serveur ADB
+    adb_windows kill-server >/dev/null 2>&1
+    adb_windows start-server >/dev/null 2>&1
     
     # Lancer l'émulateur avec des options optimisées
-    log_info "Chemin de l'émulateur (Windows) : $emulator_path_windows"
     cmd.exe /c "$emulator_path_windows" -avd "$avd_name" \
         -gpu host \
         -no-snapshot-load \
@@ -356,52 +382,26 @@ start_android_emulator() {
         -qemu -no-reboot &
     
     # Attendre que l'émulateur soit connecté
-    log_info "Attente de la connexion de l'émulateur..."
+    log_info "Attente du démarrage de l'émulateur..."
     timeout=90
     while [ $timeout -gt 0 ]; do
-        # Afficher l'état des appareils pour le debug
-        echo "État des appareils ADB:"
-        adb_windows devices
-        
-        devices_output=$(adb_windows devices)
-        if echo "$devices_output" | grep -q "emulator-.*device\|emulator-.*offline\|emulator-.*unauthorized"; then
-            log_success "Émulateur Android détecté (statut: $(echo "$devices_output" | grep "emulator-" | awk '{print $2}'))"
+        if adb_windows devices | grep -q "emulator-.*device"; then
             break
         fi
-        
-        # Afficher le statut de l'émulateur pour le debug
-        if [ $((timeout % 10)) -eq 0 ]; then
-            log_info "Attente de l'émulateur... ($timeout secondes restantes)"
-        fi
-        
         sleep 1
         ((timeout--))
     done
 
     if [ $timeout -eq 0 ]; then
-        devices_output=$(adb_windows devices)
-        if echo "$devices_output" | grep -q "emulator-"; then
-            log_warning "⚠️  L'émulateur est présent mais pas encore prêt"
-            log_info "État actuel: $(echo "$devices_output" | grep "emulator-" | awk '{print $2}')"
-            # On continue quand même
-        else
-            log_warning "⚠️  Aucun émulateur détecté après 90 secondes"
-            return
-        fi
+        log_warning "⚠️  L'émulateur n'a pas démarré correctement"
+        return 1
     fi
 
     # Attendre que le système soit complètement démarré
-    log_info "Attente du démarrage complet du système..."
-    timeout=180
+    timeout=60
     while [ $timeout -gt 0 ]; do
-        
-        # Vérifier plusieurs propriétés système en gérant les retours chariot Windows
         boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')
-        boot_animation=$(adb_windows shell getprop init.svc.bootanim | tr -d '\r')
-        dev_complete=$(adb_windows shell getprop dev.bootcomplete | tr -d '\r')
-        
-        if [ "$boot_completed" = "1" ] && [ "$boot_animation" = "stopped" ]; then
-            log_success "Système Android complètement démarré"
+        if [ "$boot_completed" = "1" ]; then
             break
         fi
         sleep 2
@@ -409,81 +409,47 @@ start_android_emulator() {
     done
 
     if [ $timeout -eq 0 ]; then
-        # Vérifier une dernière fois l'état
-        boot_completed=$(adb_windows shell getprop sys.boot_completed | tr -d '\r')
-        if [ "$boot_completed" = "1" ]; then
-            log_success "Système démarré (détecté lors de la dernière vérification)"
-        else
-            log_warning "⚠️  Timeout atteint, mais on continue quand même..."
-        fi
+        log_warning "⚠️  Le système Android n'a pas démarré complètement"
     fi
 
-    # Attendre un peu plus pour s'assurer que le système est vraiment prêt
-    log_info "Attente supplémentaire pour s'assurer que le système est stable..."
-    sleep 15
-
-    # Installer et lancer l'application
-    log_info "Installation de l'application..."
+    # Installation de l'application
+    cd mobile || exit 1
     
-    # Se déplacer dans le dossier mobile
-    if ! cd mobile; then
-        log_warning "❌ Dossier mobile non trouvé"
-        return 1
-    fi
+    # Nettoyer le build précédent
+    flutter clean >/dev/null 2>&1
     
-    # Récupérer l'ID de l'émulateur
-    emulator_id=$(adb_windows devices | grep "emulator-" | cut -f1)
-    if [ -z "$emulator_id" ]; then
-        log_warning "❌ Émulateur non trouvé"
-        cd ..
-        return 1
-    fi
+    # Rendre gradlew exécutable
+    chmod +x android/gradlew >/dev/null 2>&1
     
-    # Construire et installer l'application avec Flutter
-    log_info "Construction et installation de l'application avec Flutter..."
-    if flutter build apk --debug; then
-        log_success "APK construit avec succès"
-        
-        # Chemin de l'APK (conversion en chemin Windows)
-        local apk_path_wsl="$(pwd)/build/app/outputs/flutter-apk/app-debug.apk"
-        local apk_path_windows=$(wslpath -w "$apk_path_wsl")
-        
-        log_info "Chemin de l'APK: $apk_path_windows"
-        
-        # Installer l'APK avec ADB
-        log_info "Installation de l'APK..."
-        install_output=$(adb_windows install -r "$apk_path_windows" 2>&1)
-        install_status=$?
-        
-        echo "Résultat de l'installation:"
-        echo "$install_output"
-        
-        if [ $install_status -eq 0 ] && echo "$install_output" | grep -q "Success"; then
-            log_success "Application installée avec succès"
-            
-            # Lancer l'application
-            log_info "Lancement de l'application..."
-            if adb_windows shell am start -n "com.example.mobile/.MainActivity"; then
-                log_success "Application lancée avec succès"
-            else
-                log_warning "⚠️  Impossible de lancer l'application"
-                log_info "Vérification du package..."
-                adb_windows shell pm list packages | grep -i "com.example.mobile"
-            fi
-        else
-            log_warning "❌ Erreur lors de l'installation de l'APK"
-            log_info "Détails de l'erreur:"
-            echo "$install_output"
-            cd ..
-            return 1
-        fi
-    else
+    # Construction de l'application
+    log_info "Construction de l'application..."
+    if ! flutter build apk --debug >/dev/null 2>&1; then
         log_warning "❌ Erreur lors de la construction de l'application"
+        flutter build apk --debug --verbose  # Afficher les logs détaillés en cas d'erreur
         cd ..
         return 1
     fi
+
+    # Installation de l'APK
+    local apk_path_wsl="$(pwd)/build/app/outputs/flutter-apk/app-debug.apk"
+    local apk_path_windows=$(wslpath -w "$apk_path_wsl")
     
-    # Retourner au dossier précédent
+    log_info "Installation de l'application..."
+    if ! adb_windows install -r "$apk_path_windows" >/dev/null 2>&1; then
+        log_warning "❌ Erreur lors de l'installation de l'APK"
+        adb_windows install -r "$apk_path_windows"  # Afficher les logs détaillés en cas d'erreur
+        cd ..
+        return 1
+    fi
+
+    # Lancement de l'application
+    if ! adb_windows shell am start -n "com.example.mobile/.MainActivity" >/dev/null 2>&1; then
+        log_warning "❌ Erreur lors du lancement de l'application"
+        cd ..
+        return 1
+    fi
+
+    log_success "Application installée et lancée avec succès"
     cd ..
 }
 

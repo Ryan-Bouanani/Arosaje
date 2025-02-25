@@ -21,14 +21,18 @@ const newPlant = ref({
 });
 
 const plantes = ref([
-  { id: 1, nom: "Ficus", photo: "/ficus.jpg", description: "Besoin d'arrosage régulier", dernierArrosage: "2024-02-10", prochainArrosage: "2024-02-17", sante: 85, temperatureIdeale: "18-24°C", exposition: "Lumière indirecte", engrais: "Tous les 2 mois" },
-  { id: 2, nom: "Cactus", photo: "/cactus.jpg", description: "Arrosage rare nécessaire", dernierArrosage: "2024-01-28", prochainArrosage: "2024-03-01", sante: 95, temperatureIdeale: "20-30°C", exposition: "Plein soleil", engrais: "Tous les 3 mois" },
-  { id: 3, nom: "Monstera", photo: "/monstera.jpg", description: "Aime l'humidité et la lumière indirecte", dernierArrosage: "2024-02-12", prochainArrosage: "2024-02-18", sante: 90, temperatureIdeale: "20-27°C", exposition: "Lumière indirecte", engrais: "Tous les mois" },
-  { id: 4, nom: "Aloe Vera", photo: "/aloe-vera.jpg", description: "Plante résistante nécessitant peu d'eau", dernierArrosage: "2024-02-05", prochainArrosage: "2024-02-25", sante: 80, temperatureIdeale: "15-25°C", exposition: "Soleil ou mi-ombre", engrais: "Tous les 2 mois" },
-  { id: 5, nom: "Pothos", photo: "/pothos.jpg", description: "Facile à entretenir, supporte peu de lumière", dernierArrosage: "2024-02-14", prochainArrosage: "2024-02-21", sante: 92, temperatureIdeale: "18-30°C", exposition: "Mi-ombre", engrais: "Tous les mois" },
-  { id: 6, nom: "Orchidée", photo: "/orchidee.jpg", description: "Besoins spécifiques en humidité et lumière", dernierArrosage: "2024-02-08", prochainArrosage: "2024-02-15", sante: 85, temperatureIdeale: "16-24°C", exposition: "Lumière indirecte", engrais: "Tous les 15 jours" },
-  { id: 7, nom: "Lavande", photo: "/lavande.jpg", description: "Apprécie le soleil et un sol bien drainé", dernierArrosage: "2024-02-01", prochainArrosage: "2024-02-28", sante: 88, temperatureIdeale: "10-25°C", exposition: "Plein soleil", engrais: "Tous les 2 mois" }
+  { id: 1, nom: "Chrysanthème", photo: "/assets/persisted_img/chrysantheme.jpg", description: "Fleur d'automne résistante", dernierArrosage: "2024-02-10", prochainArrosage: "2024-02-17", sante: 85, temperatureIdeale: "15-20°C", exposition: "Soleil", engrais: "Tous les mois" },
+  { id: 2, nom: "Jasmin", photo: "/assets/persisted_img/jasmin.jpg", description: "Plante grimpante parfumée", dernierArrosage: "2024-02-08", prochainArrosage: "2024-02-15", sante: 90, temperatureIdeale: "15-25°C", exposition: "Lumière indirecte", engrais: "Tous les mois" },
+  { id: 3, nom: "Lavande", photo: "/assets/persisted_img/lavande.jpg", description: "Apprécie le soleil et un sol bien drainé", dernierArrosage: "2024-02-01", prochainArrosage: "2024-02-28", sante: 88, temperatureIdeale: "10-25°C", exposition: "Plein soleil", engrais: "Tous les 2 mois" },
+  { id: 4, nom: "Lys", photo: "/assets/persisted_img/lys.jpg", description: "Fleur élégante au parfum intense", dernierArrosage: "2024-02-05", prochainArrosage: "2024-02-12", sante: 80, temperatureIdeale: "18-22°C", exposition: "Lumière indirecte", engrais: "Tous les 2 mois" },
+  { id: 5, nom: "Marguerite", photo: "/assets/persisted_img/marguerite.jpg", description: "Fleur champêtre facile à cultiver", dernierArrosage: "2024-02-14", prochainArrosage: "2024-02-21", sante: 92, temperatureIdeale: "15-25°C", exposition: "Soleil", engrais: "Tous les mois" },
+  { id: 6, nom: "Orchidée", photo: "/assets/persisted_img/orchidee.jpg", description: "Besoins spécifiques en humidité et lumière", dernierArrosage: "2024-02-08", prochainArrosage: "2024-02-15", sante: 85, temperatureIdeale: "16-24°C", exposition: "Lumière indirecte", engrais: "Tous les 15 jours" },
+  { id: 7, nom: "Pivoine", photo: "/assets/persisted_img/pivoine.jpg", description: "Fleur spectaculaire au parfum envoûtant", dernierArrosage: "2024-02-12", prochainArrosage: "2024-02-18", sante: 90, temperatureIdeale: "15-20°C", exposition: "Soleil", engrais: "Tous les 2 mois" },
+  { id: 8, nom: "Rose", photo: "/assets/persisted_img/rose.jpg", description: "Fleur emblématique au parfum délicat", dernierArrosage: "2024-02-07", prochainArrosage: "2024-02-14", sante: 85, temperatureIdeale: "15-25°C", exposition: "Soleil", engrais: "Tous les mois" },
+  { id: 9, nom: "Tournesol", photo: "/assets/persisted_img/tournesol.jpg", description: "Fleur solaire qui suit la lumière", dernierArrosage: "2024-02-10", prochainArrosage: "2024-02-17", sante: 88, temperatureIdeale: "18-30°C", exposition: "Plein soleil", engrais: "Tous les mois" },
+  { id: 10, nom: "Tulipe", photo: "/assets/persisted_img/tulipe.jpg", description: "Fleur printanière élégante", dernierArrosage: "2024-02-15", prochainArrosage: "2024-02-22", sante: 87, temperatureIdeale: "10-18°C", exposition: "Soleil", engrais: "Tous les 2 mois" }
 ]);
+
 
 const addPlant = () => {
   if (newPlant.value.nom) {
@@ -45,7 +49,7 @@ const addPlant = () => {
       <v-row class="mb-4">
         <v-col cols="12">
           <v-card class="pa-4 text-center" elevation="4">
-            <v-card-title class="text-h4 font-weight-bold">Inventaire de plantes</v-card-title>
+            <v-card-title class="text-h4 font-weight-bold">Inventaire de mes plantes</v-card-title>
           </v-card>
         </v-col>
       </v-row>
@@ -55,7 +59,7 @@ const addPlant = () => {
           <v-card class="plant-card" @click="selectedPlante = plant">
             <v-img :src="plant.photo" height="200px" cover></v-img>
             <v-card-title>{{ plant.nom }}</v-card-title>
-            <v-card-subtitle>{{ plant.description }}</v-card-subtitle>
+            <v-card-subtitle><strong>Conseil botaniste :</strong> {{ plant.description }}</v-card-subtitle>
             <v-card-text>
               <p><strong>Dernier arrosage :</strong> {{ plant.dernierArrosage }}</p>
               <p><strong>Prochain arrosage :</strong> {{ plant.prochainArrosage }}</p>

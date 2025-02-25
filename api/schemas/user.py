@@ -28,6 +28,16 @@ class User(UserBase, IDSchema):
     id: int
     role: UserRole
 
+    @property
+    def username(self) -> str:
+        """Retourne le nom complet de l'utilisateur"""
+        return f"{self.prenom} {self.nom}"
+
+    @property
+    def name(self) -> str:
+        """Alias pour username pour la compatibilité"""
+        return self.username
+
     class Config:
         from_attributes = True
 

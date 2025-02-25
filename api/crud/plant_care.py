@@ -46,6 +46,24 @@ class CRUDPlantCare:
         
         return query.offset(skip).limit(limit).all()
 
+    def get_available_cares(
+        self,
+        db: Session,
+        *,
+        current_user_id: int,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[PlantCare]:
+        """Récupérer les gardes disponibles pour l'utilisateur (en attente et créées par d'autres utilisateurs)"""
+        return (
+            db.query(PlantCare)
+            .filter(PlantCare.status == CareStatus.PENDING)
+            .filter(PlantCare.owner_id != current_user_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
     def update(
         self,
         db: Session,
@@ -54,7 +72,10 @@ class CRUDPlantCare:
         obj_in: PlantCareUpdate
     ) -> PlantCare:
         obj_data = jsonable_encoder(db_obj)
-        update_data = obj_in.model_dump(exclude_unset=True)
+        if isinstance(obj_in, dict):
+            update_data = obj_in
+        else:
+            update_data = obj_in.model_dump(exclude_unset=True)
         
         for field in obj_data:
             if field in update_data:

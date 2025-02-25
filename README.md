@@ -100,6 +100,10 @@ git clone <repository-url>
 # Rendre les scripts exécutables
 chmod +x bin/up bin/update bin/setup-api bin/setup-env
 
+
+# Configurer les variables d'environnement
+bin/setup-secrets
+
 # Configurer les variables d'environnement
 bin/setup-env
 

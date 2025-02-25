@@ -39,8 +39,11 @@ app.add_middleware(
 assets_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
 if not os.path.exists(assets_directory):
     os.makedirs(assets_directory)
-    os.makedirs(os.path.join(assets_directory, "persisted_img"), exist_ok=True)
-    os.makedirs(os.path.join(assets_directory, "temp_img"), exist_ok=True)
+
+# Créer les sous-dossiers nécessaires
+os.makedirs(os.path.join(assets_directory, "persisted_img"), exist_ok=True)
+os.makedirs(os.path.join(assets_directory, "temp_img"), exist_ok=True)
+os.makedirs(os.path.join(assets_directory, "img"), exist_ok=True)
 
 app.mount("/assets", StaticFiles(directory=assets_directory), name="assets")
 

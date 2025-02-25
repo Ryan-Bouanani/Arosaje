@@ -4,6 +4,7 @@ import 'add_plant_screen.dart';
 import 'plant_care_details_screen.dart';
 import 'package:mobile/models/plant.dart';
 import 'package:mobile/services/plant_service.dart';
+import 'package:mobile/services/plant_care_service.dart';
 
 class HomeAfterLogin extends StatefulWidget {
   const HomeAfterLogin({super.key});
@@ -13,8 +14,8 @@ class HomeAfterLogin extends StatefulWidget {
 }
 
 class _HomeAfterLoginState extends State<HomeAfterLogin> {
-  late final PlantService _plantService;
-  List<Plant> _nearbyPlants = [];
+  late final PlantCareService _plantCareService;
+  List<Map<String, dynamic>> _pendingCares = [];
   bool _isLoading = true;
   String? _error;
 
@@ -26,8 +27,8 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
 
   Future<void> _initializeService() async {
     try {
-      _plantService = await PlantService.init();
-      await _loadPlants();
+      _plantCareService = await PlantCareService.init();
+      await _loadPendingCares();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -36,18 +37,18 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
     }
   }
 
-  Future<void> _loadPlants() async {
+  Future<void> _loadPendingCares() async {
     try {
       setState(() {
         _isLoading = true;
         _error = null;
       });
 
-      final plants = await _plantService.getMyPlants();
+      final cares = await _plantCareService.getPendingPlantCares();
       
       if (mounted) {
         setState(() {
-          _nearbyPlants = plants;
+          _pendingCares = cares;
           _isLoading = false;
         });
       }
@@ -61,7 +62,15 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
     }
   }
 
-  Widget _buildPlantCard(BuildContext context, Plant plant) {
+  Widget _buildCareCard(BuildContext context, Map<String, dynamic> care) {
+    final plant = care['plant'];
+    final startDate = DateTime.parse(care['start_date']);
+    final endDate = DateTime.parse(care['end_date']);
+    
+    String formatDateNumber(int number) {
+      return number.toString().padLeft(2, '0');
+    }
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -69,7 +78,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
           MaterialPageRoute(
             builder: (context) => PlantCareDetailsScreen(
               isCurrentPlant: false,
-              plantId: plant.id,
+              careId: care['id'],
             ),
           ),
         );
@@ -100,17 +109,18 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     topRight: Radius.circular(12),
                   ),
                 ),
-                child: plant.photo != null
+                child: plant != null && plant['photo'] != null
                   ? ClipRRect(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
                       ),
                       child: Image.network(
-                        plant.photo!,
+                        plant['photo'],
                         fit: BoxFit.cover,
                         width: double.infinity,
                         errorBuilder: (context, error, stackTrace) {
+                          print('Erreur de chargement de l\'image: $error');
                           return Icon(
                             Icons.local_florist,
                             size: 40,
@@ -133,17 +143,32 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                 padding: const EdgeInsets.all(8.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      plant.nom,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          plant != null ? plant['nom'] : 'Plante inconnue',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          plant != null ? (plant['espece'] ?? 'Espèce non spécifiée') : 'Espèce inconnue',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                     Text(
-                      plant.espece ?? 'Espèce non spécifiée',
+                      'Du ${formatDateNumber(startDate.day)}/${formatDateNumber(startDate.month)} au ${formatDateNumber(endDate.day)}/${formatDateNumber(endDate.month)}',
                       style: TextStyle(
                         color: Colors.grey[600],
                         fontSize: 12,
@@ -165,7 +190,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
   Widget build(BuildContext context) {
     return BasePage(
       body: RefreshIndicator(
-        onRefresh: _loadPlants,
+        onRefresh: _loadPendingCares,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
@@ -221,9 +246,9 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       style: const TextStyle(color: Colors.red),
                     ),
                   )
-                else if (_nearbyPlants.isEmpty && !_isLoading)
+                else if (_pendingCares.isEmpty && !_isLoading)
                   const Center(
-                    child: Text('Aucune plante disponible pour le moment'),
+                    child: Text('Aucune garde en attente disponible pour le moment'),
                   )
                 else
                   GridView.builder(
@@ -235,10 +260,10 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       crossAxisSpacing: 16,
                       childAspectRatio: 0.75,
                     ),
-                    itemCount: _nearbyPlants.length,
-                    itemBuilder: (context, index) => _buildPlantCard(
+                    itemCount: _pendingCares.length,
+                    itemBuilder: (context, index) => _buildCareCard(
                       context,
-                      _nearbyPlants[index],
+                      _pendingCares[index],
                     ),
                   ),
                 const SizedBox(height: 24),

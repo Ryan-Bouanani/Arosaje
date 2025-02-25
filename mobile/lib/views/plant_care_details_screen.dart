@@ -3,7 +3,13 @@ import 'package:mobile/views/add_report_screen.dart';
 
 class PlantCareDetailsScreen extends StatelessWidget {
   final bool isCurrentPlant;
-  const PlantCareDetailsScreen({super.key, required this.isCurrentPlant});
+  final int plantId;
+
+  const PlantCareDetailsScreen({
+    super.key,
+    required this.isCurrentPlant,
+    required this.plantId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +74,7 @@ class PlantCareDetailsScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: true),
+                            builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: true, plantId: 0),
                           ),
                         );
                       },

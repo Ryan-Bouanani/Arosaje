@@ -471,6 +471,40 @@ start_android_emulator() {
     log_info "Nettoyage du build précédent..."
     flutter clean || true
     
+    # Vérifier et corriger les fins de ligne des fichiers importants
+    log_info "Vérification des fins de ligne des fichiers Flutter..."
+    
+    # Liste des fichiers à vérifier
+    files_to_check=(
+        "pubspec.yaml"
+        "android/gradlew"
+        "android/gradlew.bat"
+        "android/gradle/wrapper/gradle-wrapper.properties"
+    )
+    
+    for file in "${files_to_check[@]}"; do
+        if [ -f "$file" ]; then
+            log_info "Vérification de $file..."
+            if file "$file" | grep -q "CRLF"; then
+                log_warning "⚠️  $file contient des fins de ligne Windows (CRLF)"
+                log_info "Conversion en format Unix (LF)..."
+                dos2unix "$file"
+                log_success "✅ $file converti"
+            fi
+        fi
+    done
+    
+    # Rendre les scripts gradlew exécutables
+    log_info "Attribution des permissions d'exécution..."
+    chmod +x android/gradlew
+    
+    # Vérifier l'environnement Android
+    log_info "Vérification de l'environnement Android..."
+    if [ -f "android/gradlew" ]; then
+        log_info "Test de Gradle..."
+        (cd android && ./gradlew --version) || log_warning "⚠️  Erreur lors du test Gradle"
+    fi
+    
     # Récupérer l'ID de l'émulateur
     emulator_id=$(adb_windows devices | grep "emulator-" | cut -f1)
     if [ -z "$emulator_id" ]; then
@@ -481,7 +515,43 @@ start_android_emulator() {
     
     # Construire et installer l'application avec Flutter avec plus de verbosité
     log_info "Construction et installation de l'application avec Flutter..."
-    if flutter build apk --debug --verbose; then
+    
+    # Vérifier et corriger le shebang du script Flutter
+    flutter_bin=$(which flutter)
+    log_info "Vérification du script Flutter à $flutter_bin..."
+    if [ -f "$flutter_bin" ]; then
+        # Vérifier le shebang
+        first_line=$(head -n 1 "$flutter_bin")
+        if [[ "$first_line" == *$'\r' ]]; then
+            log_warning "⚠️  Le shebang du script Flutter contient des retours chariot Windows"
+            log_info "Tentative de correction du shebang..."
+            # Créer un fichier temporaire
+            temp_file=$(mktemp)
+            # Copier le contenu en supprimant les retours chariot
+            tr -d '\r' < "$flutter_bin" > "$temp_file"
+            # Vérifier si nous avons les permissions pour modifier le fichier Flutter
+            if [ -w "$flutter_bin" ]; then
+                mv "$temp_file" "$flutter_bin"
+                chmod +x "$flutter_bin"
+                log_success "✅ Shebang corrigé"
+            else
+                log_warning "❌ Permissions insuffisantes pour corriger le script Flutter"
+                log_info "➡️  Essayez de lancer la commande suivante avec sudo :"
+                echo "sudo tr -d '\r' < $flutter_bin > ${flutter_bin}.tmp && sudo mv ${flutter_bin}.tmp $flutter_bin && sudo chmod +x $flutter_bin"
+                rm "$temp_file"
+            fi
+        fi
+    fi
+    
+    # Tentative de build avec gestion d'erreur détaillée
+    build_output=$(flutter build apk --debug --verbose 2>&1)
+    build_status=$?
+    
+    # Afficher la sortie complète pour le débogage
+    echo "Sortie complète du build:"
+    echo "$build_output"
+    
+    if [ $build_status -eq 0 ]; then
         log_success "APK construit avec succès"
         
         # Chemin de l'APK (conversion en chemin Windows)

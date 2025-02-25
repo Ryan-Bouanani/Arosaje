@@ -18,7 +18,7 @@ class PlantCare(Base):
     id = Column(Integer, primary_key=True, index=True)
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    caretaker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    caretaker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="SET NULL"), nullable=True)
     
     start_date = Column(DateTime, nullable=False)
@@ -28,6 +28,7 @@ class PlantCare(Base):
     care_instructions = Column(String, nullable=True)
     start_photo_url = Column(String, nullable=True)
     end_photo_url = Column(String, nullable=True)
+    localisation = Column(String, nullable=True)
     
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

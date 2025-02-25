@@ -1,10 +1,11 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from crud.plant import plant
 from schemas.plant import Plant, PlantCreate, PlantUpdate
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.image_handler import ImageHandler
 
 router = APIRouter(
     prefix="/plants",
@@ -26,15 +27,38 @@ def read_plants(
     return plants
 
 @router.post("/", response_model=Plant)
-def create_plant(
-    *,
+async def create_plant(
+    nom: str = Form(...),
+    espece: str = Form(None),
+    description: str = Form(None),
+    photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    plant_in: PlantCreate,
     current_user = Depends(get_current_user)
 ):
     """Crée une nouvelle plante"""
-    plant_in.owner_id = current_user.id
-    return plant.create(db=db, obj_in=plant_in)
+    try:
+        # Créer l'objet PlantCreate avec les données du formulaire
+        plant_data = {
+            "nom": nom,
+            "espece": espece,
+            "description": description,
+            "owner_id": current_user.id
+        }
+
+        # Si une photo est fournie, la sauvegarder
+        if photo:
+            filename, photo_url = await ImageHandler.save_image(photo, "persisted")
+            plant_data["photo"] = photo_url
+
+        # Créer la plante
+        plant_in = PlantCreate(**plant_data)
+        result = plant.create(db=db, obj_in=plant_in)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la création de la plante: {str(e)}"
+        )
 
 @router.get("/{plant_id}", response_model=Plant)
 def read_plant(

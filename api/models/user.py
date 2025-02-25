@@ -32,3 +32,7 @@ class User(Base):
     # Relations pour le statut
     typing_status = relationship("UserTypingStatus", back_populates="user", uselist=True)
     presence = relationship("UserPresence", back_populates="user", uselist=False)
+
+    def get_full_name(self) -> str:
+        """Retourne le nom complet de l'utilisateur"""
+        return f"{self.prenom} {self.nom}"

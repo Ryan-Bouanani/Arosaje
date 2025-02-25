@@ -17,11 +17,11 @@ const isDarkMode = ref(false);
 const plantes = ref([
   { 
     id: 1, 
-    nom: "Ficus", 
-    photo: "/ficus.jpg", 
-    description: "Besoin d'arrosage régulier",
-    dernierArrosage: "2024-01-10",
-    prochainArrosage: "2024-02-28",
+    nom: "Chrysanthème", 
+    photo: "/assets/persisted_img/chrysantheme.jpg", 
+    description: "Fleur d'automne résistante",
+    dernierArrosage: "2024-02-10",
+    prochainArrosage: "2024-02-17",
     santé: 85,
     type: "Plante d'intérieur",
     besoins: "Un sol légèrement humide",
@@ -29,56 +29,56 @@ const plantes = ref([
   },
   { 
     id: 2, 
-    nom: "Cactus", 
-    photo: "/cactus.jpg",
-    description: "Besoin d'arrosage régulier",
-    dernierArrosage: "2024-01-10",
-    prochainArrosage: "2024-02-27",
-    santé: 10,
-    type: "Plante succulente",
-    besoins: "Sol sec entre les arrosages",
-    soins: "Arrosage toutes les 2-3 semaines, lumière directe"
-  },
-  { 
-    id: 3, 
-    nom: "Monstera", 
-    photo: "/monstera.jpg", 
-    description: "Aime l'humidité et la lumière indirecte", 
-    dernierArrosage: "2024-02-12", 
-    prochainArrosage: "2024-02-18", 
-    santé: 90, 
-    type: "Plante tropicale",
-    besoins: "Un sol humide mais bien drainé",
+    nom: "Jasmin", 
+    photo: "/assets/persisted_img/jasmin.jpg",
+    description: "Plante grimpante parfumée",
+    dernierArrosage: "2024-02-08",
+    prochainArrosage: "2024-02-15",
+    santé: 90,
+    type: "Plante grimpante",
+    besoins: "Sol bien drainé, humidité modérée",
     soins: "Arrosage modéré, lumière indirecte"
   },
   { 
+    id: 3, 
+    nom: "Lavande", 
+    photo: "/assets/persisted_img/lavande.jpg", 
+    description: "Apprécie le soleil et un sol bien drainé", 
+    dernierArrosage: "2024-02-01", 
+    prochainArrosage: "2024-02-28", 
+    santé: 88, 
+    type: "Plante aromatique",
+    besoins: "Sol sec et bien drainé",
+    soins: "Arrosage tous les 2 mois, exposition plein soleil"
+  },
+  { 
     id: 4, 
-    nom: "Aloe Vera", 
-    photo: "/aloe-vera.jpg", 
-    description: "Plante résistante nécessitant peu d'eau", 
+    nom: "Lys", 
+    photo: "/assets/persisted_img/lys.jpg", 
+    description: "Fleur élégante au parfum intense", 
     dernierArrosage: "2024-02-05", 
-    prochainArrosage: "2024-02-25", 
+    prochainArrosage: "2024-02-12", 
     santé: 80, 
-    type: "Plante succulente",
-    besoins: "Un sol bien drainé, sec entre les arrosages",
-    soins: "Arrosage tous les 2 mois, plein soleil ou mi-ombre"
+    type: "Plante à fleurs",
+    besoins: "Sol bien drainé et léger",
+    soins: "Arrosage modéré, lumière indirecte"
   },
   { 
     id: 5, 
-    nom: "Pothos", 
-    photo: "/pothos.jpg", 
-    description: "Facile à entretenir, supporte peu de lumière", 
+    nom: "Marguerite", 
+    photo: "/assets/persisted_img/marguerite.jpg", 
+    description: "Fleur champêtre facile à cultiver", 
     dernierArrosage: "2024-02-14", 
     prochainArrosage: "2024-02-21", 
     santé: 92, 
-    type: "Plante grimpante",
-    besoins: "Un sol humide mais pas détrempé",
-    soins: "Arrosage hebdomadaire, lumière faible à moyenne"
+    type: "Plante vivace",
+    besoins: "Sol bien drainé, arrosage modéré",
+    soins: "Arrosage tous les mois, plein soleil"
   },
   { 
     id: 6, 
     nom: "Orchidée", 
-    photo: "/orchidee.jpg", 
+    photo: "/assets/persisted_img/orchidee.jpg", 
     description: "Besoins spécifiques en humidité et lumière", 
     dernierArrosage: "2024-02-08", 
     prochainArrosage: "2024-02-15", 
@@ -89,15 +89,15 @@ const plantes = ref([
   },
   { 
     id: 7, 
-    nom: "Lavande", 
-    photo: "/lavande.jpg", 
-    description: "Apprécie le soleil et un sol bien drainé", 
-    dernierArrosage: "2024-02-01", 
-    prochainArrosage: "2024-02-28", 
-    santé: 88, 
-    type: "Plante aromatique",
-    besoins: "Sol sec et bien drainé",
-    soins: "Arrosage tous les 2 mois, exposition plein soleil"
+    nom: "Pivoine", 
+    photo: "/assets/persisted_img/pivoine.jpg", 
+    description: "Fleur spectaculaire au parfum envoûtant", 
+    dernierArrosage: "2024-02-12", 
+    prochainArrosage: "2024-02-18", 
+    santé: 90, 
+    type: "Plante à fleurs",
+    besoins: "Sol légèrement humide, lumière indirecte",
+    soins: "Arrosage hebdomadaire, exposition au soleil"
   }
 ]);
 
@@ -207,7 +207,7 @@ onMounted(() => {
       <v-list-item
   v-for="(item, index) in [
     { title: 'Plantes', icon: 'mdi-leaf', route: 'plants' },
-    { title: 'Messagerie', icon: 'mdi-message', route: 'MessagerieDialog' },
+    { title: 'Messagerie', icon: 'mdi-message', route: 'messagerie' },
     { title: 'Historique', icon: 'mdi-history', route: 'historique' },
     { title: 'Paramètres', icon: 'mdi-cog', route: 'parametre' }
   ]"

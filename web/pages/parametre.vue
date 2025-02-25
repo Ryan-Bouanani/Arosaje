@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import EmailModal from '@/components/modals/EmailModal.vue';
 import UsernameModal from '@/components/modals/UsernameModal.vue';
 import FullNameModal from '@/components/modals/FullNameModal.vue';
@@ -8,6 +9,7 @@ import CityModal from '@/components/modals/CityModal.vue';
 import PasswordModal from '@/components/modals/PasswordModal.vue';
 import BackButton from '@/components/buttons/BackButton.vue';
 
+const router = useRouter();
 const email = ref('user@example.com');
 const username = ref('username123');
 const fullName = ref('John Doe');
@@ -31,8 +33,7 @@ const openCityModal = () => cityModalVisible.value = true;
 const openPasswordModal = () => passwordModalVisible.value = true;
 
 const logout = () => {
-  console.log('Déconnexion...');
-  // Logique de déconnexion ici
+  router.push('/login');
 };
 
 const uploadAvatar = (event) => {

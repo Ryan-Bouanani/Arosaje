@@ -73,11 +73,13 @@ fi
 
 # Créer les dossiers nécessaires
 echo "📁 Création des dossiers nécessaires..."
-if mkdir -p assets/database assets/img; then
+if mkdir -p assets/database assets/img assets/temp_img assets/persisted_img; then
     FOLDERS_STATUS="✅"
     echo "✅ Dossiers créés:"
     echo "   - assets/database"
     echo "   - assets/img"
+    echo "   - assets/temp_img"
+    echo "   - assets/persisted_img"
 else
     echo "❌ Erreur: Impossible de créer les dossiers"
 fi

@@ -10,7 +10,7 @@ class PendingAccountsList extends StatefulWidget {
 }
 
 class _PendingAccountsListState extends State<PendingAccountsList> {
-  final AuthService _authService = AuthService();
+  late final AuthService _authService;
   List<User> _pendingAccounts = [];
   bool _isLoading = true;
   String? _error;
@@ -18,6 +18,11 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
   @override
   void initState() {
     super.initState();
+    _initializeAuthService();
+  }
+
+  Future<void> _initializeAuthService() async {
+    _authService = await AuthService.getInstance();
     _loadPendingAccounts();
   }
 
@@ -27,7 +32,7 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
         _isLoading = true;
         _error = null;
       });
-      
+
       final accounts = await _authService.getPendingAccounts();
       setState(() {
         _pendingAccounts = accounts;
@@ -63,9 +68,9 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
       );
       await _loadPendingAccounts();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors du rejet : $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Erreur lors du rejet : $e")));
     }
   }
 
@@ -91,9 +96,7 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
     }
 
     if (_pendingAccounts.isEmpty) {
-      return const Center(
-        child: Text("Aucun compte en attente de validation"),
-      );
+      return const Center(child: Text("Aucun compte en attente de validation"));
     }
 
     return RefreshIndicator(
@@ -126,4 +129,4 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
       ),
     );
   }
-} 
+}

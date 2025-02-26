@@ -1,11 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from utils.database import Base, engine, SessionLocal
+from utils.database import Base, engine
 from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin
-from models.user import User, UserRole
-from utils.password import get_password_hash
-from sqlalchemy.orm import Session
+from scripts.init_data import init_data
+import os
 
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
@@ -15,50 +14,11 @@ app = FastAPI(
     version=VERSION
 )
 
-def init_admin_account(db: Session):
-    """Initialise ou met à jour le compte admin"""
-    admin_data = {
-        "email": "root@arosa.fr",
-        "password": "epsi691",
-        "nom": "Admin",
-        "prenom": "System",
-        "role": UserRole.ADMIN,
-        "is_verified": True  # Le compte admin est toujours vérifié
-    }
-
-    # Vérifier si l'admin existe déjà
-    admin = db.query(User).filter(User.email == admin_data["email"]).first()
-    
-    if admin:
-        # Mettre à jour l'admin existant
-        admin.password = get_password_hash(admin_data["password"])
-        admin.role = admin_data["role"]
-        admin.is_verified = admin_data["is_verified"]
-        db.add(admin)
-    else:
-        # Créer un nouvel admin
-        admin = User(
-            email=admin_data["email"],
-            password=get_password_hash(admin_data["password"]),
-            nom=admin_data["nom"],
-            prenom=admin_data["prenom"],
-            role=admin_data["role"],
-            is_verified=admin_data["is_verified"]
-        )
-        db.add(admin)
-    
-    db.commit()
-    print("✅ Compte admin initialisé avec succès")
-
 # Créer les tables
 Base.metadata.create_all(bind=engine)
 
-# Initialiser le compte admin
-db = SessionLocal()
-try:
-    init_admin_account(db)
-finally:
-    db.close()
+# Initialiser les données de base
+init_data()
 
 # Middleware de monitoring
 app.middleware("http")(monitoring_middleware)
@@ -75,7 +35,17 @@ app.add_middleware(
 )
 
 # Monter le dossier static pour les images
-app.mount("/assets", StaticFiles(directory="assets"), name="assets")
+# Utiliser le chemin absolu basé sur la racine de l'application
+assets_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+if not os.path.exists(assets_directory):
+    os.makedirs(assets_directory)
+
+# Créer les sous-dossiers nécessaires
+os.makedirs(os.path.join(assets_directory, "persisted_img"), exist_ok=True)
+os.makedirs(os.path.join(assets_directory, "temp_img"), exist_ok=True)
+os.makedirs(os.path.join(assets_directory, "img"), exist_ok=True)
+
+app.mount("/assets", StaticFiles(directory=assets_directory), name="assets")
 
 # Inclure les routers
 app.include_router(auth.router)

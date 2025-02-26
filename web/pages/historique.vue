@@ -4,27 +4,48 @@ import { ref } from 'vue';
 import BackButton from '@/components/buttons/BackButton.vue';
 
 const historique = ref([
-  { 
+{ 
     id: 1, 
-    nom: "Ficus", 
-    dateDebut: "2024-01-10", 
-    dateFin: "2024-01-20",
+    nom: "Chrysanthème", 
+    dateDebut: "2024-02-10", 
+    dateFin: "2024-02-17",
     status: "terminé",
     gardienNom: "Alice Martin",
     notes: "Arrosage effectué selon les instructions",
-    photo: "/ficus.jpg"
+    photo: "/assets/persisted_img/chrysantheme.jpg"
   },
   { 
     id: 2, 
-    nom: "Cactus", 
-    dateDebut: "2024-02-01", 
+    nom: "Jasmin", 
+    dateDebut: "2024-02-08", 
     dateFin: "2024-02-15",
     status: "en cours",
     gardienNom: "Thomas Dubois",
     notes: "Plante en excellente condition",
-    photo: "/cactus.jpg"
+    photo: "/assets/persisted_img/jasmin.jpg"
+  },
+  { 
+    id: 3, 
+    nom: "Lavande", 
+    dateDebut: "2024-02-01", 
+    dateFin: "2024-02-28",
+    status: "terminé",
+    gardienNom: "Sophie Lemoine",
+    notes: "Arrosage fait avec soin, la plante est en pleine forme",
+    photo: "/assets/persisted_img/lavande.jpg"
+  },
+  { 
+    id: 4, 
+    nom: "Marguerite", 
+    dateDebut: "2024-02-14", 
+    dateFin: "2024-02-21",
+    status: "en cours",
+    gardienNom: "Paul Lefevre",
+    notes: "Prochain arrosage prévu dans quelques jours",
+    photo: "/assets/persisted_img/marguerite.jpg"
   }
 ]);
+
 
 const getStatusColor = (status) => {
   return status === 'terminé' ? 'success' : 'info';

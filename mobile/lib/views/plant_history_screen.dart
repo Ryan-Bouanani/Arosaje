@@ -8,20 +8,51 @@ class PlantHistoryScreen extends StatefulWidget {
   _PlantHistoryScreenState createState() => _PlantHistoryScreenState();
 }
 
-class _PlantHistoryScreenState extends State<PlantHistoryScreen> with SingleTickerProviderStateMixin {
+class _PlantHistoryScreenState extends State<PlantHistoryScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
 
   final List<Map<String, String>> plantsConfiees = [
-    {'name': 'Plante A', 'type': 'Rose rouge', 'date': '10/15/2021', 'gardien': 'Marie', 'image': 'assets/monstera.webp'},
-    {'name': 'Plante B', 'type': 'Lys blanc', 'date': '09/27/2021', 'gardien': 'Jean', 'image': 'assets/ficus.png'},
-    {'name': 'Plante C', 'type': 'Orchidée violette', 'date': '08/02/2021', 'gardien': 'Sophie', 'image': 'assets/monstera.webp'},
+    {
+      'name': 'Plante A',
+      'type': 'Rose rouge',
+      'date': '10/15/2021',
+      'gardien': 'Marie',
+      'image': 'assets/monstera.webp',
+    },
+    {
+      'name': 'Plante B',
+      'type': 'Lys blanc',
+      'date': '09/27/2021',
+      'gardien': 'Jean',
+      'image': 'assets/ficus.png',
+    },
+    {
+      'name': 'Plante C',
+      'type': 'Orchidée violette',
+      'date': '08/02/2021',
+      'gardien': 'Sophie',
+      'image': 'assets/monstera.webp',
+    },
   ];
 
   final List<Map<String, String>> plantsGardees = [
-    {'name': 'Plante D', 'type': 'Ficus', 'date': '11/05/2021', 'gardien': 'Paul', 'image': 'assets/ficus.png'},
-    {'name': 'Plante E', 'type': 'Cactus', 'date': '07/19/2021', 'gardien': 'Emma', 'image': 'assets/monstera.webp'},
+    {
+      'name': 'Plante D',
+      'type': 'Ficus',
+      'date': '11/05/2021',
+      'gardien': 'Paul',
+      'image': 'assets/ficus.png',
+    },
+    {
+      'name': 'Plante E',
+      'type': 'Cactus',
+      'date': '07/19/2021',
+      'gardien': 'Emma',
+      'image': 'assets/monstera.webp',
+    },
   ];
 
   @override
@@ -43,10 +74,7 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> with SingleTick
       appBar: AppBar(
         title: const Text("Historique"),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -97,9 +125,12 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> with SingleTick
   }
 
   Widget _buildPlantList(List<Map<String, String>> plants) {
-    final filteredPlants = plants
-        .where((plant) => plant['name']!.toLowerCase().contains(_searchQuery))
-        .toList();
+    final filteredPlants =
+        plants
+            .where(
+              (plant) => plant['name']!.toLowerCase().contains(_searchQuery),
+            )
+            .toList();
 
     return ListView.builder(
       padding: const EdgeInsets.all(8),
@@ -132,7 +163,11 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen> with SingleTick
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const PlantCareDetailsScreen(isCurrentPlant: false),
+                    builder:
+                        (context) => const PlantCareDetailsScreen(
+                          isCurrentPlant: false,
+                          careId: 1,
+                        ),
                   ),
                 );
               },

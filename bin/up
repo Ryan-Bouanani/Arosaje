@@ -256,13 +256,18 @@ start_services() {
         exit 1
     fi
 
-    # Si le service mobile est demandé, demander les informations nécessaires
+    # Si le service mobile est demandé, récupérer automatiquement le nom d'utilisateur Windows
     if [[ " ${services[@]} " =~ " mobile " ]]; then
-        # Demander le nom d'utilisateur Windows
-        read -p "Entrez votre nom d'utilisateur Windows : " windows_user
+        windows_user=$(get_windows_username)
         if [ -z "$windows_user" ]; then
-            echo "❌ Aucun nom d'utilisateur fourni. Le script ne peut pas continuer."
-            exit 1
+            log_warning "❌ Impossible de récupérer automatiquement le nom d'utilisateur Windows"
+            read -p "Veuillez entrer votre nom d'utilisateur Windows manuellement : " windows_user
+            if [ -z "$windows_user" ]; then
+                echo "❌ Aucun nom d'utilisateur fourni. Le script ne peut pas continuer."
+                exit 1
+            fi
+        else
+            log_success "✅ Nom d'utilisateur Windows détecté : $windows_user"
         fi
 
         # Lister les AVD disponibles
@@ -471,6 +476,27 @@ check_env_files() {
     fi
     
     log_success "Fichiers d'environnement validés"
+}
+
+# Fonction pour récupérer automatiquement le nom d'utilisateur Windows
+get_windows_username() {
+    # Essayer de récupérer le nom d'utilisateur Windows via /mnt/c/Windows/System32/cmd.exe
+    local win_username
+    win_username=$(powershell.exe '$env:USERNAME' 2>/dev/null | tr -d '\r')
+    
+    if [ -n "$win_username" ]; then
+        echo "$win_username"
+        return 0
+    fi
+    
+    # Fallback : essayer de récupérer depuis le chemin du répertoire utilisateur Windows
+    win_username=$(cmd.exe /c "echo %USERNAME%" 2>/dev/null | tr -d '\r')
+    if [ -n "$win_username" ]; then
+        echo "$win_username"
+        return 0
+    fi
+    
+    return 1
 }
 
 case "$1" in

@@ -24,6 +24,12 @@ export class ApiService {
   private static getBaseUrl(): string {
     return useRuntimeConfig().public.apiUrl
   }
+  static buildPhotoUrl(photoPath: string | null): string {
+    if (!photoPath) return '';
+    if (photoPath.startsWith('http')) return photoPath;
+    console.log(photoPath)
+    return `${this.getBaseUrl()}/${photoPath}`;
+  }
 
   static async login(data: LoginData): Promise<ApiResponse<any>> {
     try {
@@ -58,6 +64,7 @@ export class ApiService {
         error: error.message || 'Une erreur est survenue lors de la connexion'
       }
     }
+
   }
 
   static async register(data: RegisterData): Promise<ApiResponse<any>> {
@@ -139,4 +146,30 @@ export class ApiService {
       };
     }
   }
+
+  
+static async getPlants(): Promise<ApiResponse<any>> {
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${this.getBaseUrl()}/plants/`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.detail || 'Erreur lors de la récupération des plantes');
+    }
+
+    return { success: true, data: result };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Une erreur est survenue lors de la récupération des plantes',
+    };
+  }
+}
 } 

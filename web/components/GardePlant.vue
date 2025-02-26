@@ -7,6 +7,10 @@ export default {
     plantName: {
       type: String,
       required: true
+    },
+    plantPhoto: { // Nouvelle prop pour recevoir l'URL de la photo
+      type: String,
+      required: true
     }
   },
   data() {
@@ -32,44 +36,19 @@ export default {
     }
   },
   methods: {
-    validateFileExtension(event) {
-      const file = event.target.files[0];
-
-      if (!file) {
-        this.photo = null;
-        return;
-      }
-
-      const isValidExtension = /\.(jpg|jpeg|png)$/i.test(file.name);
-      const isValidMimeType = file.type === 'image/jpeg' || file.type === 'image/png';
-
-      if (!isValidExtension || !isValidMimeType) {
-        this.errorMessage = "Seuls les fichiers JPG ou PNG sont autorisés.";
-        this.photo = null;
-        this.photoPreview = null;
-      } else {
-        this.errorMessage = "";
-        this.photo = file;
-        this.photoPreview = URL.createObjectURL(file);
-      }
-    },
     async handleSubmit() {
-      if (!this.photo) {
-        alert("Veuillez ajouter une photo valide avant de soumettre.");
-        return;
-      }
-
       try {
-        const response = await ApiService.createGarde({
-          name: this.gardeData.name,
-          espece: this.gardeData.espece,
-          description: this.gardeData.description,
-          soins: this.gardeData.soins,
-          location: this.gardeData.location,
-          startDate: this.gardeData.startDate,
-          endDate: this.gardeData.endDate,
-          photo: this.photo
-        });
+    const response = await ApiService.createGarde({
+      name: this.gardeData.name,
+      espece: this.gardeData.espece,
+      description: this.gardeData.description,
+      soins: this.gardeData.soins,
+      location: this.gardeData.location,
+      startDate: this.gardeData.startDate,
+      endDate: this.gardeData.endDate,
+      // Retire la vérification de la photo ici
+      // photo: this.photo  // Retire cette ligne si tu n'as plus besoin de la photo
+    });
 
         if (response.success) {
           alert('Plante ajoutée à la garde avec succès !');
@@ -101,22 +80,8 @@ export default {
       <div class="mb-6">
         <h2 class="text-lg mb-3">Faites garder votre plante !</h2>
 
-        <v-file-input
-          label="Photo de la plante"
-          accept="image/jpeg, image/png"
-          show-size
-          outlined
-          rounded="lg"
-          density="comfortable"
-          v-model="photo"
-          @change="validateFileExtension"
-          class="mb-4"
-        ></v-file-input>
-
-        <p v-if="errorMessage" class="text-red-500 text-sm mt-1">{{ errorMessage }}</p>
-
-        <div v-if="photoPreview" class="mt-4 mb-4 image-preview">
-           <img :src="photoPreview" alt="Aperçu" class="preview-img" />
+        <div v-if="plantPhoto" class="mt-4 mb-4 image-preview">
+          <img :src="plantPhoto" alt="Photo de la plante" class="preview-img" />
         </div>
 
         <form @submit.prevent="handleSubmit">

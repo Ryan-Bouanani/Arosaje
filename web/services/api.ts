@@ -24,6 +24,12 @@ export class ApiService {
   private static getBaseUrl(): string {
     return useRuntimeConfig().public.apiUrl
   }
+  static buildPhotoUrl(photoPath: string | null): string {
+    if (!photoPath) return '';
+    if (photoPath.startsWith('http')) return photoPath;
+    console.log(photoPath)
+    return `${this.getBaseUrl()}/${photoPath}`;
+  }
 
   static async login(data: LoginData): Promise<ApiResponse<any>> {
     try {
@@ -58,6 +64,7 @@ export class ApiService {
         error: error.message || 'Une erreur est survenue lors de la connexion'
       }
     }
+
   }
 
   static async register(data: RegisterData): Promise<ApiResponse<any>> {
@@ -165,5 +172,4 @@ static async getPlants(): Promise<ApiResponse<any>> {
     };
   }
 }
-
 } 

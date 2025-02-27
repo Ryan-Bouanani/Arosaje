@@ -12,6 +12,11 @@ export default {
       type: String,
       required: true
     }
+  ,
+  plantId: {
+      type: [String, Number],
+      required: true
+    },
   },
   data() {
     return {
@@ -39,7 +44,7 @@ export default {
     async handleSubmit() {
       try {
         const response = await ApiService.createPlantCare({
-          plant_id: 1,  // Remplacez par l'ID de la plante, si disponible
+          plant_id: this.plantId,  // Remplacez par l'ID de la plante, si disponible
           caretaker_id: null,  // Optionnel si vous avez un caretaker_id à transmettre
           start_date: this.gardeData.startDate,
           end_date: this.gardeData.endDate,

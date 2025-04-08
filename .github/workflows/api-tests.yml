@@ -32,6 +32,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+      
+      - name: Install Redis CLI
+        run: |
+          # Installer redis-cli
+          sudo apt-get update
+          sudo apt-get install -y redis-tools
+          redis-cli --version
           
       - name: Install dependencies
         working-directory: ./api
@@ -50,6 +57,7 @@ jobs:
           mkdir -p logs
           # S'assurer que les permissions sont correctes
           chmod -R 777 assets
+          chmod -R 777 logs
       
       - name: Préparer la base de données SQLite
         working-directory: ./api
@@ -89,6 +97,8 @@ jobs:
           # Variables pour les tests qui utilisent un compte admin
           ADMIN_EMAIL=admin@example.com
           ADMIN_PASSWORD=admin123secure
+          LOG_LEVEL=DEBUG
+          LOG_FILE=logs/api.log
           EOL
           
           cat .env.test
@@ -181,9 +191,12 @@ jobs:
           export REDIS_URL="redis://localhost:6379"
           export ADMIN_EMAIL="admin@example.com"
           export ADMIN_PASSWORD="admin123secure"
+          export LOG_LEVEL=DEBUG
+          export LOG_FILE=logs/api.log
           
           # Démarrer l'API en mode test avec la base SQLite
-          nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 --env-file .env.test > api_log.txt 2>&1 &
+          # Rediriger stdout et stderr vers un fichier de log spécifique
+          nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 --env-file .env.test > logs/uvicorn.log 2>&1 &
           echo $! > api_pid.txt
           
           # Attente active pour que le serveur soit prêt
@@ -193,7 +206,10 @@ jobs:
           until $(curl --output /dev/null --silent --fail http://localhost:8000/health); do
             if [ $retries -eq $max_retries ]; then
               echo "L'API n'a pas démarré après $max_retries tentatives"
-              cat api_log.txt
+              cat logs/uvicorn.log
+              if [ -f logs/api.log ]; then
+                cat logs/api.log
+              fi
               exit 1
             fi
             printf '.'
@@ -225,8 +241,23 @@ jobs:
         if: ${{ failure() }}
         working-directory: ./api
         run: |
-          echo "=== Logs de l'API ==="
-          cat api_log.txt
+          echo "=== Logs de l'API (Uvicorn) ==="
+          if [ -f logs/uvicorn.log ]; then
+            cat logs/uvicorn.log
+          else
+            echo "Fichier logs/uvicorn.log introuvable"
+          fi
+          
+          echo "=== Logs de l'API (Application) ==="
+          if [ -f logs/api.log ]; then
+            cat logs/api.log
+          else
+            echo "Fichier logs/api.log introuvable"
+            ls -la logs/
+          fi
+          
+          echo "=== Contenu du répertoire logs ==="
+          ls -la logs/
           
           echo "=== Contenu du répertoire de la base de données ==="
           ls -la assets/database/

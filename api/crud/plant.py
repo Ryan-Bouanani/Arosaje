@@ -22,5 +22,4 @@ class CRUDPlant(CRUDBase[Plant, PlantCreate, PlantUpdate]):
             .all()
         )
 
-# Créer une instance pour l'utiliser dans les routes
 plant = CRUDPlant(Plant) 

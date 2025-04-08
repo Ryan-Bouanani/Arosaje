@@ -33,12 +33,23 @@ jobs:
         with:
           python-version: '3.10'
       
+      - name: Configure hosts file
+        run: |
+          # Ajouter une entrée dans /etc/hosts pour api-redis
+          echo "127.0.0.1 api-redis" | sudo tee -a /etc/hosts
+          # Vérifier que l'entrée a été ajoutée
+          cat /etc/hosts
+          # Vérifier que api-redis résout vers localhost
+          ping -c 1 api-redis
+          
       - name: Install Redis CLI
         run: |
           # Installer redis-cli
           sudo apt-get update
           sudo apt-get install -y redis-tools
           redis-cli --version
+          # Tester la connexion à Redis avec le nom d'hôte api-redis
+          redis-cli -h api-redis ping
           
       - name: Install dependencies
         working-directory: ./api
@@ -71,8 +82,8 @@ jobs:
       
       - name: Vérifier la connexion Redis
         run: |
-          # Vérifier que Redis est accessible
-          redis-cli ping
+          # Vérifier que Redis est accessible via api-redis
+          redis-cli -h api-redis ping
       
       - name: Create test environment file
         working-directory: ./api
@@ -80,7 +91,7 @@ jobs:
           # Créer le fichier d'environnement pour les tests
           cat > .env.test << EOL
           DATABASE_URL=sqlite:///assets/database/test.db
-          REDIS_URL=redis://localhost:6379
+          REDIS_URL=redis://api-redis:6379
           REDIS_PASSWORD=
           ENVIRONMENT=test
           JWT_SECRET=test_secret_key_for_github_actions
@@ -125,8 +136,8 @@ jobs:
           cat > test_redis.py << EOL
           import redis
           
-          r = redis.Redis(host='localhost', port=6379, db=0)
-          print("Test de connexion à Redis...")
+          r = redis.Redis(host='api-redis', port=6379, db=0)
+          print("Test de connexion à Redis via api-redis...")
           
           # Tester set/get
           r.set('test_key', 'test_value')
@@ -188,7 +199,7 @@ jobs:
         run: |
           # Définir explicitement les variables d'environnement
           export DATABASE_URL="sqlite:///assets/database/test.db"
-          export REDIS_URL="redis://localhost:6379"
+          export REDIS_URL="redis://api-redis:6379"
           export ADMIN_EMAIL="admin@example.com"
           export ADMIN_PASSWORD="admin123secure"
           export LOG_LEVEL=DEBUG
@@ -225,9 +236,12 @@ jobs:
           # Vérifier à nouveau la disponibilité de l'API avant de lancer les tests
           curl -v http://localhost:8000/health
           
+          # Vérifier que Redis est accessible via api-redis
+          redis-cli -h api-redis ping
+          
           # Exécuter les tests avec SQLite et Redis
           export DATABASE_URL="sqlite:///assets/database/test.db"
-          export REDIS_URL="redis://localhost:6379"
+          export REDIS_URL="redis://api-redis:6379"
           export ADMIN_EMAIL="admin@example.com"
           export ADMIN_PASSWORD="admin123secure"
           
@@ -266,8 +280,8 @@ jobs:
           grep -r "DATABASE_URL\|engine\|create_engine\|sqlite" --include="*.py" .
           
           echo "=== Test Redis ==="
-          redis-cli ping
-          redis-cli keys '*'
+          redis-cli -h api-redis ping
+          redis-cli -h api-redis keys '*'
           
       - name: Arrêt de l'API
         if: ${{ always() }}

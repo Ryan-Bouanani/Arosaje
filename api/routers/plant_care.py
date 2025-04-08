@@ -67,16 +67,22 @@ def read_plant_cares(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    status: CareStatus = None,
-    as_owner: bool = None,
+    status: Optional[CareStatus] = None,
+    as_owner: Optional[bool] = None,
+    as_caretaker: Optional[bool] = None,
     current_user: User = Depends(get_current_user)
 ):
     """Liste les gardes de plantes"""
     if as_owner is True:
         return plant_care.get_multi(db, skip=skip, limit=limit, owner_id=current_user.id, status=status)
+    elif as_caretaker is True:
+        return plant_care.get_multi(db, skip=skip, limit=limit, caretaker_id=current_user.id, status=status)
     elif as_owner is False:
         # Récupérer les gardes disponibles (en attente et créées par d'autres utilisateurs)
         return plant_care.get_available_cares(db, current_user_id=current_user.id, skip=skip, limit=limit)
+    else:
+        # Par défaut, retourner une liste vide
+        return []
 
 @router.get("/{care_id}", response_model=PlantCareInDB)
 def get_plant_care(

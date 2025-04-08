@@ -62,6 +62,10 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
   // Point central de la carte (Paris)
   final LatLng _center = const LatLng(48.8566, 2.3522);
 
+  String formatDateNumber(int number) {
+    return number.toString().padLeft(2, '0');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -317,22 +321,20 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
     final startDate = DateTime.parse(care['start_date']);
     final endDate = DateTime.parse(care['end_date']);
 
-    String formatDateNumber(int number) {
-      return number.toString().padLeft(2, '0');
-    }
-
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder:
-                (context) => PlantCareDetailsScreen(
-                  isCurrentPlant: false,
-                  careId: care['id'],
-                ),
+            builder: (context) => PlantCareDetailsScreen(
+              isCurrentPlant: false,
+              careId: care['id'],
+            ),
           ),
         );
+        if (result == true) {
+          await _loadPendingCares();
+        }
       },
       child: Container(
         decoration: BoxDecoration(
@@ -545,9 +547,6 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                 // Carte OpenStreetMap
                 _buildMap(),
                 const SizedBox(height: 24),
-                // Liste des plantes à proximité
-                _buildNearbyPlantsList(),
-                const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -581,20 +580,97 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     ),
                   )
                 else
-                  GridView.builder(
+                  ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 0.75,
-                        ),
                     itemCount: _pendingCares.length,
-                    itemBuilder:
-                        (context, index) =>
-                            _buildCareCard(context, _pendingCares[index]),
+                    itemBuilder: (context, index) {
+                      final care = _pendingCares[index];
+                      final plant = care['plant'];
+                      final startDate = DateTime.parse(care['start_date']);
+                      final endDate = DateTime.parse(care['end_date']);
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          leading: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: plant != null && plant['photo'] != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      plant['photo'],
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(
+                                          Icons.local_florist,
+                                          size: 25,
+                                          color: Colors.green[700],
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.local_florist,
+                                    size: 25,
+                                    color: Colors.green[700],
+                                  ),
+                          ),
+                          title: Text(
+                            plant != null ? plant['nom'] : 'Plante inconnue',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(plant != null ? (plant['espece'] ?? 'Espèce non spécifiée') : 'Espèce inconnue'),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 14,
+                                    color: Colors.green[700],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      'Du ${formatDateNumber(startDate.day)}/${formatDateNumber(startDate.month)} au ${formatDateNumber(endDate.day)}/${formatDateNumber(endDate.month)}',
+                                      style: const TextStyle(fontSize: 12),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PlantCareDetailsScreen(
+                                  isCurrentPlant: false,
+                                  careId: care['id'],
+                                ),
+                              ),
+                            );
+                            if (result == true) {
+                              await _loadPendingCares();
+                            }
+                          },
+                        ),
+                      );
+                    },
                   ),
                 const SizedBox(height: 24),
                 SizedBox(

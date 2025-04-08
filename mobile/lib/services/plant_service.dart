@@ -71,7 +71,7 @@ class PlantService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
-      Uri.parse('$baseUrl/plants/'),
+      Uri.parse('$baseUrl/plants/?owner_id=${await _storageService.getUserId()}'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -115,6 +115,54 @@ class PlantService {
       }).toList();
     } else {
       throw Exception('Échec du chargement des plantes');
+    }
+  }
+
+  Future<List<Plant>> getAllPlants() async {
+    final token = await _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/plants/'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> jsonResponse = json.decode(response.body);
+      return jsonResponse.map((data) {
+        if (data['photo'] != null) {
+          data['photo'] = _buildPhotoUrl(data['photo']);
+        }
+        return Plant.fromJson(data);
+      }).toList();
+    } else {
+      throw Exception('Échec du chargement des plantes');
+    }
+  }
+
+  Future<Plant> getPlantDetails(int plantId) async {
+    final token = await _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/plants/$plantId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['photo'] != null) {
+        data['photo'] = _buildPhotoUrl(data['photo']);
+      }
+      return Plant.fromJson(data);
+    } else {
+      throw Exception('Échec du chargement des détails de la plante');
     }
   }
 } 

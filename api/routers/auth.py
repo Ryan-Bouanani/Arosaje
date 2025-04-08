@@ -71,7 +71,6 @@ async def register(
             user_name=f"{user.prenom} {user.nom}"
         )
     except Exception as e:
-        # Log l'erreur mais ne pas bloquer l'inscription
         print(f"Erreur lors de l'envoi de l'email de bienvenue: {e}")
     
     return user

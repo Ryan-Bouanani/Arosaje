@@ -92,6 +92,16 @@ jobs:
           REDIS_URL: redis://localhost:6379
           ENVIRONMENT: test
           JWT_SECRET: test_secret_key_for_github_actions
+          # Variables d'environnement pour l'email (nécessaires pour lancer l'API)
+          MAIL_USERNAME: test@example.com
+          MAIL_PASSWORD: test_password
+          MAIL_FROM: test@example.com
+          MAIL_PORT: 587
+          MAIL_SERVER: smtp.example.com
+          MAIL_FROM_NAME: Test API
+          MAIL_STARTTLS: false
+          MAIL_SSL_TLS: false
+          USE_CREDENTIALS: false
       
       - name: Run tests
         working-directory: ./api
@@ -105,6 +115,16 @@ jobs:
           REDIS_URL: redis://localhost:6379
           ENVIRONMENT: test
           JWT_SECRET: test_secret_key_for_github_actions
+          # Variables d'environnement pour l'email (nécessaires pour lancer l'API)
+          MAIL_USERNAME: test@example.com
+          MAIL_PASSWORD: test_password
+          MAIL_FROM: test@example.com
+          MAIL_PORT: 587
+          MAIL_SERVER: smtp.example.com
+          MAIL_FROM_NAME: Test API
+          MAIL_STARTTLS: false
+          MAIL_SSL_TLS: false
+          USE_CREDENTIALS: false
       
       - name: API logs en cas d'échec
         if: ${{ failure() }}

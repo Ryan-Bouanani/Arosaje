@@ -5,7 +5,7 @@ from utils.security import get_current_user
 router = APIRouter(
     prefix="/monitoring",
     tags=["monitoring"],
-    dependencies=[Depends(get_current_user)]  # Sécuriser l'accès aux métriques
+    dependencies=[Depends(get_current_user)]
 )
 
 @router.get("/stats")

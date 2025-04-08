@@ -42,7 +42,7 @@ def test_password():
 @pytest.fixture
 def admin_email():
     """Email admin pour les tests"""
-    return "root@arosa.fr"
+    return "root@arosaje.fr"
 
 @pytest.fixture
 def admin_password():

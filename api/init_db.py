@@ -1,5 +1,4 @@
 from utils.database import Base, engine
-# Import tous les modèles pour que SQLAlchemy puisse créer les tables
 from models.user import User
 from models.plant import Plant
 from models.plant_care import PlantCare

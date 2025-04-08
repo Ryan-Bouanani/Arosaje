@@ -9,7 +9,7 @@ class Plant(Base):
     espece = Column(String, nullable=True)
     description = Column(String, nullable=True)
     photo = Column(String, nullable=True)
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)  # Propriétaire de la plante
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relations
     owner = relationship("User", back_populates="owned_plants")

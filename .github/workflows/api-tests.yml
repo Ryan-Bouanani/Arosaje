@@ -1,0 +1,133 @@
+name: API Tests
+
+on:
+  pull_request:
+    paths:
+      - 'api/**'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'api/**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      # Service PostgreSQL pour les tests
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: arosaje_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      # Service Redis pour les tests
+      redis:
+        image: redis:6
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: Install dependencies
+        working-directory: ./api
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          
+      - name: Create required directories
+        working-directory: ./api
+        run: |
+          mkdir -p assets/persisted_img
+          mkdir -p assets/temp_img
+          mkdir -p assets/img
+          mkdir -p logs
+      
+      - name: Create test environment file
+        working-directory: ./api
+        run: |
+          cat > .env.test << EOL
+          DATABASE_URL=postgresql://postgres:postgres@localhost:5432/arosaje_test
+          REDIS_URL=redis://localhost:6379
+          ENVIRONMENT=test
+          JWT_SECRET=test_secret_key_for_github_actions
+          MAIL_USERNAME=test@example.com
+          MAIL_PASSWORD=test_password
+          MAIL_FROM=test@example.com
+          MAIL_PORT=587
+          MAIL_SERVER=smtp.example.com
+          MAIL_FROM_NAME=Test API
+          MAIL_STARTTLS=false
+          MAIL_SSL_TLS=false
+          USE_CREDENTIALS=false
+          DISABLE_EMAIL=true
+          EOL
+          
+          cat .env.test
+
+      - name: Start API server
+        working-directory: ./api
+        run: |
+          # Démarrer l'API en mode test
+          nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 --env-file .env.test > api_log.txt 2>&1 &
+          echo $! > api_pid.txt
+          
+          # Attente active pour que le serveur soit prêt
+          echo "Attente du démarrage de l'API..."
+          max_retries=30
+          retries=0
+          until $(curl --output /dev/null --silent --fail http://localhost:8000/health); do
+            if [ $retries -eq $max_retries ]; then
+              echo "L'API n'a pas démarré après $max_retries tentatives"
+              cat api_log.txt
+              exit 1
+            fi
+            printf '.'
+            retries=$((retries+1))
+            sleep 2
+          done
+          echo "API démarrée avec succès!"
+          curl -v http://localhost:8000/health
+      
+      - name: Run tests
+        working-directory: ./api
+        run: |
+          # Vérifier à nouveau la disponibilité de l'API avant de lancer les tests
+          curl -v http://localhost:8000/health
+          # Exécuter les tests avec le même environnement
+          python -m pytest tests/workflows/ -v
+      
+      - name: API logs en cas d'échec
+        if: ${{ failure() }}
+        working-directory: ./api
+        run: |
+          echo "=== Logs de l'API ==="
+          cat api_log.txt
+          
+      - name: Arrêt de l'API
+        if: ${{ always() }}
+        working-directory: ./api
+        run: |
+          if [ -f api_pid.txt ]; then
+            kill $(cat api_pid.txt) || true
+          fi 

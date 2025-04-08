@@ -5,6 +5,8 @@ marks:
       - api_url
       - test_password
       - test_user_email
+      - admin_email
+      - admin_password
 
 stages:
   # 1. Création d'un botaniste
@@ -25,6 +27,34 @@ stages:
         json:
           botanist_id: id
 
+  # 1.1 Login administrateur
+  - name: Login administrateur
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{admin_email}"
+        password: "{admin_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          admin_token: access_token
+
+  # 1.2 Validation du compte botaniste
+  - name: Valider le compte botaniste
+    request:
+      url: "{api_url}/admin/verify/{botanist_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {admin_token}"
+    response:
+      status_code: 200
+      json:
+        message: "Compte vérifié avec succès"
+
   # 2. Création d'un propriétaire de plante
   - name: Créer un compte propriétaire
     request:
@@ -42,6 +72,18 @@ stages:
       save:
         json:
           owner_id: id
+
+  # 2.1 Validation du compte propriétaire
+  - name: Valider le compte propriétaire
+    request:
+      url: "{api_url}/admin/verify/{owner_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {admin_token}"
+    response:
+      status_code: 200
+      json:
+        message: "Compte vérifié avec succès"
 
   # 3. Login du propriétaire
   - name: Login propriétaire
@@ -66,11 +108,11 @@ stages:
       method: POST
       headers:
         Authorization: "Bearer {owner_token}"
-      json:
+        content-type: application/x-www-form-urlencoded
+      data:
         nom: "Orchidée"
         espece: "Phalaenopsis"
         description: "Orchidée d'intérieur"
-        owner_id: !int "{owner_id}"
     response:
       status_code: 200
       save:
@@ -105,7 +147,7 @@ stages:
     response:
       status_code: 200
 
-  # 7. Création d'un conseil
+  # 7. Création d'un conseil (automatiquement validé pour les botanistes)
   - name: Créer un conseil
     request:
       url: "{api_url}/advices/"
@@ -123,71 +165,9 @@ stages:
       verify_response_with:
         function: validators.advice_validators:validate_advice_response
         extra_kwargs:
-          expected_status: "pending"
-
-  # 8. Création d'un second botaniste pour validation
-  - name: Créer un compte second botaniste
-    request:
-      url: "{api_url}/auth/register"
-      method: POST
-      json:
-        email: "botanist2_{test_user_email}"
-        password: "{test_password}"
-        nom: "Petit"
-        prenom: "Marie"
-        telephone: "0123456780"
-        localisation: "Bordeaux"
-    response:
-      status_code: 200
-      save:
-        json:
-          botanist2_id: id
-
-  # 9. Login du second botaniste
-  - name: Login second botaniste
-    request:
-      url: "{api_url}/auth/login"
-      method: POST
-      headers:
-        content-type: application/x-www-form-urlencoded
-      data:
-        username: "botanist2_{test_user_email}"
-        password: "{test_password}"
-    response:
-      status_code: 200
-      save:
-        json:
-          botanist2_token: access_token
-
-  # 10. Définir le rôle du second botaniste
-  - name: Mettre à jour le rôle en botaniste pour le second botaniste
-    request:
-      url: "{api_url}/auth/users/{botanist2_id}/role"
-      method: PUT
-      headers:
-        Authorization: "Bearer {botanist2_token}"
-      json:
-        role: "botanist"
-    response:
-      status_code: 200
-
-  # 11. Validation du conseil par le second botaniste
-  - name: Valider le conseil
-    request:
-      url: "{api_url}/advices/{advice_id}/validate"
-      method: PUT
-      headers:
-        Authorization: "Bearer {botanist2_token}"
-      params:
-        status: "validated"
-    response:
-      status_code: 200
-      verify_response_with:
-        function: validators.advice_validators:validate_advice_response
-        extra_kwargs:
           expected_status: "validated"
 
-  # 12. Vérification finale
+  # 8. Vérification finale
   - name: Vérifier l'état final du conseil
     request:
       url: "{api_url}/advices/{advice_id}"

@@ -40,6 +40,16 @@ def test_password():
     return "test123secure"
 
 @pytest.fixture
+def admin_email():
+    """Email admin pour les tests"""
+    return "root@arosa.fr"
+
+@pytest.fixture
+def admin_password():
+    """Mot de passe admin pour les tests"""
+    return "epsi691"
+
+@pytest.fixture
 def test_image_path():
     """Chemin vers une image de test"""
     return str(TEST_DIR / "assets" / "test_plant.jpg")

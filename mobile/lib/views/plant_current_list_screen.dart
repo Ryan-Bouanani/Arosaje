@@ -3,6 +3,7 @@ import 'package:mobile/views/plant_care_details_screen.dart';
 import 'package:mobile/models/plant.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/services/storage_service.dart';
+import 'package:mobile/services/plant_care_service.dart';
 
 class PlantCurrentListScreen extends StatefulWidget {
   const PlantCurrentListScreen({super.key});
@@ -16,11 +17,12 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   late final PlantService _plantService;
+  late final PlantCareService _plantCareService;
   late final StorageService _storageService;
   bool _isInitialized = false;
 
-  List<Plant> plantsConfieesEnCours = [];
-  List<Plant> plantsGardeesEnCours = [];
+  List<Plant> mesPlantes = [];
+  List<Map<String, dynamic>> mesGardes = [];
   bool isLoading = true;
   String? error;
 
@@ -35,6 +37,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
     try {
       _storageService = await StorageService.init();
       _plantService = await PlantService.init();
+      _plantCareService = await PlantCareService.init();
       setState(() {
         _isInitialized = true;
       });
@@ -56,19 +59,16 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
         error = null;
       });
 
-      final userId = await _storageService.getUserId();
-      if (userId == null) throw Exception('Utilisateur non connecté');
-
-      // Charger les plantes confiées (mes plantes)
+      // Charger mes plantes
       final myPlants = await _plantService.getMyPlants();
       
-      // Charger les plantes gardées (plantes dont je suis le gardien)
-      final plantsGardees = await _plantService.getPlantsByOwner(userId);
+      // Charger les plantes que je garde
+      final myCaretakingPlants = await _plantCareService.getMyPlantCares();
 
       if (mounted) {
         setState(() {
-          plantsConfieesEnCours = myPlants;
-          plantsGardeesEnCours = plantsGardees;
+          mesPlantes = myPlants;
+          mesGardes = myCaretakingPlants;
           isLoading = false;
         });
       }
@@ -93,7 +93,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Plantes en cours"),
+        title: const Text("Mes plantes"),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -106,8 +106,8 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
           labelColor: Colors.green,
           unselectedLabelColor: Colors.grey,
           tabs: const [
-            Tab(text: "Plantes Confiées"),
-            Tab(text: "Plantes Gardées"),
+            Tab(text: "Mes plantes"),
+            Tab(text: "Mes gardes"),
           ],
         ),
       ),
@@ -142,8 +142,8 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                 : TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildPlantList(plantsConfieesEnCours),
-                      _buildPlantList(plantsGardeesEnCours),
+                      _buildMyPlantsList(),
+                      _buildMyCaretakingList(),
                     ],
                   ),
           ),
@@ -152,8 +152,8 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
     );
   }
 
-  Widget _buildPlantList(List<Plant> plants) {
-    final filteredPlants = plants
+  Widget _buildMyPlantsList() {
+    final filteredPlants = mesPlantes
         .where((plant) => plant.nom.toLowerCase().contains(_searchQuery))
         .toList();
 
@@ -161,36 +161,121 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
       return const Center(child: Text('Aucune plante trouvée'));
     }
 
+    Widget _buildCareStatusBadge(String status) {
+      IconData icon;
+      Color color;
+      String text;
+
+      switch (status) {
+        case 'PENDING':
+          icon = Icons.hourglass_empty;
+          color = Colors.orange;
+          text = 'En attente';
+          break;
+        case 'ACCEPTED':
+          icon = Icons.check_circle;
+          color = Colors.blue;
+          text = 'Acceptée';
+          break;
+        case 'REFUSED':
+          icon = Icons.cancel;
+          color = Colors.red;
+          text = 'Refusée';
+          break;
+        case 'IN_PROGRESS':
+          icon = Icons.volunteer_activism;
+          color = Colors.green;
+          text = 'En garde';
+          break;
+        case 'COMPLETED':
+          icon = Icons.task_alt;
+          color = Colors.purple;
+          text = 'Terminée';
+          break;
+        case 'CANCELLED':
+          icon = Icons.block;
+          color = Colors.grey;
+          text = 'Annulée';
+          break;
+        default:
+          return const SizedBox.shrink();
+      }
+
+      return Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              text,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(8),
       itemCount: filteredPlants.length,
       itemBuilder: (context, index) {
         final plant = filteredPlants[index];
+        // Trouver si la plante a une garde et son statut
+        final care = mesGardes.firstWhere(
+          (care) => care['plant']['id'] == plant.id,
+          orElse: () => <String, dynamic>{},
+        );
+        final String? careStatus = care.isNotEmpty ? care['status'] as String : null;
+
         return Column(
           children: [
             ListTile(
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey[200],
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: plant.photo != null
-                    ? Image.network(
-                        plant.photo!,
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
+              leading: Stack(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.grey[200],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: plant.photo != null
+                        ? Image.network(
+                            plant.photo!,
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.local_florist,
+                                color: Colors.green[700],
+                              );
+                            },
+                          )
+                        : Icon(
                             Icons.local_florist,
                             color: Colors.green[700],
-                          );
-                        },
-                      )
-                    : Icon(
-                        Icons.local_florist,
-                        color: Colors.green[700],
-                      ),
-                ),
+                          ),
+                    ),
+                  ),
+                  if (careStatus != null)
+                    Positioned(
+                      right: -5,
+                      bottom: -5,
+                      child: _buildCareStatusBadge(careStatus),
+                    ),
+                ],
               ),
               title: Text(
                 plant.nom,
@@ -204,6 +289,111 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                     builder: (context) => PlantCareDetailsScreen(
                       isCurrentPlant: true,
                       plantId: plant.id,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildMyCaretakingList() {
+    final filteredCares = mesGardes
+        .where((care) => care['plant']['nom'].toLowerCase().contains(_searchQuery))
+        .toList();
+
+    if (filteredCares.isEmpty) {
+      return const Center(child: Text('Aucune garde en cours'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: filteredCares.length,
+      itemBuilder: (context, index) {
+        final care = filteredCares[index];
+        final plant = care['plant'];
+        final startDate = DateTime.parse(care['start_date']);
+        final endDate = DateTime.parse(care['end_date']);
+
+        return Column(
+          children: [
+            ListTile(
+              leading: Stack(
+                children: [
+                  CircleAvatar(
+                    backgroundColor: Colors.grey[200],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: plant['photo'] != null
+                        ? Image.network(
+                            plant['photo'],
+                            width: 40,
+                            height: 40,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.local_florist,
+                                color: Colors.green[700],
+                              );
+                            },
+                          )
+                        : Icon(
+                            Icons.local_florist,
+                            color: Colors.green[700],
+                          ),
+                    ),
+                  ),
+                  if (mesGardes.any((care) => 
+                    care['plant']['id'] == plant.id && 
+                    care['status'] == 'in_progress'
+                  ))
+                    Positioned(
+                      right: -5,
+                      bottom: -5,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.green[700],
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Colors.white,
+                            width: 2,
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.volunteer_activism,
+                          size: 12,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              title: Text(
+                plant['nom'],
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(plant['espece'] ?? 'Espèce non spécifiée'),
+                  Text(
+                    'Du ${startDate.day}/${startDate.month}/${startDate.year} au ${endDate.day}/${endDate.month}/${endDate.year}',
+                    style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                  ),
+                ],
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlantCareDetailsScreen(
+                      isCurrentPlant: true,
+                      careId: care['id'],
                     ),
                   ),
                 );

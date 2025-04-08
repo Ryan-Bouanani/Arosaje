@@ -18,7 +18,6 @@ export default {
   watch: {
     photo(newValue) {
       if (!newValue) {
-        // Si la photo est supprimée, on réinitialise l'aperçu et le message d'erreur
         this.photoPreview = null;
         this.errorMessage = "";
       }
@@ -29,7 +28,6 @@ export default {
       const file = event.target.files[0];
 
       if (!file) {
-        // Si aucun fichier n'est sélectionné, on réinitialise l'aperçu
         this.photo = null;
         return;
       }
@@ -176,4 +174,3 @@ export default {
   margin-bottom: 10px; 
 }
 </style>
-

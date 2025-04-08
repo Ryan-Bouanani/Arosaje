@@ -39,6 +39,7 @@ NC='\033[0m' # No Color
 # Variables globales pour l'émulateur
 windows_user=""
 avd_name=""
+verbose_mode=false
 
 # Fonction pour les logs
 log_info() {
@@ -267,14 +268,16 @@ start_services() {
                 exit 1
             fi
         else
-            log_success "✅ Nom d'utilisateur Windows détecté : $windows_user"
+            log_success "Nom d'utilisateur Windows détecté : $windows_user"
         fi
 
         # Lister les AVD disponibles
         echo -e "\n📱 Liste des émulateurs Android disponibles :"
         emulator_path="/mnt/c/Users/$windows_user/AppData/Local/Android/Sdk/emulator/emulator.exe"
         emulator_path_windows=$(wslpath -w "$emulator_path")
-        cmd.exe /c "$emulator_path_windows" -list-avds
+        
+        # Changer vers le répertoire Windows temporairement pour éviter le warning
+        (cd /mnt/c && cmd.exe /c "$emulator_path_windows" -list-avds)
 
         # Demander le nom de l'AVD
         echo -e "\n➡️  Choisissez un émulateur dans la liste ci-dessus"
@@ -336,15 +339,16 @@ start_services() {
 
 # Afficher l'aide
 show_help() {
-    echo "Usage: bin/up [services...]"
+    echo "Usage: bin/up [options] [services...]"
     echo ""
     echo "Options disponibles:"
+    echo "  -v                - Mode verbeux (affiche tous les logs)"
     echo "  all               - Démarre tous les services"
     echo "  api web mobile    - Démarre les services spécifiés (dans n'importe quel ordre)"
     echo ""
     echo "Exemples:"
     echo "  bin/up api web    - Démarre l'API et le frontend web"
-    echo "  bin/up api mobile - Démarre l'API et l'application mobile"
+    echo "  bin/up -v mobile  - Démarre l'application mobile en mode verbeux"
     echo "  bin/up web       - Démarre uniquement le frontend web"
     echo ""
     exit 1
@@ -370,7 +374,11 @@ start_android_emulator() {
 
     # Fonction pour exécuter adb.exe de Windows
     adb_windows() {
-        cmd.exe /c "$adb_path_windows" "$@" 2>/dev/null
+        if [ "$verbose_mode" = true ]; then
+            cmd.exe /c "$adb_path_windows" "$@"
+        else
+            cmd.exe /c "$adb_path_windows" "$@" 2>/dev/null
+        fi
     }
 
     # Redémarrer le serveur ADB
@@ -378,13 +386,23 @@ start_android_emulator() {
     adb_windows start-server >/dev/null 2>&1
     
     # Lancer l'émulateur avec des options optimisées
-    cmd.exe /c "$emulator_path_windows" -avd "$avd_name" \
-        -gpu host \
-        -no-snapshot-load \
-        -no-audio \
-        -no-boot-anim \
-        -no-snapshot-save \
-        -qemu -no-reboot &
+    if [ "$verbose_mode" = true ]; then
+        cmd.exe /c "$emulator_path_windows" -avd "$avd_name" \
+            -gpu host \
+            -no-snapshot-load \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot-save \
+            -qemu -no-reboot &
+    else
+        cmd.exe /c "$emulator_path_windows" -avd "$avd_name" \
+            -gpu host \
+            -no-snapshot-load \
+            -no-audio \
+            -no-boot-anim \
+            -no-snapshot-save \
+            -qemu -no-reboot >/dev/null 2>&1 &
+    fi
     
     # Attendre que l'émulateur soit connecté
     log_info "Attente du démarrage de l'émulateur..."
@@ -398,7 +416,7 @@ start_android_emulator() {
     done
 
     if [ $timeout -eq 0 ]; then
-        log_warning "⚠️  L'émulateur n'a pas démarré correctement"
+        log_warning "❌ L'émulateur n'a pas démarré correctement"
         return 1
     fi
 
@@ -414,25 +432,37 @@ start_android_emulator() {
     done
 
     if [ $timeout -eq 0 ]; then
-        log_warning "⚠️  Le système Android n'a pas démarré complètement"
+        log_warning "❌ Le système Android n'a pas démarré complètement"
     fi
 
     # Installation de l'application
     cd mobile || exit 1
     
     # Nettoyer le build précédent
-    flutter clean >/dev/null 2>&1
+    if [ "$verbose_mode" = true ]; then
+        flutter clean
+    else
+        flutter clean >/dev/null 2>&1
+    fi
     
     # Rendre gradlew exécutable
     chmod +x android/gradlew >/dev/null 2>&1
     
     # Construction de l'application
     log_info "Construction de l'application..."
-    if ! flutter build apk --debug >/dev/null 2>&1; then
-        log_warning "❌ Erreur lors de la construction de l'application"
-        flutter build apk --debug --verbose  # Afficher les logs détaillés en cas d'erreur
-        cd ..
-        return 1
+    if [ "$verbose_mode" = true ]; then
+        if ! flutter build apk --debug; then
+            log_warning "❌ Erreur lors de la construction de l'application"
+            cd ..
+            return 1
+        fi
+    else
+        if ! flutter build apk --debug >/dev/null 2>&1; then
+            log_warning "❌ Erreur lors de la construction de l'application"
+            flutter build apk --debug --verbose  # Afficher les logs détaillés en cas d'erreur
+            cd ..
+            return 1
+        fi
     fi
 
     # Installation de l'APK
@@ -500,6 +530,43 @@ get_windows_username() {
 }
 
 case "$1" in
+    "-v")
+        verbose_mode=true
+        shift
+        if [ -z "$1" ]; then
+            show_help
+        elif [ "$1" = "all" ]; then
+            log_info "Mode verbeux activé"
+            log_info "Vérification de l'environnement..."
+            check_docker
+            check_docker_compose
+            check_env_files
+            check_database_directory
+            check_image "api"
+            check_image "web"
+            check_image "mobile"
+            
+            # Capture du signal SIGINT pour tous les services
+            trap "cleanup all" SIGINT SIGTERM
+            
+            log_info "Démarrage de tous les services..."
+            if ! docker-compose up -d; then
+                echo "❌ Erreur lors du démarrage des conteneurs."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs
+                exit 1
+            fi
+
+            log_success "Tous les services démarrés avec succès!"
+            log_info "Affichage des logs..."
+            echo "ℹ️  Utilisez CTRL+C pour arrêter"
+            
+            docker-compose logs -f --since 0s
+        else
+            log_info "Mode verbeux activé"
+            start_services "$@"
+        fi
+        ;;
     "all")
         log_info "Vérification de l'environnement..."
         check_docker
@@ -525,7 +592,6 @@ case "$1" in
         log_info "Affichage des logs..."
         echo "ℹ️  Utilisez CTRL+C pour arrêter"
         
-        # Utiliser --since pour n'afficher que les nouveaux logs
         docker-compose logs -f --since 0s
         ;;
     "")

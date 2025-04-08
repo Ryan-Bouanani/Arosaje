@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from models.advice import Advice, AdviceStatus
 from models.user import User, UserRole
 from schemas.advice import AdviceCreate, AdviceUpdate
-from fastapi import HTTPException
 
 def get_advice(db: Session, advice_id: int):
     return db.query(Advice).filter(Advice.id == advice_id).first()
@@ -19,7 +19,12 @@ def create_advice(db: Session, advice: AdviceCreate, botanist_id: int):
     if not botanist or botanist.role != UserRole.BOTANIST:
         raise HTTPException(status_code=403, detail="Seuls les botanistes peuvent créer des conseils")
     
-    db_advice = Advice(**advice.model_dump(), botanist_id=botanist_id)
+    # Créer le conseil avec le statut VALIDATED puisque c'est un botaniste qui le crée
+    db_advice = Advice(
+        **advice.model_dump(),
+        botanist_id=botanist_id,
+        status=AdviceStatus.VALIDATED
+    )
     db.add(db_advice)
     db.commit()
     db.refresh(db_advice)
@@ -55,4 +60,12 @@ def delete_advice(db: Session, advice_id: int):
     
     db.delete(db_advice)
     db.commit()
-    return db_advice 
+    return db_advice
+
+def get_pending_requests(db: Session, skip: int = 0, limit: int = 100):
+    """Récupérer toutes les demandes de conseils en attente"""
+    return db.query(Advice)\
+        .filter(Advice.status == AdviceStatus.PENDING)\
+        .offset(skip)\
+        .limit(limit)\
+        .all() 

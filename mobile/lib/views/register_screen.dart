@@ -45,13 +45,16 @@ class _InscriptionPageState extends State<InscriptionPage> {
 
     try {
       final authService = await _authServiceFuture;
+      // Convertir le rôle au format attendu par le backend
+      final String backendRole = _selectedRole == 'BOTANIST' ? 'botanist' : 'user';
+      
       await authService.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         nom: _nomController.text.trim(),
         prenom: _prenomController.text.trim(),
         telephone: _telephoneController.text.trim(),
-        role: _selectedRole,
+        role: backendRole,
       );
 
       if (!mounted) return;
@@ -152,46 +155,110 @@ class _InscriptionPageState extends State<InscriptionPage> {
                         color: Colors.green.shade50,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      padding: const EdgeInsets.all(16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Text(
-                              'Type de compte',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                              ),
+                          const Text(
+                            'Type de compte',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1B4332),
                             ),
                           ),
+                          const SizedBox(height: 12),
                           Row(
                             children: [
                               Expanded(
-                                child: RadioListTile<String>(
-                                  title: const Text('Particulier'),
-                                  value: 'USER',
-                                  groupValue: _selectedRole,
-                                  onChanged: (value) {
+                                child: GestureDetector(
+                                  onTap: () {
                                     setState(() {
-                                      _selectedRole = value!;
+                                      _selectedRole = 'USER';
                                     });
                                   },
-                                  activeColor: Colors.green,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 'USER' 
+                                          ? Colors.green.shade100 
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _selectedRole == 'USER'
+                                            ? Colors.green
+                                            : Colors.grey.shade300,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          color: _selectedRole == 'USER'
+                                              ? Colors.green
+                                              : Colors.grey,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Particulier',
+                                          style: TextStyle(
+                                            color: _selectedRole == 'USER'
+                                                ? Colors.green
+                                                : Colors.grey,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 12),
                               Expanded(
-                                child: RadioListTile<String>(
-                                  title: const Text('Botaniste'),
-                                  value: 'BOTANISTE',
-                                  groupValue: _selectedRole,
-                                  onChanged: (value) {
+                                child: GestureDetector(
+                                  onTap: () {
                                     setState(() {
-                                      _selectedRole = value!;
+                                      _selectedRole = 'BOTANIST';
                                     });
                                   },
-                                  activeColor: Colors.green,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: _selectedRole == 'BOTANIST'
+                                          ? Colors.green.shade100
+                                          : Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _selectedRole == 'BOTANIST'
+                                            ? Colors.green
+                                            : Colors.grey.shade300,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.local_florist,
+                                          color: _selectedRole == 'BOTANIST'
+                                              ? Colors.green
+                                              : Colors.grey,
+                                          size: 32,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Botaniste',
+                                          style: TextStyle(
+                                            color: _selectedRole == 'BOTANIST'
+                                                ? Colors.green
+                                                : Colors.grey,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
                             ],

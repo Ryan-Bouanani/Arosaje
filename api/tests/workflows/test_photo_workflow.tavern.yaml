@@ -6,6 +6,8 @@ marks:
       - test_password
       - test_image_path
       - invalid_file_path
+      - admin_email
+      - admin_password
 
 stages:
   # Étape 1: Inscription et connexion (prérequis)
@@ -25,6 +27,34 @@ stages:
       save:
         json:
           user_id: id
+
+  # Étape 1.1: Login administrateur
+  - name: Login administrateur
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{admin_email}"
+        password: "{admin_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          admin_token: access_token
+
+  # Étape 1.2: Validation du compte utilisateur par l'administrateur
+  - name: Validation du compte
+    request:
+      url: "{api_url}/admin/verify/{user_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {admin_token}"
+    response:
+      status_code: 200
+      json:
+        message: "Compte vérifié avec succès"
 
   - name: Test login
     request:
@@ -48,11 +78,11 @@ stages:
       method: POST
       headers:
         Authorization: "Bearer {auth_token}"
-      json:
+        content-type: application/x-www-form-urlencoded
+      data:
         nom: "Ficus"
         espece: "Ficus benjamina"
         description: "Plante test pour photos"
-        owner_id: !int "{user_id}"
     response:
       status_code: 200
       save:

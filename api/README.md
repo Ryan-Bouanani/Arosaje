@@ -100,4 +100,30 @@ Les tests utilisent Tavern, un framework de test d'API qui permet de tester faci
 - La gestion des erreurs
 - La validation des données
 
+### 🚀 Script de test automatisé
+
+Pour simplifier l'exécution des tests, un script shell est disponible :
+
+```bash
+# Exécuter tous les tests
+./tests/run_tests.sh
+
+# Exécuter un test spécifique
+./tests/run_tests.sh tests/workflows/test_auth_workflow.tavern.yaml
+```
+
+Ce script démarre automatiquement l'API si nécessaire, configure les variables d'environnement et exécute les tests.
+
+## 🔄 Intégration continue (CI)
+
+Les tests sont automatiquement exécutés via GitHub Actions à chaque pull request et à chaque push sur les branches `main` et `develop`.
+
+Le workflow de CI effectue les actions suivantes :
+1. Démarrage des services PostgreSQL et Redis
+2. Installation des dépendances
+3. Démarrage de l'API
+4. Exécution des tests Tavern
+
+Pour configurer le CI dans votre fork, aucune configuration supplémentaire n'est nécessaire car les workflows sont inclus dans le dépôt.
+
 ---

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'base_page_botaniste.dart';
 import 'plant_detail_botaniste.dart';
+import 'package:mobile/services/plant_service.dart';
+import 'package:mobile/models/plant.dart';
+import 'package:mobile/services/plant_care_service.dart';
 
 class HomeAfterLoginAdmin extends StatefulWidget {
   const HomeAfterLoginAdmin({super.key});
@@ -11,16 +14,67 @@ class HomeAfterLoginAdmin extends StatefulWidget {
 
 class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
   final TextEditingController _searchController = TextEditingController();
+  late final PlantService _plantService;
+  late final PlantCareService _plantCareService;
+  bool _isInitialized = false;
+  bool _isLoading = true;
+  String? _error;
+  List<Plant> _allPlants = [];
+  String _searchQuery = "";
 
-  Widget _buildPlantCard(BuildContext context, int index) {
+  @override
+  void initState() {
+    super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      _plantService = await PlantService.init();
+      _plantCareService = await PlantCareService.init();
+      setState(() {
+        _isInitialized = true;
+      });
+      await _loadPlants();
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadPlants() async {
+    if (!_isInitialized) return;
+    
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final plants = await _plantService.getAllPlants();
+      
+      if (mounted) {
+        setState(() {
+          _allPlants = plants;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Widget _buildPlantCard(Plant plant) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const PlantDetailBotaniste(),
-          ),
-        );
+        _showPlantDetails(plant);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -28,7 +82,7 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withAlpha(3),
+              color: Colors.grey.withOpacity(0.2),
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 3),
@@ -48,13 +102,32 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                     topRight: Radius.circular(12),
                   ),
                 ),
-                child: Center(
-                  child: Icon(
-                    Icons.local_florist,
-                    size: 40,
-                    color: Colors.green[700],
-                  ),
-                ),
+                child: plant.photo != null
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(12),
+                        topRight: Radius.circular(12),
+                      ),
+                      child: Image.network(
+                        plant.photo!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(
+                            Icons.local_florist,
+                            size: 40,
+                            color: Colors.green[700],
+                          );
+                        },
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.local_florist,
+                        size: 40,
+                        color: Colors.green[700],
+                      ),
+                    ),
               ),
             ),
             Expanded(
@@ -64,18 +137,23 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Plante ${index + 1}',
+                      plant.nom,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Text(
-                      '2 km',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12,
+                    if (plant.espece != null)
+                      Text(
+                        plant.espece!,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -86,8 +164,23 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
     );
   }
 
+  void _showPlantDetails(Plant plant) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PlantDetailBotaniste(
+          plantId: plant.id,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filteredPlants = _allPlants
+        .where((plant) => plant.nom.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .toList();
+
     return BasePageBotaniste(
       body: SingleChildScrollView(
         child: Padding(
@@ -115,7 +208,6 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Barre de recherche
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -139,14 +231,13 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                     suffixIcon: IconButton(
                       icon: Icon(Icons.filter_list, color: Colors.grey[600]),
                       onPressed: () {
-                        // Ajouter la logique de filtrage ici
+                        // Logique de filtrage
                       },
                     ),
                   ),
                   onChanged: (value) {
-                    // Ajouter la logique de recherche ici
                     setState(() {
-                      // Mettre à jour la liste des plantes en fonction de la recherche
+                      _searchQuery = value;
                     });
                   },
                 ),
@@ -163,28 +254,34 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      // Ajouter la logique pour voir toutes les plantes
-                    },
+                    onPressed: _loadPlants,
                     child: const Text(
-                      'Voir tout',
+                      'Actualiser',
                       style: TextStyle(color: Colors.green),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                children: List.generate(
-                  4,
-                  (index) => _buildPlantCard(context, index),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_error != null)
+                Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+              else if (filteredPlants.isEmpty)
+                const Center(child: Text('Aucune plante trouvée'))
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemCount: filteredPlants.length,
+                  itemBuilder: (context, index) => _buildPlantCard(filteredPlants[index]),
                 ),
-              ),
               const SizedBox(height: 24),
             ],
           ),

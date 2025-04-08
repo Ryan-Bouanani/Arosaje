@@ -12,6 +12,7 @@ class UserBase(BaseSchema):
 
 class UserCreate(UserBase):
     password: str
+    role: Optional[UserRole] = UserRole.USER
 
 class UserUpdate(BaseSchema):
     nom: Optional[str] = None

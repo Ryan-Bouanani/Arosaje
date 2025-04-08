@@ -4,6 +4,8 @@ marks:
       - api_url
       - test_user_email
       - test_password
+      - admin_email
+      - admin_password
 
 stages:
   - name: Test inscription utilisateur
@@ -22,6 +24,7 @@ stages:
       save:
         json:
           saved_email: email
+          user_id: id
       json:
         id: !anyint
         nom: "Dupont"
@@ -31,7 +34,50 @@ stages:
         localisation: "Paris"
         role: "user"
 
-  - name: Test login
+  - name: Test login avec compte non validé
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{saved_email}"
+        password: "{test_password}"
+    response:
+      status_code: 403
+      json:
+        detail: "Votre compte est en attente de vérification par un administrateur"
+
+  - name: Login administrateur
+    request:
+      url: "{api_url}/auth/login"
+      method: POST
+      headers:
+        content-type: application/x-www-form-urlencoded
+      data:
+        username: "{admin_email}"
+        password: "{admin_password}"
+    response:
+      status_code: 200
+      save:
+        json:
+          admin_token: access_token
+      json:
+        access_token: !anything
+        token_type: "bearer"
+
+  - name: Validation du compte par l'administrateur
+    request:
+      url: "{api_url}/admin/verify/{user_id}"
+      method: POST
+      headers:
+        Authorization: "Bearer {admin_token}"
+    response:
+      status_code: 200
+      json:
+        message: "Compte vérifié avec succès"
+
+  - name: Test login avec compte validé
     request:
       url: "{api_url}/auth/login"
       method: POST

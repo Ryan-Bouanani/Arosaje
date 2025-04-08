@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/views/plant_history_screen.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -39,6 +40,17 @@ class SettingsPage extends StatelessWidget {
             onTap: () => _showChangeCityDialog(context),
           ),
           const SizedBox(height: 16),
+          buildListTile(
+            title: "Historique des Gardes",
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PlantHistoryScreen(),
+                ),
+              );
+            },
+          ),
           buildListTile(
             title: "Changer de mot de passe",
             onTap: () => _showChangePasswordDialog(context),

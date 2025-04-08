@@ -2,13 +2,14 @@
 import { ref, onMounted } from 'vue';
 import BackButton from '@/components/buttons/BackButton.vue';
 import { mdiSend, mdiLeaf, mdiInformation, mdiImage } from '@mdi/js';
+import { ApiService } from '@/services/api';
 
 // États et données
 const messages = ref([
   { id: 1, sender: 'botaniste', content: 'Bonjour, que puis-je faire pour vous aujourd\'hui ?', timestamp: '2024-02-25 10:00', isTyping: false }
 ]);
 
-const botanisteInfo = ref({ nom: 'Dr. Claire Dubois', specialite: 'Plantes méditerranéennes et aromatiques', experience: '15 ans', photo: '/assets/botaniste.png' });
+const botanisteInfo = ref({ nom: 'Dr. Claire Dubois', specialite: 'Plantes méditerranéennes et aromatiques', experience: '15 ans', photo: '/assets/botaniste.jpg' });
 const newMessage = ref('');
 const showBotanisteInfo = ref(false);
 const isLoading = ref(false);
@@ -19,24 +20,31 @@ const attachmentOptions = [
   { icon: mdiLeaf, title: 'Identifier plante', action: () => alert('Fonctionnalité d\'identification de plante à implémenter') }
 ];
 
-// Liste des plantes simple pour les réponses
-const plants = [
-  'chrysantheme', 'jasmin', 'lavande', 'lys', 'marguerite', 'orchidee', 'pivoine', 'rose', 'tournesol', 'tulipe'
-];
+// Liste des plantes simple pour les réponses (noms sans accents)
+const plants = ref([]);
 
-// Liste détaillée des plantes
-const plantes = ref([
-  { id: 1, nom: "Chrysanthème", photo: "/assets/persisted_img/chrysantheme.jpg", description: "Fleur d'automne résistante", dernierArrosage: "2024-02-10", prochainArrosage: "2024-02-17", sante: 85, temperatureIdeale: "15-20°C", exposition: "Soleil", engrais: "Tous les mois" },
-  { id: 2, nom: "Jasmin", photo: "/assets/persisted_img/jasmin.jpg", description: "Plante grimpante parfumée", dernierArrosage: "2024-02-08", prochainArrosage: "2024-02-15", sante: 90, temperatureIdeale: "15-25°C", exposition: "Lumière indirecte", engrais: "Tous les mois" },
-  { id: 3, nom: "Lavande", photo: "/assets/persisted_img/lavande.jpg", description: "Apprécie le soleil et un sol bien drainé", dernierArrosage: "2024-02-01", prochainArrosage: "2024-02-28", sante: 88, temperatureIdeale: "10-25°C", exposition: "Plein soleil", engrais: "Tous les 2 mois" },
-  { id: 4, nom: "Lys", photo: "/assets/persisted_img/lys.jpg", description: "Fleur élégante au parfum intense", dernierArrosage: "2024-02-05", prochainArrosage: "2024-02-12", sante: 80, temperatureIdeale: "18-22°C", exposition: "Lumière indirecte", engrais: "Tous les 2 mois" },
-  { id: 5, nom: "Marguerite", photo: "/assets/persisted_img/marguerite.jpg", description: "Fleur champêtre facile à cultiver", dernierArrosage: "2024-02-14", prochainArrosage: "2024-02-21", sante: 92, temperatureIdeale: "15-25°C", exposition: "Soleil", engrais: "Tous les mois" },
-  { id: 6, nom: "Orchidée", photo: "/assets/persisted_img/orchidee.jpg", description: "Besoins spécifiques en humidité et lumière", dernierArrosage: "2024-02-08", prochainArrosage: "2024-02-15", sante: 85, temperatureIdeale: "16-24°C", exposition: "Lumière indirecte", engrais: "Tous les 15 jours" },
-  { id: 7, nom: "Pivoine", photo: "/assets/persisted_img/pivoine.jpg", description: "Fleur spectaculaire au parfum envoûtant", dernierArrosage: "2024-02-12", prochainArrosage: "2024-02-18", sante: 90, temperatureIdeale: "15-20°C", exposition: "Soleil", engrais: "Tous les 2 mois" },
-  { id: 8, nom: "Rose", photo: "/assets/persisted_img/rose.jpg", description: "Fleur emblématique au parfum délicat", dernierArrosage: "2024-02-07", prochainArrosage: "2024-02-14", sante: 85, temperatureIdeale: "15-25°C", exposition: "Soleil", engrais: "Tous les mois" },
-  { id: 9, nom: "Tournesol", photo: "/assets/persisted_img/tournesol.jpg", description: "Fleur solaire qui suit la lumière", dernierArrosage: "2024-02-10", prochainArrosage: "2024-02-17", sante: 88, temperatureIdeale: "18-30°C", exposition: "Plein soleil", engrais: "Tous les mois" },
-  { id: 10, nom: "Tulipe", photo: "/assets/persisted_img/tulipe.jpg", description: "Fleur printanière élégante", dernierArrosage: "2024-02-15", prochainArrosage: "2024-02-22", sante: 87, temperatureIdeale: "10-18°C", exposition: "Soleil", engrais: "Tous les 2 mois" }
-]);
+// Liste détaillée des plantes (à charger depuis l'API)
+const plantes = ref([]);
+
+// Fonction pour récupérer les plantes depuis l'API
+const fetchPlants = async () => {
+  const response = await ApiService.getPlants();
+  if (response.success && Array.isArray(response.data)) {
+    // Mettre à jour la liste détaillée des plantes
+    plantes.value = response.data.map(plant => ({
+      ...plant,
+      photo: ApiService.buildPhotoUrl(plant.photo) // Ajout de l'URL complète de l'image
+    }));
+    
+    // Mettre à jour la liste simple des noms de plantes pour les réponses
+    plants.value = response.data.map(plant => {
+      // Normaliser le nom (enlever les accents, mettre en minuscule)
+      return plant.nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    });
+  } else {
+    console.error('Erreur de récupération des plantes:', response.error);
+  }
+};
 
 // Fonctions
 const getTimestamp = () => new Date().toLocaleString('fr-FR', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -55,35 +63,45 @@ const selectPlant = (plante) => {
 // Réponse spécifique en fonction de la plante
 const generateResponse = (question) => {
   // Recherche de la plante dans la question
-  const plant = plants.find(p => question.toLowerCase().includes(p.toLowerCase()) || 
-                              question.toLowerCase().includes(p.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")));
-  
   const normalizedQuestion = question.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
+  
+  // Chercher dans la liste des noms de plantes
+  const plant = plants.value.find(p => normalizedQuestion.includes(p));
+  
+  // Si une plante est trouvée
   if (plant) {
-    switch (plant) {
-      case 'chrysantheme':
-        return 'Le chrysanthème préfère un sol bien drainé et un ensoleillement direct. Arrosez régulièrement, mais évitez l\'excès d\'eau.';
-      case 'jasmin':
-        return 'Le jasmin aime le soleil et nécessite un sol bien drainé. Arrosez-le modérément et évitez les excès d\'eau qui peuvent faire pourrir les racines.';
-      case 'lavande':
-        return 'La lavande préfère un sol sec. Arrosez-la seulement quand le sol est complètement sec, environ une fois par semaine en été et une fois par mois en hiver.';
-      case 'lys':
-        return 'Les lys préfèrent un sol riche et bien drainé. Arrosez-les modérément, mais veillez à ne pas laisser l\'eau stagner.';
-      case 'marguerite':
-        return 'Les marguerites aiment le soleil et un sol bien drainé. Arrosez-les modérément en évitant les excès d\'eau.';
-      case 'orchidee':
-        return 'Les orchidées nécessitent un environnement humide avec un arrosage léger. Arrosez-les une fois par semaine en été et réduisez l\'arrosage en hiver.';
-      case 'pivoine':
-        return 'Les pivoines aiment un sol profond et bien drainé. Arrosez-les régulièrement pendant la croissance, mais évitez l\'excès d\'eau.';
-      case 'rose':
-        return 'Les rosiers préfèrent un sol légèrement acide, riche et bien drainé. Arrosez-les régulièrement, mais évitez de mouiller les feuilles.';
-      case 'tournesol':
-        return 'Les tournesols ont besoin de plein soleil et d\'un sol bien drainé. Arrosez-les fréquemment en été, surtout pendant la floraison.';
-      case 'tulipe':
-        return 'Les tulipes préfèrent un sol léger et bien drainé. Arrosez-les modérément, mais évitez l\'excès d\'eau pour prévenir la pourriture des bulbes.';
-      default:
-        return 'Pour cette plante, je vous recommande de vérifier les besoins spécifiques d\'arrosage, d\'exposition et de sol. N\'hésitez pas à me donner plus de détails pour une réponse plus précise.';
+    // Trouver la plante correspondante dans la liste détaillée
+    const planteDetail = plantes.value.find(p => 
+      p.nom.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") === plant
+    );
+    
+    if (planteDetail) {
+      const nom = planteDetail.nom;
+      
+      switch (plant) {
+        case 'chrysantheme':
+          return `Le ${nom} préfère un sol bien drainé et un ensoleillement direct. Arrosez régulièrement, mais évitez l\'excès d\'eau.`;
+        case 'jasmin':
+          return `Le ${nom} aime le soleil et nécessite un sol bien drainé. Arrosez-le modérément et évitez les excès d\'eau qui peuvent faire pourrir les racines.`;
+        case 'lavande':
+          return `La ${nom} préfère un sol sec. Arrosez-la seulement quand le sol est complètement sec, environ une fois par semaine en été et une fois par mois en hiver.`;
+        case 'lys':
+          return `Les ${nom} préfèrent un sol riche et bien drainé. Arrosez-les modérément, mais veillez à ne pas laisser l\'eau stagner.`;
+        case 'marguerite':
+          return `Les ${nom}s aiment le soleil et un sol bien drainé. Arrosez-les modérément en évitant les excès d\'eau.`;
+        case 'orchidee':
+          return `Les ${nom}s nécessitent un environnement humide avec un arrosage léger. Arrosez-les une fois par semaine en été et réduisez l\'arrosage en hiver.`;
+        case 'pivoine':
+          return `Les ${nom}s aiment un sol profond et bien drainé. Arrosez-les régulièrement pendant la croissance, mais évitez l\'excès d\'eau.`;
+        case 'rose':
+          return `Les ${nom}s préfèrent un sol légèrement acide, riche et bien drainé. Arrosez-les régulièrement, mais évitez de mouiller les feuilles.`;
+        case 'tournesol':
+          return `Les ${nom}s ont besoin de plein soleil et d\'un sol bien drainé. Arrosez-les fréquemment en été, surtout pendant la floraison.`;
+        case 'tulipe':
+          return `Les ${nom}s préfèrent un sol léger et bien drainé. Arrosez-les modérément, mais évitez l\'excès d\'eau pour prévenir la pourriture des bulbes.`;
+        default:
+          return `Pour ${nom}, je vous recommande de vérifier les besoins spécifiques d\'arrosage, d\'exposition et de sol. N\'hésitez pas à me donner plus de détails pour une réponse plus précise.`;
+      }
     }
   }
 
@@ -121,7 +139,11 @@ const sendMessage = () => {
   }, 1500);
 };
 
-onMounted(scrollToBottom);
+// Charger les plantes au montage du composant
+onMounted(() => {
+  fetchPlants();
+  scrollToBottom();
+});
 </script>
 
 <template>

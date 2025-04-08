@@ -60,20 +60,23 @@ const uploadAvatar = (event) => {
       <v-col cols="12" md="4">
         <v-card class="mb-4" elevation="2">
           <v-card-text class="text-center">
-            <v-avatar size="150" color="grey-lighten-2" class="mb-4">
-              <v-img v-if="avatar" :src="avatar" cover />
-              <span v-else class="text-h3">{{ fullName[0]?.toUpperCase() }}</span>
+            <div class="d-flex justify-center position-relative">
+              <v-avatar size="150" color="grey-lighten-2" class="mb-4">
+                <v-img v-if="avatar" :src="avatar" cover />
+                <span v-else class="text-h3">{{ fullName[0]?.toUpperCase() }}</span>
+              </v-avatar>
               <v-btn
                 color="green"
                 size="small"
                 icon
                 density="compact"
-                class="d-flex justify-center align-center"
+                class="position-absolute"
+                style="top: 75px; right: 20px;"
                 @click="$refs.avatarInput.click()"
               >
                 <v-icon>mdi-pencil</v-icon>
               </v-btn>
-            </v-avatar>
+            </div>
             <input
               ref="avatarInput"
               type="file"

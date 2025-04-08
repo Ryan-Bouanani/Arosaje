@@ -66,10 +66,26 @@ jobs:
       - name: Start API server
         working-directory: ./api
         run: |
-          # Démarrer l'API en arrière-plan
-          python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
-          # Attendre que le serveur soit prêt
-          sleep 10
+          # Démarrer l'API en arrière-plan dans un processus nohup
+          nohup python -m uvicorn main:app --host 0.0.0.0 --port 8000 > api_log.txt 2>&1 &
+          echo $! > api_pid.txt
+          
+          # Attente active pour que le serveur soit prêt
+          echo "Attente du démarrage de l'API..."
+          max_retries=30
+          retries=0
+          until $(curl --output /dev/null --silent --fail http://localhost:8000/health); do
+            if [ $retries -eq $max_retries ]; then
+              echo "L'API n'a pas démarré après $max_retries tentatives"
+              cat api_log.txt
+              exit 1
+            fi
+            printf '.'
+            retries=$((retries+1))
+            sleep 2
+          done
+          echo "API démarrée avec succès!"
+          curl -v http://localhost:8000/health
         env:
           # Variables d'environnement pour les tests
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/arosaje_test
@@ -80,10 +96,27 @@ jobs:
       - name: Run tests
         working-directory: ./api
         run: |
+          # Vérifier à nouveau la disponibilité de l'API avant de lancer les tests
+          curl -v http://localhost:8000/health
           pytest tests/workflows/ -v
         env:
           # Variables d'environnement pour les tests
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/arosaje_test
           REDIS_URL: redis://localhost:6379
           ENVIRONMENT: test
-          JWT_SECRET: test_secret_key_for_github_actions 
+          JWT_SECRET: test_secret_key_for_github_actions
+      
+      - name: API logs en cas d'échec
+        if: ${{ failure() }}
+        working-directory: ./api
+        run: |
+          echo "=== Logs de l'API ==="
+          cat api_log.txt
+          
+      - name: Arrêt de l'API
+        if: ${{ always() }}
+        working-directory: ./api
+        run: |
+          if [ -f api_pid.txt ]; then
+            kill $(cat api_pid.txt) || true
+          fi 

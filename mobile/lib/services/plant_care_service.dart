@@ -58,7 +58,7 @@ class PlantCareService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
-      Uri.parse('$baseUrl/plant-care/'),
+      Uri.parse('$baseUrl/plant-care/?as_caretaker=true'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

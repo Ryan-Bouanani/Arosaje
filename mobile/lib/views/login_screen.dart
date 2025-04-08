@@ -12,7 +12,7 @@ import 'inscription_validation_screen.dart';
 class UserRoles {
   static const String USER = 'USER';
   static const String ADMIN = 'ADMIN';
-  static const String BOTANISTE = 'BOTANISTE';
+  static const String BOTANIST = 'BOTANIST';
 }
 
 class LoginScreen extends StatefulWidget {
@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
       case UserRoles.ADMIN:
         targetScreen = const InscriptionValidationScreen();
         break;
-      case UserRoles.BOTANISTE:
+      case UserRoles.BOTANIST:
         targetScreen = const HomeAfterLoginAdmin();
         break;
       case UserRoles.USER:
@@ -105,9 +105,10 @@ class _LoginScreenState extends State<LoginScreen> {
         
         if (!mounted) return;
 
-        // Sauvegarder le rôle de l'utilisateur
+        // Sauvegarder le rôle et l'ID de l'utilisateur
         final userRole = userInfo['role']?.toString().toUpperCase() ?? UserRoles.USER;
         await _storageService!.saveUserRole(userRole);
+        await _storageService!.setUserId(userInfo['id']);
 
         // Rediriger en fonction du rôle
         _navigateBasedOnRole(userRole);

@@ -12,6 +12,11 @@ export default {
       type: String,
       required: true
     }
+  ,
+  plantId: {
+      type: [String, Number],
+      required: true
+    },
   },
   data() {
     return {
@@ -38,17 +43,14 @@ export default {
   methods: {
     async handleSubmit() {
       try {
-    const response = await ApiService.createGarde({
-      name: this.gardeData.name,
-      espece: this.gardeData.espece,
-      description: this.gardeData.description,
-      soins: this.gardeData.soins,
-      location: this.gardeData.location,
-      startDate: this.gardeData.startDate,
-      endDate: this.gardeData.endDate,
-      // Retire la vérification de la photo ici
-      // photo: this.photo  // Retire cette ligne si tu n'as plus besoin de la photo
-    });
+        const response = await ApiService.createPlantCare({
+          plant_id: this.plantId,  // Remplacez par l'ID de la plante, si disponible
+          caretaker_id: null,  // Optionnel si vous avez un caretaker_id à transmettre
+          start_date: this.gardeData.startDate,
+          end_date: this.gardeData.endDate,
+          location: this.gardeData.location,
+          owner_id: this.gardeData.owner_id
+        });
 
         if (response.success) {
           alert('Plante ajoutée à la garde avec succès !');
@@ -57,7 +59,7 @@ export default {
           alert(`Erreur: ${response.error}`);
         }
       } catch (error) {
-        alert("Une erreur est survenue lors de l'ajout de la plante à la garde.");
+        alert(`Erreur : ${error}`);
       }
     },
     closeModal() {

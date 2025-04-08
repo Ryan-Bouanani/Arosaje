@@ -68,8 +68,6 @@ class CRUDPhoto(CRUDBase[Photo, PhotoCreate, PhotoCreate]):
         
         if cached_photos:
             return {"photos": json.loads(cached_photos)}
-            
-        # Si pas en cache, récupérer depuis la base de données
         photos = db.query(Photo).filter(Photo.plant_id == plant_id).all()
         
         # Convertir en PhotoResponse avec sérialisation JSON automatique

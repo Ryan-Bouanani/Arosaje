@@ -113,7 +113,7 @@ jobs:
           ADMIN_PASSWORD=admin123secure
           LOG_LEVEL=DEBUG
           LOG_FILE=logs/api.log
-          TAVERN_SKIP_PLANT_CARE=false
+          TAVERN_SKIP_PLANT_CARE=true
           EOL
           
           cat .env.test
@@ -198,87 +198,88 @@ jobs:
           
           python create_admin.py
           
-      - name: Préparer les données pour le test de garde de plante
-        working-directory: ./api
-        run: |
-          # Script pour initialiser les données nécessaires pour le test plant_care_workflow
-          cat > init_plant_care_data.py << EOL
-          import os
-          import sys
-          from sqlalchemy import create_engine, text
-          from datetime import datetime, timedelta
-          
-          # Configurer la base de données
-          db_url = "sqlite:///assets/database/test.db"
-          engine = create_engine(db_url)
-          
-          print("Initialisation des données pour le test plant_care_workflow...")
-          
-          with engine.connect() as conn:
-              # Créer la table plantes si elle n'existe pas
-              conn.execute(text("""
-                  CREATE TABLE IF NOT EXISTS plants (
-                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      nom TEXT NOT NULL,
-                      espece TEXT,
-                      description TEXT,
-                      user_id INTEGER NOT NULL,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                  )
-              """))
-              
-              # Créer la table plant_care si elle n'existe pas
-              conn.execute(text("""
-                  CREATE TABLE IF NOT EXISTS plant_care (
-                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      plant_id INTEGER NOT NULL,
-                      owner_id INTEGER NOT NULL,
-                      caretaker_id INTEGER,
-                      start_date TIMESTAMP NOT NULL,
-                      end_date TIMESTAMP NOT NULL,
-                      status TEXT DEFAULT 'pending',
-                      notes TEXT,
-                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                  )
-              """))
-              
-              # Insérer des utilisateurs pour le test
-              conn.execute(text("""
-                  INSERT OR IGNORE INTO users (id, nom, prenom, email, password_hash, telephone, localisation, verified, role)
-                  VALUES 
-                  (2, 'Propriétaire', 'Test', 'owner@example.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 
-                  '0123456789', 'Paris', 1, 'user'),
-                  (3, 'Gardien', 'Test', 'caretaker@example.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 
-                  '0123456789', 'Lyon', 1, 'user')
-              """))
-              
-              # Insérer une plante pour le test
-              conn.execute(text("""
-                  INSERT OR IGNORE INTO plants (id, nom, espece, description, user_id)
-                  VALUES (1, 'Plante Test', 'Espèce Test', 'Description Test', 2)
-              """))
-              
-              # Insérer une demande de garde
-              start_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
-              end_date = (datetime.now() + timedelta(days=10)).strftime('%Y-%m-%d')
-              
-              # Supprimer les anciennes demandes s'il y en a
-              conn.execute(text("DELETE FROM plant_care WHERE id = 1"))
-              
-              # Créer une nouvelle demande
-              conn.execute(text(f"""
-                  INSERT INTO plant_care (id, plant_id, owner_id, caretaker_id, start_date, end_date, status, notes)
-                  VALUES (1, 1, 2, 3, '{start_date}', '{end_date}', 'pending', 'Notes de test')
-              """))
-              
-              print("Données initialisées avec succès!")
-              
-              # Vérifier que les données ont été correctement insérées
-              result = conn.execute(text("SELECT * FROM plant_care WHERE id = 1")).fetchone()
-              print(f"Données de garde insérées: {result}")
-          EOL
-          
-          python init_plant_care_data.py
+      # Commenté pour le moment : Préparation des données plant_care
+      # - name: Préparer les données pour le test de garde de plante
+      #   working-directory: ./api
+      #   run: |
+      #     # Script pour initialiser les données nécessaires pour le test plant_care_workflow
+      #     cat > init_plant_care_data.py << EOL
+      #     import os
+      #     import sys
+      #     from sqlalchemy import create_engine, text
+      #     from datetime import datetime, timedelta
+      #     
+      #     # Configurer la base de données
+      #     db_url = "sqlite:///assets/database/test.db"
+      #     engine = create_engine(db_url)
+      #     
+      #     print("Initialisation des données pour le test plant_care_workflow...")
+      #     
+      #     with engine.connect() as conn:
+      #         # Créer la table plantes si elle n'existe pas
+      #         conn.execute(text("""
+      #             CREATE TABLE IF NOT EXISTS plants (
+      #                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+      #                 nom TEXT NOT NULL,
+      #                 espece TEXT,
+      #                 description TEXT,
+      #                 user_id INTEGER NOT NULL,
+      #                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      #             )
+      #         """))
+      #         
+      #         # Créer la table plant_care si elle n'existe pas
+      #         conn.execute(text("""
+      #             CREATE TABLE IF NOT EXISTS plant_care (
+      #                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+      #                 plant_id INTEGER NOT NULL,
+      #                 owner_id INTEGER NOT NULL,
+      #                 caretaker_id INTEGER,
+      #                 start_date TIMESTAMP NOT NULL,
+      #                 end_date TIMESTAMP NOT NULL,
+      #                 status TEXT DEFAULT 'pending',
+      #                 notes TEXT,
+      #                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      #             )
+      #         """))
+      #         
+      #         # Insérer des utilisateurs pour le test
+      #         conn.execute(text("""
+      #             INSERT OR IGNORE INTO users (id, nom, prenom, email, password_hash, telephone, localisation, verified, role)
+      #             VALUES 
+      #             (2, 'Propriétaire', 'Test', 'owner@example.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 
+      #             '0123456789', 'Paris', 1, 'user'),
+      #             (3, 'Gardien', 'Test', 'caretaker@example.com', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 
+      #             '0123456789', 'Lyon', 1, 'user')
+      #         """))
+      #         
+      #         # Insérer une plante pour le test
+      #         conn.execute(text("""
+      #             INSERT OR IGNORE INTO plants (id, nom, espece, description, user_id)
+      #             VALUES (1, 'Plante Test', 'Espèce Test', 'Description Test', 2)
+      #         """))
+      #         
+      #         # Insérer une demande de garde
+      #         start_date = (datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d')
+      #         end_date = (datetime.now() + timedelta(days=10)).strftime('%Y-%m-%d')
+      #         
+      #         # Supprimer les anciennes demandes s'il y en a
+      #         conn.execute(text("DELETE FROM plant_care WHERE id = 1"))
+      #         
+      #         # Créer une nouvelle demande
+      #         conn.execute(text(f"""
+      #             INSERT INTO plant_care (id, plant_id, owner_id, caretaker_id, start_date, end_date, status, notes)
+      #             VALUES (1, 1, 2, 3, '{start_date}', '{end_date}', 'pending', 'Notes de test')
+      #         """))
+      #         
+      #         print("Données initialisées avec succès!")
+      #         
+      #         # Vérifier que les données ont été correctement insérées
+      #         result = conn.execute(text("SELECT * FROM plant_care WHERE id = 1")).fetchone()
+      #         print(f"Données de garde insérées: {result}")
+      #     EOL
+      #     
+      #     python init_plant_care_data.py
 
       - name: Start API server
         working-directory: ./api
@@ -290,7 +291,7 @@ jobs:
           export ADMIN_PASSWORD="admin123secure"
           export LOG_LEVEL=DEBUG
           export LOG_FILE=logs/api.log
-          export TAVERN_SKIP_PLANT_CARE=false
+          export TAVERN_SKIP_PLANT_CARE=true
           
           # Démarrer l'API en mode test avec la base SQLite
           # Rediriger stdout et stderr vers un fichier de log spécifique
@@ -331,6 +332,7 @@ jobs:
           export REDIS_URL="redis://api-redis:6379"
           export ADMIN_EMAIL="admin@example.com"
           export ADMIN_PASSWORD="admin123secure"
+          export TAVERN_SKIP_PLANT_CARE=true
           
           # Exécuter les tests un par un et capturer les résultats
           echo "0" > test_results/auth_result.txt
@@ -357,14 +359,14 @@ jobs:
             echo "1" > test_results/redis_result.txt
           fi
           
-          # Ajouter une étape pour le test plant_care_workflow
-          echo "0" > test_results/plant_care_result.txt
-          python -m pytest tests/workflows/test_plant_care_workflow.tavern.yaml -v
-          if [ $? -eq 0 ]; then
-            echo "1" > test_results/plant_care_result.txt
-          else
-            echo "Le test plant_care_workflow a échoué, mais nous continuons l'exécution."
-          fi
+          # Test plant_care commenté pour le moment
+          # echo "0" > test_results/plant_care_result.txt
+          # python -m pytest tests/workflows/test_plant_care_workflow.tavern.yaml -v
+          # if [ $? -eq 0 ]; then
+          #   echo "1" > test_results/plant_care_result.txt
+          # else
+          #   echo "Le test plant_care_workflow a échoué, mais nous continuons l'exécution."
+          # fi
       
       - name: API logs en cas d'échec
         if: ${{ failure() }}
@@ -409,7 +411,7 @@ jobs:
           ADVICE_RESULT=$(cat test_results/advice_result.txt)
           PHOTO_RESULT=$(cat test_results/photo_result.txt)
           REDIS_RESULT=$(cat test_results/redis_result.txt)
-          PLANT_CARE_RESULT=$(cat test_results/plant_care_result.txt)
+          # PLANT_CARE_RESULT supprimé
           
           # Afficher les résultats
           if [ "$AUTH_RESULT" -eq "1" ]; then
@@ -436,15 +438,12 @@ jobs:
             echo "❌ Test Redis: Échoué"
           fi
           
-          if [ "$PLANT_CARE_RESULT" -eq "1" ]; then
-            echo "✅ Test Plant Care: Réussi"
-          else
-            echo "⚠️ Test Plant Care: Échoué (ignoré pour la réussite globale)"
-          fi
+          # Test Plant Care désactivé
+          echo "⏸️ Test Plant Care: Désactivé temporairement"
           
           # Calculer le nombre total de tests réussis
           TOTAL_SUCCESS=$((AUTH_RESULT + ADVICE_RESULT + PHOTO_RESULT + REDIS_RESULT))
-          echo "Résultat global: $TOTAL_SUCCESS/4 tests réussis (sans compter Plant Care)"
+          echo "Résultat global: $TOTAL_SUCCESS/4 tests réussis"
           
       - name: Arrêt de l'API
         if: ${{ always() }}

@@ -31,8 +31,7 @@ async def upload_photo(
                 status_code=400,
                 detail="Format de fichier non supporté. Utilisez JPG, JPEG, PNG ou GIF"
             )
-
-        # Sauvegarder l'image
+            
         filename, url = await ImageHandler.save_image(file, type)
 
         # Créer l'entrée en base

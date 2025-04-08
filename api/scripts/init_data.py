@@ -7,7 +7,6 @@ def init_data():
     """Initialise les données de base (admin et plantes) si elles n'existent pas"""
     db = SessionLocal()
     try:
-        # Vérifier si l'admin existe déjà
         admin = db.query(User).filter(User.id == 1).first()
         
         if not admin:

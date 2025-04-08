@@ -96,8 +96,7 @@ class CRUDPlantCare:
         """Mettre à jour le statut d'une garde"""
         old_status = db_obj.status
         db_obj.status = status
-        
-        # Si la garde est acceptée, créer une conversation
+
         if status == CareStatus.ACCEPTED and old_status != CareStatus.ACCEPTED:
             conversation = message.create_conversation(
                 db=db,

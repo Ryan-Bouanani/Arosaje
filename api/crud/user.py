@@ -19,7 +19,7 @@ class CRUDUser:
             prenom=obj_in.prenom,
             telephone=obj_in.telephone,
             localisation=obj_in.localisation,
-            role=obj_in.role  # Utiliser le rôle fourni dans obj_in
+            role=obj_in.role
         )
         db.add(db_obj)
         db.commit()

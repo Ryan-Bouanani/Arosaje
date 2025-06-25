@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from utils.database import Base, engine
+from utils.database import Base, engine, SessionLocal
 from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin
-from scripts.init_data import init_data
 import os
+from scripts.init_data import init_data
+from models.user import User
 
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
@@ -14,11 +15,22 @@ app = FastAPI(
     version=VERSION
 )
 
-# Créer les tables
+# Créer les tables si elles n'existent pas
+print("🔧 Création des tables...")
 Base.metadata.create_all(bind=engine)
+print("✅ Tables créées avec succès")
 
-# Initialiser les données de base
-init_data()
+# Vérifier si c'est le premier lancement en cherchant l'utilisateur root
+db = SessionLocal()
+try:
+    root_exists = db.query(User).filter(User.email == "root@arosaje.fr").first() is not None
+    if not root_exists:
+        print("🌱 Premier lancement détecté, initialisation des données...")
+        init_data()
+    else:
+        print("ℹ️ Les données existent déjà")
+finally:
+    db.close()
 
 # Middleware de monitoring
 app.middleware("http")(monitoring_middleware)

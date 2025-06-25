@@ -92,21 +92,8 @@ check_image() {
     fi
 }
 
-# Fonction pour vérifier la base de données
-check_database() {
-    log_info "Vérification de la base de données..."
-    
-    if [ ! -f "./api/assets/database/arosaje.db" ]; then
-        echo "❌ Base de données non trouvée!"
-        echo "➡️  Veuillez exécuter 'bin/setup-api' avant de lancer les services"
-        exit 1
-    fi
-    
-    log_success "Base de données trouvée"
-}
-
 # Fonction pour vérifier si le dossier de la base de données existe
-check_database_directory() {
+check_assets_directory() {
     log_info "Vérification des dossiers nécessaires..."
     
     local missing_dirs=()
@@ -114,9 +101,6 @@ check_database_directory() {
     # Vérification des dossiers requis
     if [ ! -d "./api/assets" ]; then
         missing_dirs+=("./api/assets")
-    fi
-    if [ ! -d "./api/assets/database" ]; then
-        missing_dirs+=("./api/assets/database")
     fi
     if [ ! -d "./api/assets/img" ]; then
         missing_dirs+=("./api/assets/img")
@@ -131,9 +115,6 @@ check_database_directory() {
         echo "➡️  Veuillez exécuter 'bin/setup-api' avant de lancer les services"
         exit 1
     fi
-    
-    # Vérification de la base de données
-    check_database
     
     log_success "Configuration des dossiers validée"
 }
@@ -305,7 +286,7 @@ start_services() {
     
     # Configuration spécifique pour l'API si nécessaire
     if [[ " ${services[@]} " =~ " api " ]]; then
-        check_database_directory
+        check_assets_directory
     fi
     
     # Vérifier et construire les images
@@ -541,7 +522,7 @@ case "$1" in
             check_docker
             check_docker_compose
             check_env_files
-            check_database_directory
+            check_assets_directory
             check_image "api"
             check_image "web"
             check_image "mobile"
@@ -572,7 +553,7 @@ case "$1" in
         check_docker
         check_docker_compose
         check_env_files
-        check_database_directory
+        check_assets_directory
         check_image "api"
         check_image "web"
         check_image "mobile"

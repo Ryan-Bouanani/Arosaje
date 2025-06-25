@@ -8,22 +8,12 @@ FOLDERS_STATUS="❌"
 DB_STATUS="❌"
 MIGRATIONS_STATUS="❌"
 
-# Définir le chemin de la base de données
-DB_PATH="api/assets/database/arosaje.db"
-
 echo "🚀 Installation et configuration de l'API..."
 
 # Vérifier si nous sommes dans le bon dossier
 if [ ! -d "api" ]; then
     echo "❌ Erreur: Dossier 'api' non trouvé"
     echo "➡️  Exécutez cette commande depuis la racine du projet"
-    exit 1
-fi
-
-# Vérifier si sqlite3 est installé
-if ! command -v sqlite3 >/dev/null 2>&1; then
-    echo "❌ Erreur: sqlite3 n'est pas installé"
-    echo "➡️  Veuillez installer sqlite3 avant de continuer"
     exit 1
 fi
 
@@ -73,62 +63,14 @@ fi
 
 # Créer les dossiers nécessaires
 echo "📁 Création des dossiers nécessaires..."
-if mkdir -p assets/database assets/img assets/temp_img assets/persisted_img; then
+if mkdir -p assets/img assets/temp_img assets/persisted_img; then
     FOLDERS_STATUS="✅"
     echo "✅ Dossiers créés:"
-    echo "   - assets/database"
     echo "   - assets/img"
     echo "   - assets/temp_img"
     echo "   - assets/persisted_img"
 else
     echo "❌ Erreur: Impossible de créer les dossiers"
-fi
-
-# Sauvegarder l'ancienne base de données si elle existe
-if [ -f "../$DB_PATH" ]; then
-    echo "💾 Sauvegarde de la base de données existante..."
-    cp "../$DB_PATH" "../$DB_PATH.backup"
-fi
-
-# Initialiser la base de données
-echo "🗄️  Initialisation de la base de données..."
-if python init_db.py; then
-    DB_STATUS="✅"
-else
-    echo "❌ Erreur lors de l'initialisation de la base de données"
-    # Restaurer la sauvegarde si elle existe
-    if [ -f "../$DB_PATH.backup" ]; then
-        echo "🔄 Restauration de la sauvegarde..."
-        mv "../$DB_PATH.backup" "../$DB_PATH"
-    fi
-    exit 1
-fi
-
-# Exécuter les migrations Alembic
-echo "🔄 Application des migrations..."
-if alembic upgrade head; then
-    MIGRATIONS_STATUS="✅"
-else
-    echo "❌ Erreur lors de l'application des migrations"
-    exit 1
-fi
-
-# Vérifier si la base de données a été créée et est accessible
-if [ -f "../$DB_PATH" ]; then
-    echo "🔍 Vérification de la base de données..."
-    if sqlite3 "../$DB_PATH" ".tables" >/dev/null 2>&1; then
-        echo "✅ Base de données créée et accessible!"
-        # Supprimer la sauvegarde si tout est OK
-        rm -f "../$DB_PATH.backup"
-    else
-        echo "❌ La base de données existe mais semble corrompue"
-        DB_STATUS="❌"
-        exit 1
-    fi
-else
-    echo "❌ Erreur: La base de données n'a pas été créée"
-    DB_STATUS="❌"
-    exit 1
 fi
 
 # Désactiver l'environnement virtuel
@@ -141,13 +83,12 @@ echo "${VENV_STATUS} Environnement virtuel configuré"
 echo "${DEPS_STATUS} Dépendances installées"
 echo "${REQ_STATUS} Fichier requirements.txt mis à jour"
 echo "${FOLDERS_STATUS} Dossiers créés"
-echo "${DB_STATUS} Base de données initialisée"
-echo "${MIGRATIONS_STATUS} Migrations appliquées"
 echo "----------------------------------------"
 
 # Vérifier si toutes les actions ont réussi
-if [ "$VENV_STATUS" = "✅" ] && [ "$DEPS_STATUS" = "✅" ] && [ "$REQ_STATUS" = "✅" ] && [ "$FOLDERS_STATUS" = "✅" ] && [ "$DB_STATUS" = "✅" ] && [ "$MIGRATIONS_STATUS" = "✅" ]; then
+if [ "$VENV_STATUS" = "✅" ] && [ "$DEPS_STATUS" = "✅" ] && [ "$REQ_STATUS" = "✅" ] && [ "$FOLDERS_STATUS" = "✅" ]; then
     echo "🚀 L'API est prête à être utilisée!"
+    echo "➡️  Utilisez 'bin/up api' pour démarrer l'API"
 else
     echo "⚠️  Certaines actions ont échoué, vérifiez les erreurs ci-dessus"
 fi 

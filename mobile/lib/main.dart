@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:provider/provider.dart';
 import 'views/home_screen.dart';
+import 'services/api_service.dart';
+import 'services/message_service.dart';
+import 'providers/message_provider.dart';
 
 Future<void> main() async {
   try {
@@ -24,33 +28,43 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'A\'rosa-je',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.light,
+    final apiService = ApiService();
+    final messageService = MessageService(apiService);
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => MessageProvider(messageService),
         ),
-        useMaterial3: true,
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
-          selectedItemColor: Colors.green,
-          unselectedItemColor: Colors.grey[600],
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'A\'rosa-je',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.green,
+            brightness: Brightness.light,
+          ),
+          useMaterial3: true,
+          bottomNavigationBarTheme: BottomNavigationBarThemeData(
+            selectedItemColor: Colors.green,
+            unselectedItemColor: Colors.grey[600],
+            showUnselectedLabels: true,
+            type: BottomNavigationBarType.fixed,
+          ),
         ),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('fr', 'FR'),
+          Locale('en', 'US'),
+        ],
+        locale: const Locale('fr', 'FR'),
+        home: const AccueilPage(),
       ),
-      localizationsDelegates: const [
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('fr', 'FR'),
-        Locale('en', 'US'),
-      ],
-      locale: const Locale('fr', 'FR'),
-      home: const AccueilPage(),
     );
   }
 }

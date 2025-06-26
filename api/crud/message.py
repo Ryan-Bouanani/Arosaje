@@ -45,14 +45,76 @@ class CRUDMessage:
         user_id: int,
         skip: int = 0,
         limit: int = 50
-    ) -> List[Conversation]:
-        """Récupère toutes les conversations d'un utilisateur"""
-        return db.query(Conversation)\
-            .join(ConversationParticipant)\
-            .filter(ConversationParticipant.user_id == user_id)\
-            .offset(skip)\
-            .limit(limit)\
-            .all()
+    ) -> List[Dict[str, Any]]:
+        """Récupère toutes les conversations d'un utilisateur avec leurs détails"""
+        try:
+            # Récupérer les conversations de l'utilisateur
+            conversations = (
+                db.query(Conversation)
+                .join(ConversationParticipant)
+                .filter(ConversationParticipant.user_id == user_id)
+                .order_by(Conversation.updated_at.desc())
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
+            
+            result = []
+            for conversation in conversations:
+                # Récupérer le dernier message
+                last_message = (
+                    db.query(Message)
+                    .filter(Message.conversation_id == conversation.id)
+                    .order_by(Message.created_at.desc())
+                    .first()
+                )
+                
+                # Compter les messages non lus pour cette conversation
+                unread_count = (
+                    db.query(Message)
+                    .join(ConversationParticipant, ConversationParticipant.conversation_id == Message.conversation_id)
+                    .filter(
+                        ConversationParticipant.user_id == user_id,
+                        Message.conversation_id == conversation.id,
+                        Message.sender_id != user_id,
+                        Message.sender_id.isnot(None),
+                        Message.is_read == False,
+                        (
+                            (ConversationParticipant.last_read_at.is_(None)) |
+                            (Message.created_at > ConversationParticipant.last_read_at)
+                        )
+                    )
+                    .count()
+                )
+                
+                # Construire le dictionnaire de la conversation
+                conv_dict = {
+                    "id": conversation.id,
+                    "type": conversation.type.value if conversation.type else "plant_care",
+                    "related_id": conversation.related_id,
+                    "created_at": conversation.created_at.isoformat(),
+                    "updated_at": conversation.updated_at.isoformat(),
+                    "unread_count": unread_count,
+                    "last_message": None
+                }
+                
+                # Ajouter le dernier message s'il existe
+                if last_message:
+                    conv_dict["last_message"] = {
+                        "id": last_message.id,
+                        "content": last_message.content,
+                        "sender_id": last_message.sender_id,
+                        "created_at": last_message.created_at.isoformat(),
+                        "is_read": last_message.is_read
+                    }
+                
+                result.append(conv_dict)
+            
+            return result
+            
+        except Exception as e:
+            print(f"Error in get_user_conversations: {e}")
+            raise
 
     def create_message(self, db: Session, *, message: MessageCreate, sender_id: Optional[int] = None) -> Message:
         """Crée un nouveau message"""

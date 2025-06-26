@@ -1,38 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'chat_screen.dart';
+import 'package:mobile/providers/message_provider.dart';
+import 'package:mobile/models/conversation.dart';
 
-class ChatMenuScreen extends StatelessWidget {
+class ChatMenuScreen extends StatefulWidget {
   const ChatMenuScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<Map<String, dynamic>> conversations = [
-      {
-        'userName': 'Marie Dupont',
-        'plantName': 'Orchidée',
-        'lastMessage': 'Nickel on fait comme ça, j\'attend votre invitation',
-        'time': '14:30',
-        'userAvatar': 'assets/images/avatar1.jpg',
-        'unreadCount': 2,
-      },
-      {
-        'userName': 'Pierre Martin',
-        'plantName': 'Monstera',
-        'lastMessage': 'D\'accord pour les dates proposées',
-        'time': 'Hier',
-        'userAvatar': 'assets/images/avatar2.jpg',
-        'unreadCount': 0,
-      },
-      {
-        'userName': 'Sophie Bernard',
-        'plantName': 'Ficus',
-        'lastMessage': 'Merci pour votre aide',
-        'time': '21/03',
-        'userAvatar': 'assets/images/avatar3.jpg',
-        'unreadCount': 0,
-      },
-    ];
+  State<ChatMenuScreen> createState() => _ChatMenuScreenState();
+}
 
+class _ChatMenuScreenState extends State<ChatMenuScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MessageProvider>().loadConversations();
+    });
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return DateFormat.Hm().format(date);
+    } else if (messageDate == yesterday) {
+      return 'Hier';
+    } else {
+      return DateFormat.yMd().format(date);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -42,94 +47,178 @@ class ChatMenuScreen extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 1,
       ),
-      body: ListView.separated(
-        itemCount: conversations.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final conversation = conversations[index];
-          return ListTile(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ChatScreen(),
+      body: Consumer<MessageProvider>(
+        builder: (context, provider, child) {
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (provider.error != null) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Erreur de connexion',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      provider.error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => provider.loadConversations(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
                 ),
-              );
-            },
-            leading: CircleAvatar(
-              backgroundColor: Colors.green,
-              radius: 25,
-              child: Text(
-                conversation['plantName'].substring(0, 1),
-                style: const TextStyle(color: Colors.white),
               ),
-            ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: conversation['plantName'],
+            );
+          }
+
+          if (provider.conversations.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(
+                    Icons.chat_bubble_outline,
+                    size: 64,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Aucune conversation',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Vos conversations apparaîtront ici',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => provider.loadConversations(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    child: const Text('Actualiser'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            onRefresh: () => provider.loadConversations(),
+            child: ListView.separated(
+              itemCount: provider.conversations.length,
+              separatorBuilder: (context, index) => const Divider(height: 1),
+              itemBuilder: (context, index) {
+                final conversation = provider.conversations[index];
+                final lastMessage = conversation.lastMessage;
+                
+                return ListTile(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChatScreen(
+                          conversationId: conversation.id,
+                        ),
+                      ),
+                    );
+                  },
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.green,
+                    radius: 25,
+                    child: Text(
+                      conversation.type == ConversationType.plantCare ? 'P' : 'B',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversation.type == ConversationType.plantCare
+                              ? 'Garde de plante'
+                              : 'Conseil botanique',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.black,
                             fontSize: 16,
                           ),
                         ),
-                        TextSpan(
-                          text: ' - ${conversation['userName']}',
-                          style: const TextStyle(
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal,
-                            fontSize: 14,
+                      ),
+                      if (lastMessage != null)
+                        Text(
+                          _formatDate(lastMessage.createdAt),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
-                ),
-                Text(
-                  conversation['time'],
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 4),
+                      if (lastMessage != null)
+                        Text(
+                          lastMessage.content,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                        ),
+                    ],
                   ),
-                ),
-              ],
+                  trailing: conversation.unreadCount > 0
+                      ? Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: const BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            conversation.unreadCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        )
+                      : null,
+                );
+              },
             ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  conversation['lastMessage'],
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-            trailing: conversation['unreadCount'] > 0
-                ? Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      conversation['unreadCount'].toString(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
-                    ),
-                  )
-                : null,
           );
         },
       ),

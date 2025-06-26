@@ -8,7 +8,7 @@ from utils.image_handler import ImageHandler
 from crud.plant_care import plant_care
 from crud.plant import plant as plant_crud
 from crud.user import user as user_crud
-from models.plant_care import CareStatus
+from models.plant_care import CareStatus, PlantCare as PlantCareModel
 from models.user import User as UserModel
 from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareUpdate, PlantCareInDB
 from schemas.user import User
@@ -220,16 +220,55 @@ def get_plant_care_by_plant(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Récupère les détails d'une garde par l'ID de la plante"""
+    """Récupère les détails d'une garde par l'ID de la plante ou crée une garde fictive pour les détails de la plante"""
+    
+    # Vérifier que la plante existe
+    plant = plant_crud.get(db, id=plant_id)
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plante non trouvée")
+    
+    # Vérifier que l'utilisateur a le droit de voir cette plante
+    if plant.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Vous n'avez pas accès à cette plante")
+    
     # Récupérer la garde la plus récente pour cette plante
     db_care = (
-        db.query(PlantCare)
-        .filter(PlantCare.plant_id == plant_id)
-        .order_by(PlantCare.created_at.desc())
+        db.query(PlantCareModel)
+        .filter(PlantCareModel.plant_id == plant_id)
+        .order_by(PlantCareModel.created_at.desc())
         .first()
     )
     
+    # Si aucune garde n'existe, créer une structure de garde fictive pour afficher les détails de la plante
     if db_care is None:
-        raise HTTPException(status_code=404, detail="Aucune garde trouvée pour cette plante")
+        from datetime import datetime
+        from schemas.plant_care import PlantCareInDB
+        
+        # Créer une garde fictive pour pouvoir afficher les détails de la plante
+        fake_care_data = {
+            'id': 0,  # ID fictif
+            'plant_id': plant_id,
+            'owner_id': plant.owner_id,
+            'caretaker_id': None,
+            'start_date': datetime.now(),
+            'end_date': datetime.now(),
+            'status': 'pending',
+            'care_instructions': 'Aucune garde active pour cette plante',
+            'localisation': 'Emplacement de la plante non spécifié',
+            'start_photo_url': None,
+            'end_photo_url': None,
+            'conversation_id': None,
+            'created_at': datetime.now(),
+            'updated_at': datetime.now(),
+            'plant': {
+                'id': plant.id,
+                'nom': plant.nom,
+                'espece': plant.espece,
+                'photo': plant.photo
+            }
+        }
+        
+        # Retourner les données directement au format attendu
+        return fake_care_data
         
     return db_care

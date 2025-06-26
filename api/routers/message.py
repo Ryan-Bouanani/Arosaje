@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from utils.database import get_db
@@ -183,7 +183,7 @@ def get_unread_messages_count(
             detail="Erreur lors du comptage des messages non lus"
         )
 
-@router.get("/conversations", response_model=List[Conversation])
+@router.get("/conversations", response_model=List[Dict[str, Any]])
 async def get_user_conversations(
     skip: int = 0,
     limit: int = 50,
@@ -191,12 +191,20 @@ async def get_user_conversations(
     current_user: User = Depends(get_current_user)
 ):
     """Récupérer toutes les conversations de l'utilisateur"""
-    return message.get_user_conversations(
-        db,
-        user_id=current_user.id,
-        skip=skip,
-        limit=limit
-    )
+    try:
+        conversations = message.get_user_conversations(
+            db,
+            user_id=current_user.id,
+            skip=skip,
+            limit=limit
+        )
+        return conversations
+    except Exception as e:
+        print(f"Error in get_user_conversations endpoint: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de la récupération des conversations: {str(e)}"
+        )
 
 @router.get("/conversations/{conversation_id}/history", response_model=dict)
 async def get_conversation_history(
@@ -257,4 +265,16 @@ async def get_typing_users(
             "last_typed_at": status.last_typed_at
         }
         for status in typing_users
-    ] 
+    ]
+
+@router.get("/auth/test")
+async def test_auth(
+    current_user: User = Depends(get_current_user)
+):
+    """Endpoint de test pour vérifier l'authentification"""
+    return {
+        "status": "authenticated", 
+        "user_id": current_user.id,
+        "user_email": current_user.email,
+        "user_role": current_user.role.value if current_user.role else "unknown"
+    } 

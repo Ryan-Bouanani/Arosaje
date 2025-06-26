@@ -15,7 +15,7 @@ class CareStatus(str, enum.Enum):
 class PlantCare(Base):
     __tablename__ = "plant_cares"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     caretaker_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)

@@ -11,7 +11,7 @@ class AdviceStatus(str, enum.Enum):
 
 class Advice(Base):
     __tablename__ = "advices"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     texte = Column(String, nullable=False)
     status = Column(Enum(AdviceStatus), default=AdviceStatus.PENDING, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

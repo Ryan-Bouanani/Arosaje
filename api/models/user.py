@@ -12,7 +12,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, autoincrement=True)
     password = Column(String)
     nom = Column(String)
     prenom = Column(String)

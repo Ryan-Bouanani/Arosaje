@@ -4,7 +4,7 @@ from utils.database import Base
 
 class Plant(Base):
     __tablename__ = "plants"
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     nom = Column(String, nullable=False)
     espece = Column(String, nullable=True)
     description = Column(String, nullable=True)

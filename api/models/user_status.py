@@ -12,7 +12,7 @@ class UserStatus(str, enum.Enum):
 class UserTypingStatus(Base):
     __tablename__ = "user_typing_status"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
     is_typing = Column(Boolean, default=False)
@@ -25,7 +25,7 @@ class UserTypingStatus(Base):
 class UserPresence(Base):
     __tablename__ = "user_presence"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
     status = Column(Enum(UserStatus), default=UserStatus.OFFLINE)
     last_seen_at = Column(DateTime, default=datetime.utcnow)

@@ -11,7 +11,7 @@ class ConversationType(str, enum.Enum):
 class Conversation(Base):
     __tablename__ = "conversations"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(Enum(ConversationType))
     related_id = Column(Integer, nullable=True)  # ID de la garde ou du conseil associé
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -26,7 +26,7 @@ class Conversation(Base):
 class ConversationParticipant(Base):
     __tablename__ = "conversation_participants"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     last_read_at = Column(DateTime, default=datetime.utcnow)
@@ -47,7 +47,7 @@ class ConversationParticipant(Base):
 class Message(Base):
     __tablename__ = "messages"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(String(2000), nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)

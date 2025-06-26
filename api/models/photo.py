@@ -6,7 +6,7 @@ from utils.database import Base
 class Photo(Base):
     __tablename__ = "photos"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
     filename = Column(String, nullable=False)
     url = Column(String, nullable=False)
     description = Column(String, nullable=True)

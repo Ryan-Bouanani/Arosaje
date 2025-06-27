@@ -6,6 +6,8 @@ from schemas.message import MessageCreate, ConversationCreate
 from datetime import datetime, timedelta
 from models.user import User
 from models.user_status import UserTypingStatus, UserPresence, UserStatus
+from models.plant import Plant
+from models.plant_care import PlantCare
 
 class CRUDMessage:
     def create_conversation(
@@ -48,6 +50,8 @@ class CRUDMessage:
     ) -> List[Dict[str, Any]]:
         """Récupère toutes les conversations d'un utilisateur avec leurs détails"""
         try:
+            print(f"DEBUG: Getting conversations for user_id={user_id}, skip={skip}, limit={limit}")
+            
             # Récupérer les conversations de l'utilisateur
             conversations = (
                 db.query(Conversation)
@@ -59,8 +63,11 @@ class CRUDMessage:
                 .all()
             )
             
+            print(f"DEBUG: Found {len(conversations)} conversations for user {user_id}")
+            
             result = []
-            for conversation in conversations:
+            for i, conversation in enumerate(conversations):
+                print(f"DEBUG: Processing conversation {i+1}/{len(conversations)}: id={conversation.id}, type={conversation.type}")
                 # Récupérer le dernier message
                 last_message = (
                     db.query(Message)
@@ -87,6 +94,17 @@ class CRUDMessage:
                     .count()
                 )
                 
+                # Récupérer les participants (pour obtenir l'autre personne)
+                participants = (
+                    db.query(User)
+                    .join(ConversationParticipant)
+                    .filter(
+                        ConversationParticipant.conversation_id == conversation.id,
+                        ConversationParticipant.user_id != user_id  # Exclure l'utilisateur actuel
+                    )
+                    .all()
+                )
+                
                 # Construire le dictionnaire de la conversation
                 conv_dict = {
                     "id": conversation.id,
@@ -95,8 +113,42 @@ class CRUDMessage:
                     "created_at": conversation.created_at.isoformat(),
                     "updated_at": conversation.updated_at.isoformat(),
                     "unread_count": unread_count,
-                    "last_message": None
+                    "last_message": None,
+                    "participants": [],
+                    "plant_info": None,
+                    "plant_care_info": None
                 }
+                
+                # Ajouter les informations des participants
+                for participant in participants:
+                    conv_dict["participants"].append({
+                        "id": participant.id,
+                        "nom": participant.nom,
+                        "prenom": participant.prenom,
+                        "email": participant.email
+                    })
+                
+                # Si c'est une conversation de type plant_care, récupérer les infos de la plante
+                if conversation.type.value == "plant_care" and conversation.related_id:
+                    # Récupérer la garde de plante
+                    plant_care = db.query(PlantCare).filter(PlantCare.id == conversation.related_id).first()
+                    if plant_care:
+                        # Récupérer la plante
+                        plant = db.query(Plant).filter(Plant.id == plant_care.plant_id).first()
+                        if plant:
+                            conv_dict["plant_info"] = {
+                                "id": plant.id,
+                                "nom": plant.nom,
+                                "espece": plant.espece
+                            }
+                        
+                        conv_dict["plant_care_info"] = {
+                            "id": plant_care.id,
+                            "start_date": plant_care.start_date.isoformat(),
+                            "end_date": plant_care.end_date.isoformat(),
+                            "owner_id": plant_care.owner_id,
+                            "caretaker_id": plant_care.caretaker_id
+                        }
                 
                 # Ajouter le dernier message s'il existe
                 if last_message:
@@ -104,11 +156,18 @@ class CRUDMessage:
                         "id": last_message.id,
                         "content": last_message.content,
                         "sender_id": last_message.sender_id,
+                        "conversation_id": last_message.conversation_id,
                         "created_at": last_message.created_at.isoformat(),
+                        "updated_at": last_message.updated_at.isoformat(),
                         "is_read": last_message.is_read
                     }
+                    print(f"DEBUG: Added last message for conversation {conversation.id}: '{last_message.content}'")
                 
                 result.append(conv_dict)
+            
+            print(f"DEBUG: Returning {len(result)} conversations")
+            if result:
+                print(f"DEBUG: First conversation: {result[0]['id']} - {result[0].get('last_message', {}).get('content', 'No message')}")
             
             return result
             

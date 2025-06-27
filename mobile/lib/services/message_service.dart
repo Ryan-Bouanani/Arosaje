@@ -24,24 +24,17 @@ class MessageService {
     int limit = 50,
   }) async {
     try {
-      print('Fetching user conversations...');
       final response = await _apiService.get(
         '/messages/conversations',
         queryParameters: {'skip': skip, 'limit': limit},
       );
       
-      print('API Response type: ${response.runtimeType}');
-      print('API Response: $response');
-      
       if (response is List) {
-        print('Processing ${response.length} conversations');
         final conversations = response
             .map((json) {
               try {
                 return Conversation.fromJson(json as Map<String, dynamic>);
               } catch (e) {
-                print('Error parsing conversation: $e');
-                print('Conversation data: $json');
                 return null;
               }
             })
@@ -49,18 +42,15 @@ class MessageService {
             .cast<Conversation>()
             .toList();
         
-        print('Successfully parsed ${conversations.length} conversations');
         return conversations;
       } else if (response is Map<String, dynamic> && response.containsKey('data')) {
         return (response['data'] as List)
             .map((json) => Conversation.fromJson(json))
             .toList();
       } else {
-        print('Unexpected response format: $response');
         return [];
       }
     } catch (e) {
-      print('Error in getUserConversations: $e');
       rethrow;
     }
   }
@@ -71,14 +61,10 @@ class MessageService {
     int limit = 50,
   }) async {
     try {
-      print('Fetching messages for conversation $conversationId');
       final response = await _apiService.get(
         '/messages/conversations/$conversationId/messages',
         queryParameters: {'skip': skip, 'limit': limit},
       );
-      
-      print('Messages response type: ${response.runtimeType}');
-      print('Messages response: $response');
       
       if (response is List) {
         final messages = response
@@ -86,8 +72,6 @@ class MessageService {
               try {
                 return Message.fromJson(json as Map<String, dynamic>);
               } catch (e) {
-                print('Error parsing message: $e');
-                print('Message data: $json');
                 return null;
               }
             })
@@ -95,65 +79,71 @@ class MessageService {
             .cast<Message>()
             .toList();
         
-        print('Successfully parsed ${messages.length} messages');
         return messages;
       } else if (response is Map<String, dynamic> && response.containsKey('data')) {
         return (response['data'] as List)
             .map((json) => Message.fromJson(json))
             .toList();
       } else {
-        print('Unexpected messages response format: $response');
         return [];
       }
     } catch (e) {
-      print('Error in getConversationMessages: $e');
       rethrow;
     }
   }
 
   // WebSocket
   Future<void> connectToConversation(int conversationId) async {
-    final token = await _apiService.getToken();
-    final wsUrl = Uri.parse('${ApiService.baseUrl.replaceFirst("http", "ws")}/ws/$conversationId');
-    
-    _channel = WebSocketChannel.connect(
-      wsUrl,
-      protocols: ['Bearer $token'],
-    );
+    try {
+      final token = await _apiService.getToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+      
+      // Passer le token comme paramètre de query dans l'URL
+      final wsUrl = Uri.parse('${ApiService.baseUrl.replaceFirst("http", "ws")}/ws/$conversationId?token=$token');
+      
+      _channel = WebSocketChannel.connect(wsUrl);
 
-    _channel!.stream.listen(
-      (message) {
-        final data = jsonDecode(message);
-        switch (data['type']) {
-          case 'new_message':
-            _messageController.add(Message.fromJson(data['message']));
-            break;
-          case 'typing_status':
-            _typingController.add(data);
-            break;
-          case 'messages_read':
-            _readController.add(data);
-            break;
-        }
-      },
-      onError: (error) {
-        print('WebSocket error: $error');
-        reconnectToConversation(conversationId);
-      },
-      onDone: () {
-        print('WebSocket connection closed');
-        reconnectToConversation(conversationId);
-      },
-    );
+      _channel!.stream.listen(
+        (message) {
+          final data = jsonDecode(message);
+          switch (data['type']) {
+            case 'new_message':
+              _messageController.add(Message.fromJson(data['message']));
+              break;
+            case 'typing_status':
+              _typingController.add(data);
+              break;
+            case 'messages_read':
+              _readController.add(data);
+              break;
+          }
+        },
+        onError: (error) {
+          _reconnectToConversation(conversationId);
+        },
+        onDone: () {
+          _reconnectToConversation(conversationId);
+        },
+      );
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  Future<void> reconnectToConversation(int conversationId) async {
+  Future<void> _reconnectToConversation(int conversationId) async {
     await Future.delayed(const Duration(seconds: 2));
     try {
       await connectToConversation(conversationId);
     } catch (e) {
-      print('Reconnection failed: $e');
+      // Reconnexion échouée, on peut réessayer plus tard
     }
+  }
+
+  // Renommage de l'ancienne méthode pour éviter les conflits
+  Future<void> reconnectToConversation(int conversationId) async {
+    await _reconnectToConversation(conversationId);
   }
 
   void sendMessage(String content) {

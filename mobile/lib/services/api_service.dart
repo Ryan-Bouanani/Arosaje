@@ -104,6 +104,34 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> getCurrentUser() async {
+    try {
+      final token = await getToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Authentication failed. Please login again.');
+      } else {
+        throw Exception('Failed to get current user: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error getting current user: $e');
+      rethrow;
+    }
+  }
+
   static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
       final response = await http.post(

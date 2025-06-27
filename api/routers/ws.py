@@ -16,21 +16,23 @@ router = APIRouter(tags=["websocket"])
 async def websocket_endpoint(
     websocket: WebSocket,
     conversation_id: int,
-    authorization: Optional[str] = Header(None),
+    token: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
-    token = None
-    if authorization and authorization.startswith("Bearer "):
-        token = authorization.split(" ")[1]
-
+    print(f"WebSocket connection attempt for conversation {conversation_id}")
+    print(f"Token provided: {token is not None}")
+    
     if token is None:
+        print("No token provided, closing connection")
         await websocket.close(code=1008)  # Policy Violation
         return
 
     # Authentifier l'utilisateur
     try:
         current_user = await get_current_user_ws(token, db)
-    except:
+        print(f"User authenticated: {current_user.id}")
+    except Exception as e:
+        print(f"Authentication failed: {e}")
         await websocket.close(code=1008)
         return
 
@@ -40,6 +42,7 @@ async def websocket_endpoint(
     try:
         # Accepter la connexion
         await manager.connect(websocket, current_user.id, socket_id)
+        print(f"WebSocket connected for user {current_user.id}")
 
         # Mettre à jour ou créer le statut de présence
         presence = db.query(UserPresence).filter(UserPresence.user_id == current_user.id).first()
@@ -59,6 +62,7 @@ async def websocket_endpoint(
         try:
             while True:
                 data = await websocket.receive_json()
+                print(f"Received WebSocket data: {data}")
                 
                 # Gérer les différents types de messages
                 message_type = data.get("type")
@@ -103,9 +107,10 @@ async def websocket_endpoint(
                     )
 
         except WebSocketDisconnect:
+            print(f"WebSocket disconnected for user {current_user.id}")
             # Gérer la déconnexion
             if conversation_id in manager.conversation_participants:
-                manager.conversation_participants[conversation_id].remove(current_user.id)
+                manager.conversation_participants[conversation_id].discard(current_user.id)
                 if not manager.conversation_participants[conversation_id]:
                     del manager.conversation_participants[conversation_id]
 

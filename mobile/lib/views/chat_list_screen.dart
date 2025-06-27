@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'chat_screen.dart';
 import 'package:mobile/providers/message_provider.dart';
 import 'package:mobile/models/conversation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatMenuScreen extends StatefulWidget {
   const ChatMenuScreen({super.key});
@@ -13,11 +14,21 @@ class ChatMenuScreen extends StatefulWidget {
 }
 
 class _ChatMenuScreenState extends State<ChatMenuScreen> {
+  int? _currentUserId;
+
   @override
   void initState() {
     super.initState();
+    _initializeUser();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MessageProvider>().loadConversations();
+    });
+  }
+
+  Future<void> _initializeUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _currentUserId = prefs.getInt('user_id');
     });
   }
 
@@ -94,6 +105,8 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
             );
           }
 
+
+
           if (provider.conversations.isEmpty) {
             return Center(
               child: Column(
@@ -135,87 +148,143 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
 
           return RefreshIndicator(
             onRefresh: () => provider.loadConversations(),
-            child: ListView.separated(
+            child: ListView.builder(
               itemCount: provider.conversations.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final conversation = provider.conversations[index];
+                final currentUserId = _currentUserId ?? 0;
                 final lastMessage = conversation.lastMessage;
                 
-                return ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChatScreen(
-                          conversationId: conversation.id,
-                        ),
-                      ),
-                    );
-                  },
-                  leading: CircleAvatar(
-                    backgroundColor: Colors.green,
-                    radius: 25,
-                    child: Text(
-                      conversation.type == ConversationType.plantCare ? 'P' : 'B',
-                      style: const TextStyle(color: Colors.white),
+                return Container(
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey, width: 0.2),
                     ),
                   ),
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          conversation.type == ConversationType.plantCare
-                              ? 'Garde de plante'
-                              : 'Conseil botanique',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(
+                            conversationId: conversation.id,
                           ),
                         ),
+                      );
+                    },
+                    leading: CircleAvatar(
+                      backgroundColor: conversation.type == ConversationType.plantCare 
+                          ? Colors.green 
+                          : Colors.blue,
+                      radius: 28,
+                      child: Icon(
+                        conversation.type == ConversationType.plantCare 
+                            ? Icons.eco 
+                            : Icons.lightbulb,
+                        color: Colors.white,
+                        size: 26,
                       ),
-                      if (lastMessage != null)
-                        Text(
-                          _formatDate(lastMessage.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                    ],
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      if (lastMessage != null)
-                        Text(
-                          lastMessage.content,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                        ),
-                    ],
-                  ),
-                  trailing: conversation.unreadCount > 0
-                      ? Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-                            shape: BoxShape.circle,
-                          ),
+                    ),
+                    title: Row(
+                      children: [
+                        Expanded(
                           child: Text(
-                            conversation.unreadCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
+                            conversation.getTitle(currentUserId),
+                            style: TextStyle(
+                              fontWeight: conversation.unreadCount > 0 
+                                  ? FontWeight.bold 
+                                  : FontWeight.w600,
+                              fontSize: 16,
+                              color: Colors.black87,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (lastMessage != null || conversation.unreadCount > 0)
+                          Text(
+                            lastMessage != null 
+                                ? _formatDate(lastMessage.createdAt)
+                                : _formatDate(conversation.updatedAt),
+                            style: TextStyle(
                               fontSize: 12,
+                              color: conversation.unreadCount > 0 
+                                  ? Colors.green[700] 
+                                  : Colors.grey[600],
+                              fontWeight: conversation.unreadCount > 0 
+                                  ? FontWeight.bold 
+                                  : FontWeight.normal,
                             ),
                           ),
-                        )
-                      : null,
+                      ],
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (conversation.getSubtitle(currentUserId).isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 2),
+                              child: Text(
+                                conversation.getSubtitle(currentUserId),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.blue[600],
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  lastMessage != null && lastMessage.content.isNotEmpty
+                                      ? lastMessage.content
+                                      : 'Commencer la conversation...',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: lastMessage != null && lastMessage.content.isNotEmpty
+                                        ? (conversation.unreadCount > 0 
+                                            ? Colors.black87 
+                                            : Colors.grey[600])
+                                        : Colors.grey[500],
+                                    fontSize: 14,
+                                    fontWeight: conversation.unreadCount > 0 
+                                        ? FontWeight.w500 
+                                        : FontWeight.normal,
+                                    fontStyle: lastMessage == null || lastMessage.content.isEmpty
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    trailing: conversation.unreadCount > 0
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.green,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              conversation.unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        : null,
+                  ),
                 );
               },
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile/models/conversation.dart';
 import 'package:mobile/models/message.dart';
 import 'package:mobile/services/message_service.dart';
+import 'dart:async';
 
 class MessageProvider extends ChangeNotifier {
   final MessageService _messageService;
@@ -10,6 +11,10 @@ class MessageProvider extends ChangeNotifier {
   Map<int, bool> _typingStatus = {};
   bool _isLoading = false;
   String? _error;
+  StreamSubscription<Message>? _messageSubscription;
+  StreamSubscription<Map<String, dynamic>>? _typingSubscription;
+  StreamSubscription<Map<String, dynamic>>? _readSubscription;
+  int? _currentConversationId;
 
   MessageProvider(this._messageService);
 
@@ -26,6 +31,14 @@ class MessageProvider extends ChangeNotifier {
       notifyListeners();
 
       final List<Conversation> loadedConversations = await _messageService.getUserConversations();
+      
+      // Trier les conversations par date du dernier message (plus récent en premier)
+      loadedConversations.sort((a, b) {
+        DateTime aDate = a.lastMessage?.createdAt ?? a.updatedAt;
+        DateTime bDate = b.lastMessage?.createdAt ?? b.updatedAt;
+        return bDate.compareTo(aDate); // Ordre décroissant (plus récent en premier)
+      });
+      
       _conversations = loadedConversations;
       _isLoading = false;
       notifyListeners();
@@ -39,68 +52,115 @@ class MessageProvider extends ChangeNotifier {
 
   Future<void> loadMessages(int conversationId) async {
     try {
+      _error = null;
+      notifyListeners();
+
+      // Charger les messages depuis l'API
       if (!_messages.containsKey(conversationId)) {
         _messages[conversationId] = [];
       }
 
       final List<Message> loadedMessages = await _messageService.getConversationMessages(conversationId);
+      // Trier les messages par date de création (du plus ancien au plus récent)
+      loadedMessages.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       _messages[conversationId] = loadedMessages;
       notifyListeners();
 
-      // Se connecter au WebSocket pour les mises à jour en temps réel
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      print('Erreur lors du chargement des messages: $e');
+    }
+  }
+
+  Future<void> connectToWebSocket(int conversationId) async {
+    try {
+      print('Connecting to WebSocket for conversation $conversationId');
+      _currentConversationId = conversationId;
+      
+      // Fermer les anciennes connexions
+      await _closeWebSocketSubscriptions();
+      
+      // Se connecter au WebSocket
       await _messageService.connectToConversation(conversationId);
 
       // Écouter les nouveaux messages
-      _messageService.onMessage.listen((message) {
+      _messageSubscription = _messageService.onMessage.listen((message) {
+        print('New message received: ${message.content} for conversation ${message.conversationId}');
         if (message.conversationId == conversationId) {
           if (_messages[conversationId] == null) {
             _messages[conversationId] = [];
           }
-          _messages[conversationId]!.add(message);
-          notifyListeners();
+          
+          // Vérifier si le message n'existe pas déjà
+          final existingMessageIndex = _messages[conversationId]!.indexWhere((m) => m.id == message.id);
+          if (existingMessageIndex == -1) {
+            _messages[conversationId]!.add(message);
+            print('Message added to conversation $conversationId. Total messages: ${_messages[conversationId]!.length}');
+            notifyListeners();
+          } else {
+            print('Message already exists, skipping');
+          }
         }
       });
 
       // Écouter les statuts de frappe
-      _messageService.onTyping.listen((data) {
+      _typingSubscription = _messageService.onTyping.listen((data) {
         if (data['conversation_id'] == conversationId) {
-          _typingStatus[conversationId] = data['is_typing'];
+          _typingStatus[conversationId] = data['is_typing'] ?? false;
           notifyListeners();
         }
       });
 
       // Écouter les marquages de lecture
-      _messageService.onRead.listen((data) {
+      _readSubscription = _messageService.onRead.listen((data) {
         if (data['conversation_id'] == conversationId) {
           final messages = _messages[conversationId];
           if (messages != null) {
-            for (var message in messages) {
-              if (!message.isRead) {
+            bool updated = false;
+            for (int i = 0; i < messages.length; i++) {
+              if (!messages[i].isRead) {
                 // Créer un nouveau message avec isRead = true
                 final updatedMessage = Message(
-                  id: message.id,
-                  content: message.content,
-                  senderId: message.senderId,
-                  conversationId: message.conversationId,
-                  createdAt: message.createdAt,
-                  updatedAt: message.updatedAt,
+                  id: messages[i].id,
+                  content: messages[i].content,
+                  senderId: messages[i].senderId,
+                  conversationId: messages[i].conversationId,
+                  createdAt: messages[i].createdAt,
+                  updatedAt: messages[i].updatedAt,
                   isRead: true,
                 );
-                final index = messages.indexOf(message);
-                messages[index] = updatedMessage;
+                messages[i] = updatedMessage;
+                updated = true;
               }
             }
-            notifyListeners();
+            if (updated) {
+              notifyListeners();
+            }
           }
         }
       });
+      
+      print('WebSocket listeners set up successfully');
+      
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      print('Erreur lors de la connexion WebSocket: $e');
     }
   }
 
+  Future<void> _closeWebSocketSubscriptions() async {
+    await _messageSubscription?.cancel();
+    await _typingSubscription?.cancel();
+    await _readSubscription?.cancel();
+    _messageSubscription = null;
+    _typingSubscription = null;
+    _readSubscription = null;
+  }
+
   void sendMessage(int conversationId, String content) {
+    print('Sending message: $content');
     _messageService.sendMessage(content);
   }
 
@@ -112,16 +172,16 @@ class MessageProvider extends ChangeNotifier {
     _messageService.markMessagesAsRead();
   }
 
-  Future<void> connectToWebSocket(int conversationId) async {
-    await _messageService.connectToConversation(conversationId);
-  }
-
   void disconnectWebSocket() {
+    print('Disconnecting WebSocket');
     _messageService.disconnect();
+    _closeWebSocketSubscriptions();
+    _currentConversationId = null;
   }
 
   @override
   void dispose() {
+    _closeWebSocketSubscriptions();
     _messageService.dispose();
     super.dispose();
   }

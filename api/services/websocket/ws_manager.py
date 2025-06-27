@@ -7,6 +7,7 @@ from models.user_status import UserPresence, UserStatus, UserTypingStatus
 from models.message import Message
 from crud.message import message as message_crud
 from crud.user import user as user_crud
+from schemas.message import MessageCreate
 from services.email.email_service import EmailService
 
 class ConnectionManager:
@@ -79,50 +80,70 @@ class ConnectionManager:
         )
 
     async def handle_message(self, user_id: int, conversation_id: int, content: str, db: Session):
-        # Créer le message dans la base de données
-        new_message = message_crud.create_message(
-            db=db,
-            message_in={"content": content, "conversation_id": conversation_id},
-            sender_id=user_id
-        )
+        try:
+            print(f"Creating message: user_id={user_id}, conversation_id={conversation_id}, content='{content}'")
+            
+            # Créer l'objet MessageCreate
+            message_create = MessageCreate(
+                content=content,
+                conversation_id=conversation_id
+            )
+            
+            # Créer le message dans la base de données
+            new_message = message_crud.create_message(
+                db=db,
+                message=message_create,
+                sender_id=user_id
+            )
+            
+            print(f"Message created successfully: id={new_message.id}")
 
-        # Récupérer l'expéditeur pour son nom
-        sender = user_crud.get(db, id=user_id)
-        sender_name = f"{sender.prenom} {sender.nom}"
+            # Récupérer l'expéditeur pour son nom
+            sender = user_crud.get(db, id=user_id)
+            sender_name = f"{sender.prenom} {sender.nom}" if sender else "Utilisateur inconnu"
 
-        # Notifier tous les participants
-        message_data = {
-            "type": "new_message",
-            "message": {
-                "id": new_message.id,
-                "content": new_message.content,
-                "sender_id": new_message.sender_id,
-                "conversation_id": new_message.conversation_id,
-                "created_at": new_message.created_at.isoformat(),
-                "is_read": new_message.is_read
+            # Préparer les données du message pour la diffusion
+            message_data = {
+                "type": "new_message",
+                "message": {
+                    "id": new_message.id,
+                    "content": new_message.content,
+                    "sender_id": new_message.sender_id,
+                    "conversation_id": new_message.conversation_id,
+                    "created_at": new_message.created_at.isoformat(),
+                    "updated_at": new_message.updated_at.isoformat(),
+                    "is_read": new_message.is_read
+                }
             }
-        }
-        
-        # Envoyer la notification WebSocket et l'email à chaque participant
-        if conversation_id in self.conversation_participants:
-            for participant_id in self.conversation_participants[conversation_id]:
-                if participant_id != user_id:  # Ne pas envoyer à l'expéditeur
-                    # Notification WebSocket
-                    if participant_id in self.active_connections:
-                        for websocket in self.active_connections[participant_id].values():
-                            await websocket.send_json(message_data)
-                    
-                    # Notification Email
-                    participant = user_crud.get(db, id=participant_id)
-                    try:
-                        await self.email_service.send_new_message_notification(
-                            recipient_email=participant.email,
-                            sender_name=sender_name,
-                            conversation_id=str(conversation_id)
-                        )
-                    except Exception as e:
-                        print(f"Erreur lors de l'envoi de l'email de notification: {e}")
+            
+            print(f"Broadcasting message to conversation {conversation_id}")
+            
+            # Envoyer le message à tous les participants connectés (y compris l'expéditeur)
+            await self.broadcast_to_conversation(
+                message_data,
+                conversation_id
+            )
+            
+            # Envoyer les notifications email uniquement aux autres participants
+            if conversation_id in self.conversation_participants:
+                for participant_id in self.conversation_participants[conversation_id]:
+                    if participant_id != user_id:  # Ne pas envoyer d'email à l'expéditeur
+                        participant = user_crud.get(db, id=participant_id)
+                        if participant:
+                            try:
+                                await self.email_service.send_new_message_notification(
+                                    recipient_email=participant.email,
+                                    sender_name=sender_name,
+                                    conversation_id=str(conversation_id)
+                                )
+                                print(f"Email notification sent to {participant.email}")
+                            except Exception as e:
+                                print(f"Erreur lors de l'envoi de l'email de notification: {e}")
 
-        return new_message
+            return new_message
+            
+        except Exception as e:
+            print(f"Error in handle_message: {e}")
+            raise
 
 manager = ConnectionManager() 

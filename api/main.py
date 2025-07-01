@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine, SessionLocal
-from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin
+from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin, metrics
 import os
 from scripts.init_data import init_data
 from models.user import User
@@ -70,6 +70,7 @@ app.include_router(message.router)
 app.include_router(debug.router)
 app.include_router(ws.router)
 app.include_router(admin.router)
+app.include_router(metrics.router)
 
 @app.get("/")
 def read_root():

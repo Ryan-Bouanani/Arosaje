@@ -7,14 +7,13 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./api:/app
-      - ./api/assets/database:/app/assets/database
       - ./api/assets/img:/app/assets/img
     ports:
       - "8000:8000"
     env_file:
       - ./env/.env.api
     environment:
-      - DATABASE_URL=sqlite:///assets/database/arosaje.db
+      - DATABASE_URL=postgresql://arosaje:epsi@postgres:5432/arosaje_db
       - PYTHONUNBUFFERED=1
       - GIT_DISCOVERY_ACROSS_FILESYSTEM=1
     networks:
@@ -22,7 +21,29 @@ services:
     depends_on:
       api-redis:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     restart: "no"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: arosa-je-postgres
+    environment:
+      - POSTGRES_USER=arosaje
+      - POSTGRES_PASSWORD=epsi
+      - POSTGRES_DB=arosaje_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - arosa-je-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arosaje -d arosaje_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
 
   web:
     container_name: arosa-je-web
@@ -103,9 +124,172 @@ services:
       retries: 3
       start_period: 5s
 
+  # === SERVICES DE MONITORING (Activés avec l'API) ===
+  
+  # Base de données InfluxDB pour les métriques business
+  influxdb:
+    image: influxdb:2.7-alpine
+    container_name: arosa-je-influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=arosaje_monitoring_2024
+      - DOCKER_INFLUXDB_INIT_ORG=arosaje
+      - DOCKER_INFLUXDB_INIT_BUCKET=metrics
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=arosaje-token-12345678
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    profiles:
+      - monitoring
+
+  # Prometheus pour les métriques techniques
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: arosa-je-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    depends_on:
+      - influxdb
+    profiles:
+      - monitoring
+
+  # Loki pour la collecte des logs
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: arosa-je-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./monitoring/loki/config.yml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    user: "0"
+    profiles:
+      - monitoring
+
+  # Promtail pour l'envoi des logs vers Loki
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: arosa-je-promtail
+    volumes:
+      - ./monitoring/promtail/config.yml:/etc/promtail/config.yml
+      - ./api/logs:/var/log/api:ro
+      - ./web/logs:/var/log/web:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - arosa-je-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana pour la visualisation
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: arosa-je-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=arosaje_grafana_2024
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - arosa-je-network
+    depends_on:
+      - prometheus
+      - loki
+      - influxdb
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Node Exporter pour les métriques système
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: arosa-je-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.rootfs=/host'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /:/host:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    pid: host
+
+  # PostgreSQL séparée pour les logs structurés
+  monitoring-postgres:
+    image: postgres:15-alpine
+    container_name: arosa-je-monitoring-postgres
+    environment:
+      - POSTGRES_USER=monitoring
+      - POSTGRES_PASSWORD=monitoring_password_2024
+      - POSTGRES_DB=monitoring_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - monitoring_postgres_data:/var/lib/postgresql/data
+      - ./monitoring/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monitoring -d monitoring_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    profiles:
+      - monitoring
+
 networks:
   arosa-je-network:
     name: arosa-je-network
 
 volumes:
   redis_data:
+  postgres_data:
+  grafana_data:
+  prometheus_data:
+  loki_data:
+  influxdb_data:
+  monitoring_postgres_data:

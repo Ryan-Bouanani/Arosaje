@@ -7,6 +7,9 @@ from typing import Callable, Dict, Optional
 import json
 import os
 from pathlib import Path
+from services.monitoring_service import monitoring_service
+from services.analytics_service import analytics_service
+from utils.platform import detect_platform, Platform
 
 # Créer le dossier logs s'il n'existe pas
 log_dir = Path("logs")
@@ -104,16 +107,73 @@ def track_error(endpoint: str, error: Exception = None):
     metrics_logger.error(error_data)
 
 async def monitoring_middleware(request: Request, call_next: Callable) -> Response:
-    """Middleware pour monitorer les requêtes avec logging détaillé"""
+    """Middleware pour monitorer les requêtes avec logging détaillé et envoi vers InfluxDB"""
     start_time = time.time()
     
     try:
         response = await call_next(request)
         duration = time.time() - start_time
         
-        # Log et monitoring
+        # Détecter la plateforme
+        platform = detect_platform(request)
+        
+        # Log et monitoring traditionnel
         log_request(request, response, duration)
         monitor_response_time(request.url.path, duration)
+        
+        # Envoi vers InfluxDB avec le nouveau service de monitoring
+        try:
+            # Récupérer l'ID utilisateur depuis les headers ou auth
+            user_id = None
+            if hasattr(request.state, 'user_id'):
+                user_id = getattr(request.state, 'user_id')
+            elif 'Authorization' in request.headers:
+                # Tentative d'extraction simple - à adapter selon votre système d'auth
+                pass
+            
+            # Envoyer toutes les métriques vers InfluxDB
+            await monitoring_service.track_api_request(request, response, duration, user_id)
+            
+            # Tracker la fonctionnalité utilisée
+            if user_id:
+                # Extraire le nom de la fonctionnalité à partir du chemin
+                path_parts = request.url.path.strip('/').split('/')
+                if len(path_parts) > 0:
+                    feature = path_parts[0]  # Utiliser la première partie du chemin comme nom de fonctionnalité
+                    if len(path_parts) > 1:
+                        feature += f"_{path_parts[1]}"  # Ajouter la seconde partie si elle existe
+                    
+                    await analytics_service.track_feature_usage(
+                        feature=feature,
+                        platform=platform,
+                        user_id=user_id
+                    )
+                
+                # Tracker la durée de session si c'est une requête authentifiée
+                if request.url.path != "/auth/login" and request.url.path != "/auth/logout":
+                    await analytics_service.track_session_duration(
+                        duration_seconds=duration,
+                        platform=platform,
+                        user_id=user_id
+                    )
+                
+                # Tracker la localisation si disponible
+                if "x-forwarded-for" in request.headers:
+                    # Note: Dans un environnement de production, il faudrait utiliser un service de géolocalisation
+                    await analytics_service.track_geographic_usage(
+                        country_code="FR",  # Par défaut pour le moment
+                        platform=platform,
+                        user_id=user_id
+                    )
+            
+        except Exception as monitoring_error:
+            # Log l'erreur de monitoring sans interrompre la requête
+            metrics_logger.error({
+                'timestamp': datetime.now().isoformat(),
+                'type': 'monitoring_error',
+                'error': str(monitoring_error),
+                'endpoint': request.url.path
+            })
         
         # Ajouter les headers de monitoring
         response.headers['X-Response-Time'] = f"{duration:.3f}s"
@@ -123,6 +183,27 @@ async def monitoring_middleware(request: Request, call_next: Callable) -> Respon
     except Exception as e:
         duration = time.time() - start_time
         track_error(request.url.path, e)
+        
+        # Envoyer l'erreur vers InfluxDB
+        try:
+            user_id = None
+            if hasattr(request.state, 'user_id'):
+                user_id = getattr(request.state, 'user_id')
+                
+            await monitoring_service.send_error_to_influxdb(
+                error_type=type(e).__name__,
+                error_message=str(e),
+                endpoint=request.url.path,
+                user_id=user_id,
+                platform=detect_platform(request)
+            )
+        except Exception as monitoring_error:
+            metrics_logger.error({
+                'timestamp': datetime.now().isoformat(),
+                'type': 'monitoring_error_during_exception',
+                'error': str(monitoring_error)
+            })
+            
         raise
 
 def monitor_endpoint(func):

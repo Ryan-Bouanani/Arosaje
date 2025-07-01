@@ -298,11 +298,39 @@ start_services() {
     trap "cleanup ${services[*]}" SIGINT SIGTERM
     
     log_info "Démarrage des services: ${services[*]}..."
-    if ! docker-compose up -d "${services[@]}"; then
-        echo "❌ Erreur lors du démarrage des services."
-        echo "📋 Logs de l'erreur:"
-        docker-compose logs "${services[@]}"
-        exit 1
+    
+    # Si l'API est dans les services, activer aussi le monitoring
+    if [[ " ${services[@]} " =~ " api " ]]; then
+        log_info "🔍 API détectée - activation du monitoring automatique..."
+        # Créer les dossiers de logs nécessaires
+        mkdir -p api/logs web/logs
+        
+        # Démarrer d'abord les services demandés
+        if ! docker-compose up -d "${services[@]}"; then
+            echo "❌ Erreur lors du démarrage des services principaux."
+            echo "📋 Logs de l'erreur:"
+            docker-compose logs "${services[@]}"
+            exit 1
+        fi
+        
+        # Puis démarrer les services de monitoring avec le profil
+        if ! docker-compose --profile monitoring up -d grafana prometheus loki influxdb promtail node-exporter monitoring-postgres; then
+            echo "❌ Erreur lors du démarrage des services de monitoring."
+            echo "📋 Logs de l'erreur:"
+            docker-compose logs grafana prometheus loki influxdb
+            exit 1
+        fi
+        
+        log_success "📊 Monitoring activé avec l'API"
+        log_info "🎯 Grafana disponible sur: http://localhost:3001 (admin/arosaje_grafana_2024)"
+    else
+        # Démarrer seulement les services demandés
+        if ! docker-compose up -d "${services[@]}"; then
+            echo "❌ Erreur lors du démarrage des services."
+            echo "📋 Logs de l'erreur:"
+            docker-compose logs "${services[@]}"
+            exit 1
+        fi
     fi
 
     # Démarrer l'émulateur Android si le service mobile est inclus
@@ -530,15 +558,29 @@ case "$1" in
             # Capture du signal SIGINT pour tous les services
             trap "cleanup all" SIGINT SIGTERM
             
-            log_info "Démarrage de tous les services..."
-            if ! docker-compose up -d; then
-                echo "❌ Erreur lors du démarrage des conteneurs."
+            log_info "Démarrage de tous les services avec monitoring..."
+            # Créer les dossiers de logs nécessaires
+            mkdir -p api/logs web/logs
+            
+            # Démarrer d'abord tous les services principaux
+            if ! docker-compose up -d api web mobile postgres api-redis; then
+                echo "❌ Erreur lors du démarrage des services principaux."
                 echo "📋 Logs de l'erreur:"
-                docker-compose logs
+                docker-compose logs api web mobile postgres api-redis
+                exit 1
+            fi
+            
+            # Puis démarrer les services de monitoring
+            if ! docker-compose --profile monitoring up -d grafana prometheus loki influxdb promtail node-exporter monitoring-postgres; then
+                echo "❌ Erreur lors du démarrage des services de monitoring."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs grafana prometheus loki influxdb
                 exit 1
             fi
 
             log_success "Tous les services démarrés avec succès!"
+            log_success "📊 Monitoring activé automatiquement"
+            log_info "🎯 Grafana disponible sur: http://localhost:3001 (admin/arosaje_grafana_2024)"
             log_info "Affichage des logs..."
             echo "ℹ️  Utilisez CTRL+C pour arrêter"
             
@@ -561,15 +603,29 @@ case "$1" in
         # Capture du signal SIGINT pour tous les services
         trap "cleanup all" SIGINT SIGTERM
         
-        log_info "Démarrage de tous les services..."
-        if ! docker-compose up -d; then
-            echo "❌ Erreur lors du démarrage des conteneurs."
-            echo "📋 Logs de l'erreur:"
-            docker-compose logs
-            exit 1
-        fi
+                    log_info "Démarrage de tous les services avec monitoring..."
+            # Créer les dossiers de logs nécessaires
+            mkdir -p api/logs web/logs
+            
+            # Démarrer d'abord tous les services principaux
+            if ! docker-compose up -d api web mobile postgres api-redis; then
+                echo "❌ Erreur lors du démarrage des services principaux."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs api web mobile postgres api-redis
+                exit 1
+            fi
+            
+            # Puis démarrer les services de monitoring
+            if ! docker-compose --profile monitoring up -d grafana prometheus loki influxdb promtail node-exporter monitoring-postgres; then
+                echo "❌ Erreur lors du démarrage des services de monitoring."
+                echo "📋 Logs de l'erreur:"
+                docker-compose logs grafana prometheus loki influxdb
+                exit 1
+            fi
 
         log_success "Tous les services démarrés avec succès!"
+        log_success "📊 Monitoring activé automatiquement"
+        log_info "🎯 Grafana disponible sur: http://localhost:3001 (admin/arosaje_grafana_2024)"
         log_info "Affichage des logs..."
         echo "ℹ️  Utilisez CTRL+C pour arrêter"
         

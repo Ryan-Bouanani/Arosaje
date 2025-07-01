@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import 'storage_service.dart';
+import 'api_service.dart';
 
 class AuthService {
   static final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
@@ -198,6 +199,19 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('Erreur lors du rejet du compte : $e');
+    }
+  }
+
+  Future<void> logout() async {
+    try {
+      final apiService = ApiService();
+      await apiService.logout();
+      await _storageService.clearAll();
+    } catch (e) {
+      print('Erreur lors de la déconnexion : $e');
+      // Même en cas d'erreur avec l'API, on nettoie les données locales
+      await _storageService.clearAll();
+      throw Exception('Erreur lors de la déconnexion : $e');
     }
   }
 } 

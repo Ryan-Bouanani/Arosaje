@@ -57,13 +57,25 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _handleLogout(BuildContext context) async {
     final bool shouldLogout = await showLogoutConfirmationDialog(context);
     if (shouldLogout) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-      if (context.mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
+      try {
+        final authService = await AuthService.getInstance();
+        await authService.logout();
+        
+        if (context.mounted) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur lors de la déconnexion : $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }

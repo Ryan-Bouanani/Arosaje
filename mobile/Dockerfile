@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y nginx && rm -rf /var/lib/apt/lists/*
 
 RUN cp -r build/web/* /var/www/html/
 
-EXPOSE 80
+EXPOSE 5000
+
+RUN sed -i 's/listen 80/listen 5000/g' /etc/nginx/sites-enabled/default
 
 CMD ["nginx", "-g", "daemon off;"]

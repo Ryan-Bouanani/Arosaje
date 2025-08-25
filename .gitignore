@@ -178,3 +178,4 @@ redis/
 
 # Dossier des secrets
 secrets/
+.claude/

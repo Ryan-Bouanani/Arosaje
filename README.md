@@ -49,13 +49,24 @@ L’application inclut :
 - API REST rapide et évolutive avec gestion des opérations asynchrones.  
 - Intégration facile avec l’ORM SQLAlchemy pour la gestion des données.  
 
-### **Base de Données : SQLite avec SQLAlchemy**  
-- Choix imposé pour le projet, optimisé avec SQLAlchemy pour une meilleure abstraction des données.  
-- Portable et adapté aux projets MVP (Minimum Viable Product).  
+### **Base de Données : PostgreSQL avec SQLAlchemy**  
+- Migration de SQLite vers PostgreSQL pour de meilleures performances et fonctionnalités avancées.  
+- Support JSON/JSONB natif, full-text search, et gestion de la concurrence optimisée.  
+- SQLAlchemy ORM pour une abstraction robuste des données.
+
+### **Cache et Session : Redis**  
+- Cache haute performance pour améliorer les temps de réponse.  
+- Gestion des sessions utilisateur et rate limiting.  
+- Support WebSocket pour la messagerie temps réel.
+
+### **Monitoring : Stack Observabilité**  
+- **Grafana** : Dashboards et visualisation des métriques.  
+- **Prometheus** : Collecte et stockage des métriques système et applicatives.  
+- **InfluxDB** : Base de données time-series pour les données analytiques.
 
 ### **Containerisation : Docker & Docker Compose**  
 - Uniformisation des environnements de développement.  
-- Déploiement simplifié des services backend, frontend et de la base de données.  
+- Orchestration complète de tous les services (API, Web, Mobile, BDD, Monitoring).  
 
 ---
 
@@ -68,11 +79,15 @@ L’application inclut :
 
 ### **Livrables**
 1. Application fonctionnelle (mobile et web).  
-2. Documentation technique :  
-   - Résultats des benchmarks technologiques.  
-   - Maquettes des interfaces.  
-   - Plans de tests fonctionnels.  
-3. Fichiers de containerisation pour faciliter le déploiement.
+2. Documentation technique complète :  
+   - **UML Base de données** (`docs/database_uml.md`) : Modèle complet des entités et relations.  
+   - **Architecture applicative** (`docs/architecture_schema.md`) : Schémas détaillés de l'infrastructure.  
+   - **Justifications techniques** :
+     - PostgreSQL vs SQLite (`docs/postgresql_justification.md`)  
+     - REST vs GraphQL (`docs/graphql_vs_rest_benchmark.md`)  
+   - Maquettes des interfaces et plans de tests fonctionnels.  
+3. Fichiers de containerisation et orchestration Docker Compose.  
+4. Stack de monitoring et observabilité intégrée.
 
 ---
 
@@ -128,9 +143,14 @@ Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 
 | Service | Description | URL Locale | Technologies |
 |---------|------------|------------|--------------|
-| API | Backend API | http://localhost:8000 | FastAPI (Python) |
-| Web | Interface Web | http://localhost:3000 | Vue.js (Nuxt.js) |
-| Mobile | App Flutter (Web) | http://localhost:5000 | Flutter |
+| **API** | Backend API | http://localhost:8000 | FastAPI (Python) |
+| **Web** | Interface Web | http://localhost:3000 | Vue.js (Nuxt.js) |
+| **Mobile** | App Flutter (Web) | http://localhost:5000 | Flutter |
+| **PostgreSQL** | Base de données | localhost:5432 | PostgreSQL 15 |
+| **Redis** | Cache & Sessions | localhost:6379 | Redis 7 |
+| **Grafana** | Monitoring Dashboard | http://localhost:3001 | Grafana |
+| **Prometheus** | Métriques | http://localhost:9090 | Prometheus |
+| **InfluxDB** | Time Series DB | localhost:8086 | InfluxDB |
 
 ### **🛠️ Scripts Utilitaires**
 
@@ -143,9 +163,12 @@ Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 #### Commandes Spéciales
 - `CTRL+C` : Arrêter proprement tous les conteneurs
 
-### **📝 Documentation API**
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+### **📝 Documentation API & Monitoring**
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
+- **Grafana Dashboards**: http://localhost:3001 (admin/admin)
+- **Prometheus Metrics**: http://localhost:9090
+- **Documentation Technique**: Dossier `docs/` avec UML, architecture et justifications
 
 ### **🛠️ Commandes Utiles**
 
@@ -162,10 +185,11 @@ docker attach arosa-je-mobile # Pour débugger l'app mobile
 
 Si `bin/up all` échoue, vérifiez :
 1. Que Docker est en cours d'exécution
-2. Que les ports requis (8000, 3000, 5000) sont disponibles
-3. Que tous les dossiers nécessaires existent (api, web, mobile)
+2. Que les ports requis sont disponibles : **8000**, **3000**, **5000**, **5432**, **6379**, **3001**, **9090**, **8086**
+3. Que tous les dossiers nécessaires existent (api, web, mobile, monitoring)
 4. Que les Dockerfiles sont présents dans chaque dossier
 5. Que les dépendances Python sont correctement installées (`bin/setup-api`)
+6. Que PostgreSQL et Redis peuvent démarrer (vérifier les logs Docker)
 
 Pour un debug détaillé :
 - Utilisez `docker attach` pour vous connecter directement au conteneur

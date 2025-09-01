@@ -94,7 +94,7 @@ services:
       - ./mobile:/app
       - /app/node_modules
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       - NODE_ENV=development
       - PORT=5000
@@ -278,6 +278,32 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+    profiles:
+      - monitoring
+
+  # RedisInsight pour interface web Redis
+  redis-insight:
+    image: redislabs/redisinsight:latest
+    container_name: arosa-je-redis-insight
+    ports:
+      - "8001:8001"
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # redis-commander (alternative plus légère)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: arosa-je-redis-commander
+    ports:
+      - "8002:8081"
+    environment:
+      - REDIS_HOSTS=local:api-redis:6379
+    networks:
+      - arosa-je-network
+    restart: unless-stopped
     profiles:
       - monitoring
 

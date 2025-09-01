@@ -25,11 +25,19 @@ L’application inclut :
 2. **Conseils d’entretien**  
    - Ajout et visualisation de recommandations par les botanistes.  
 
-3. **Communication**  
-   - Coordination entre propriétaires et gardiens via une messagerie intégrée.  
+3. **Système de conseils botaniques**  
+   - Interface dédiée aux botanistes pour examiner les gardes et donner des avis.
+   - Validation croisée : les botanistes peuvent valider les conseils d'autres collègues.
+   - Priorisation des conseils (NORMAL, URGENT, FOLLOW_UP).
+   - Versioning des conseils avec historique des modifications.
 
-4. **Historique utilisateur**  
-   - Suivi des plantes gardées ou en garde via des profils détaillés.  
+4. **Communication temps réel**  
+   - Messagerie intégrée avec WebSocket pour les discussions instantanées.
+   - Coordination entre propriétaires, gardiens et botanistes.  
+
+5. **Historique utilisateur**  
+   - Suivi des plantes gardées ou en garde via des profils détaillés.
+   - Rapports de garde avec photos avant/après entretien.  
 
 ---
 
@@ -58,6 +66,7 @@ L’application inclut :
 - Cache haute performance pour améliorer les temps de réponse.  
 - Gestion des sessions utilisateur et rate limiting.  
 - Support WebSocket pour la messagerie temps réel.
+- Interface d'administration via RedisInsight (http://localhost:8001).
 
 ### **Monitoring : Stack Observabilité**  
 - **Grafana** : Dashboards et visualisation des métriques.  
@@ -93,10 +102,37 @@ L’application inclut :
 
 ## 🧪 Tests Réalisés
 
-- **Tests Unitaires** : Vérification de chaque composant individuel (backend et mobile).  
-- **Tests d’Intégration** : Validation des interactions entre les différents modules.  
-- **Tests Fonctionnels** : Vérification des cas d’utilisation de l’utilisateur final.  
-- **Tests de Non-Régression** : Assurance que les nouvelles fonctionnalités n’impactent pas le fonctionnement existant.  
+Une suite complète de tests a été implémentée couvrant tous les aspects de l'application :
+
+### **Tests Unitaires** (38 tests - 100% de réussite)
+- **Sécurité** : Tests des utilitaires JWT, hachage des mots de passe, validation des tokens
+- **Modèles** : Tests des entités de base de données (PlantCare, User, etc.)
+- **CRUD** : Tests des opérations de création, lecture, mise à jour et suppression
+
+### **Tests d'Intégration**
+- **Base de données** : Tests de connexion, contraintes, transactions
+- **API** : Tests des endpoints avec authentification et autorisation
+- **Services** : Tests des interactions entre composants
+
+### **Tests de Workflows (Tavern)**
+- **Authentification complète** : Inscription, connexion, refresh token
+- **Gestion des plantes** : CRUD complet avec gestion des permissions
+- **Conseils botaniques** : Workflow de validation croisée
+
+### **Exécution des Tests**
+```bash
+# Lancer tous les tests
+docker exec arosa-je-api python run_tests.py
+
+# Tests unitaires uniquement
+docker exec arosa-je-api python -m pytest tests/unit/ -v
+
+# Tests d'intégration uniquement  
+docker exec arosa-je-api python -m pytest tests/integration/ -v
+
+# Tests de workflows uniquement
+docker exec arosa-je-api python -m pytest tests/workflows/ -v
+```  
 
 ---
 
@@ -148,6 +184,7 @@ Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 | **Mobile** | App Flutter (Web) | http://localhost:5000 | Flutter |
 | **PostgreSQL** | Base de données | localhost:5432 | PostgreSQL 15 |
 | **Redis** | Cache & Sessions | localhost:6379 | Redis 7 |
+| **RedisInsight** | Interface Redis | http://localhost:8001 | RedisInsight |
 | **Grafana** | Monitoring Dashboard | http://localhost:3001 | Grafana |
 | **Prometheus** | Métriques | http://localhost:9090 | Prometheus |
 | **InfluxDB** | Time Series DB | localhost:8086 | InfluxDB |
@@ -169,6 +206,29 @@ Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 - **Grafana Dashboards**: http://localhost:3001 (admin/admin)
 - **Prometheus Metrics**: http://localhost:9090
 - **Documentation Technique**: Dossier `docs/` avec UML, architecture et justifications
+
+### **👤 Comptes de Test**
+
+Pour tester l'application, utilisez ces comptes préconfigurés :
+
+```
+Admin
+Email: root@arosaje.fr
+Password: epsi691
+Rôle: ADMIN (gestion complète)
+
+Utilisateur standard
+Email: user@arosaje.fr  
+Password: epsi691
+Rôle: USER (propriétaire de plantes)
+
+Botaniste
+Email: botanist@arosaje.fr
+Password: epsi691
+Rôle: BOTANIST (conseils et validation)
+```
+
+**Note** : Ces comptes sont automatiquement créés au premier démarrage de l'application.
 
 ### **🛠️ Commandes Utiles**
 

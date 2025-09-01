@@ -22,7 +22,10 @@ class StorageService {
   }
 
   String? getToken() {
-    return _prefs.getString(tokenKey);
+    // Essayer d'abord la clé principale, puis les alternatives
+    return _prefs.getString(tokenKey) ?? 
+           _prefs.getString('token') ?? 
+           _prefs.getString('access_token');
   }
 
   String? getUserRole() {
@@ -30,7 +33,8 @@ class StorageService {
   }
 
   Future<void> setToken(String token) async {
-    await _prefs.setString('token', token);
+    // Utiliser la clé principale pour la cohérence
+    await _prefs.setString(tokenKey, token);
   }
 
   Future<void> setUserId(int userId) async {

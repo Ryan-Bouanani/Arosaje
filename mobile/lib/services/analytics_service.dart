@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:crypto/crypto.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -36,7 +36,7 @@ class AnalyticsService {
     
     // Génère un hash de session unique et anonyme
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final sessionId = '$timestamp-${Platform.isIOS ? "ios" : "android"}';
+    final sessionId = '$timestamp-${kIsWeb ? "web" : "mobile"}';
     _sessionHash = _generateHash(sessionId);
     
     await prefs.setString(_sessionKey, _sessionHash!);
@@ -53,16 +53,17 @@ class AnalyticsService {
 
   /// Initialise les informations de l'appareil (anonymisées)
   Future<void> _initializeDeviceInfo() async {
-    final deviceInfo = DeviceInfoPlugin();
+    if (kIsWeb) {
+      _deviceType = 'Web';
+      return;
+    }
     
-    if (Platform.isIOS) {
-      final iosInfo = await deviceInfo.iosInfo;
-      _deviceType = 'iOS-${iosInfo.systemVersion}';
-    } else if (Platform.isAndroid) {
-      final androidInfo = await deviceInfo.androidInfo;
-      _deviceType = 'Android-${androidInfo.version.release}';
-    } else {
-      _deviceType = 'Unknown';
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final webInfo = await deviceInfo.webBrowserInfo;
+      _deviceType = 'Web-${webInfo.userAgent?.substring(0, 20) ?? "Unknown"}';
+    } catch (e) {
+      _deviceType = 'Web';
     }
   }
 

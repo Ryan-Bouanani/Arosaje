@@ -39,15 +39,20 @@ class ConversationParticipant {
   });
 
   factory ConversationParticipant.fromJson(Map<String, dynamic> json) {
-    print('Parsing participant: $json');
+    // Gestion flexible des différents formats de l'API
+    final userId = json['user_id'] ?? json['id'] ?? 0;
+    final nom = json['nom'] ?? json['last_name'] ?? '';
+    final prenom = json['prenom'] ?? json['first_name'] ?? '';
+    final email = json['email'] ?? '';
+    
     return ConversationParticipant(
-      userId: json['user_id'] ?? json['id'],
+      userId: userId is String ? int.parse(userId) : userId,
       lastReadAt: json['last_read_at'] != null
           ? DateTime.parse(json['last_read_at'])
           : null,
-      nom: json['nom'],
-      prenom: json['prenom'],
-      email: json['email'],
+      nom: nom,
+      prenom: prenom,
+      email: email,
     );
   }
 
@@ -147,8 +152,6 @@ class Conversation {
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
     try {
-      print('Parsing conversation with JSON: $json');
-      
       // Parse participants de manière sécurisée
       List<ConversationParticipant> participantsList = [];
       if (json['participants'] != null) {
@@ -158,7 +161,6 @@ class Conversation {
                 try {
                   return ConversationParticipant.fromJson(p);
                 } catch (e) {
-                  print('Error parsing participant $p: $e');
                   return null;
                 }
               })
@@ -166,7 +168,7 @@ class Conversation {
               .cast<ConversationParticipant>()
               .toList();
         } catch (e) {
-          print('Error parsing participants list: $e');
+          // Silencieux
         }
       }
       
@@ -176,7 +178,7 @@ class Conversation {
         try {
           lastMsg = Message.fromJson(json['last_message']);
         } catch (e) {
-          print('Error parsing last message: $e');
+          // Silencieux
         }
       }
       
@@ -186,7 +188,7 @@ class Conversation {
         try {
           plantInfoObj = PlantInfo.fromJson(json['plant_info']);
         } catch (e) {
-          print('Error parsing plant info: $e');
+          // Silencieux
         }
       }
       
@@ -196,7 +198,7 @@ class Conversation {
         try {
           plantCareInfoObj = PlantCareInfo.fromJson(json['plant_care_info']);
         } catch (e) {
-          print('Error parsing plant care info: $e');
+          // Silencieux
         }
       }
       
@@ -213,11 +215,8 @@ class Conversation {
         plantCareInfo: plantCareInfoObj,
       );
       
-      print('Successfully parsed conversation ${conversation.id}');
       return conversation;
     } catch (e) {
-      print('Error in Conversation.fromJson: $e');
-      print('JSON data: $json');
       rethrow;
     }
   }
@@ -237,12 +236,34 @@ class Conversation {
 
   // Méthodes utilitaires pour l'affichage
   String getTitle(int currentUserId) {
-    if (type == ConversationType.plantCare && plantInfo != null && plantCareInfo != null) {
-      return 'Garde de ${plantInfo!.nom}';
-    } else if (type == ConversationType.botanicalAdvice) {
-      return 'Conseil botanique';
+    // Récupérer le nom de l'interlocuteur
+    String participantName = 'Inconnu';
+    if (participants.isNotEmpty) {
+      // Toujours chercher le participant qui n'est PAS l'utilisateur actuel
+      ConversationParticipant? otherParticipant = participants.firstWhere(
+        (p) => p.userId != currentUserId,
+        orElse: () => participants.first, // Fallback si pas trouvé
+      );
+      
+      // Construire le nom complet
+      final firstName = otherParticipant.prenom ?? '';
+      final lastName = otherParticipant.nom ?? '';
+      final fullName = '$firstName $lastName'.trim();
+      
+      if (fullName.isNotEmpty) {
+        participantName = fullName;
+      }
     }
-    return 'Conversation';
+    
+    // Construire le titre avec contexte
+    if (type == ConversationType.plantCare && plantInfo != null) {
+      return '$participantName - Garde ${plantInfo!.nom}';
+    } else if (type == ConversationType.botanicalAdvice) {
+      return '$participantName - Conseil botanique';
+    }
+    
+    // Fallback
+    return participantName;
   }
 
   String getSubtitle(int currentUserId) {

@@ -27,8 +27,10 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
 
   Future<void> _initializeUser() async {
     final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('userId');
+    print('[DEBUG] Retrieved userId from storage: $userId');
     setState(() {
-      _currentUserId = prefs.getInt('user_id');
+      _currentUserId = userId;
     });
   }
 
@@ -45,6 +47,49 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
     } else {
       return DateFormat.yMd().format(date);
     }
+  }
+
+  IconData _getConversationIcon(Conversation conversation, int? currentUserId) {
+    if (conversation.type == ConversationType.botanicalAdvice) {
+      // Conversation avec un botaniste
+      return Icons.local_florist;
+    }
+    
+    if (conversation.type == ConversationType.plantCare && conversation.plantCareInfo != null) {
+      // Conversation liée à une garde
+      final plantCare = conversation.plantCareInfo!;
+      if (currentUserId == plantCare.ownerId) {
+        // Je suis le propriétaire, l'autre est le gardien
+        return Icons.eco;
+      } else if (currentUserId == plantCare.caretakerid) {
+        // Je suis le gardien, l'autre est le propriétaire
+        return Icons.home;
+      }
+    }
+    
+    // Par défaut, icône générique
+    return Icons.message;
+  }
+
+  Color _getConversationColor(Conversation conversation, int? currentUserId) {
+    if (conversation.type == ConversationType.botanicalAdvice) {
+      // Conversation avec un botaniste
+      return Colors.green;
+    }
+    
+    if (conversation.type == ConversationType.plantCare && conversation.plantCareInfo != null) {
+      final plantCare = conversation.plantCareInfo!;
+      if (currentUserId == plantCare.ownerId) {
+        // Je suis le propriétaire, l'autre est le gardien
+        return Colors.green;
+      } else if (currentUserId == plantCare.caretakerid) {
+        // Je suis le gardien, l'autre est le propriétaire
+        return Colors.blue;
+      }
+    }
+    
+    // Par défaut
+    return Colors.grey;
   }
 
   @override
@@ -174,14 +219,10 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
                       );
                     },
                     leading: CircleAvatar(
-                      backgroundColor: conversation.type == ConversationType.plantCare 
-                          ? Colors.green 
-                          : Colors.blue,
+                      backgroundColor: _getConversationColor(conversation, _currentUserId),
                       radius: 28,
                       child: Icon(
-                        conversation.type == ConversationType.plantCare 
-                            ? Icons.eco 
-                            : Icons.lightbulb,
+                        _getConversationIcon(conversation, _currentUserId),
                         color: Colors.white,
                         size: 26,
                       ),

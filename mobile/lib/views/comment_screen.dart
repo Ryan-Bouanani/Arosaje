@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'base_page_botaniste.dart';
 import 'plant_detail_botaniste.dart';
+import 'care_reports_botanist_screen.dart';
 import 'package:mobile/services/advice_service.dart';
 
 class CommentScreen extends StatefulWidget {
@@ -108,6 +109,29 @@ class _CommentScreenState extends State<CommentScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      
+                      // Bouton pour accéder aux rapports de séances
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CareReportsBotanistScreen(),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.assessment),
+                          label: const Text('Consulter les rapports de séances'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.all(16),
+                          ),
+                        ),
+                      ),
 
                       // Section "demande de commentaire"
                       Container(

@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:io';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
 
 class ApiService {
-  // Pour WSL2, utilisez l'IP de l'hôte ou une IP accessible depuis l'émulateur
-  static const String baseUrl = 'http://10.0.2.2:8000'; // Pour l'émulateur Android
-  // Alternative: static const String baseUrl = 'http://192.168.1.100:8000'; // Remplacez par votre IP réseau
+  // Configuration dynamique depuis .env
+  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
 
   String? _token;
 
@@ -41,9 +41,9 @@ class ApiService {
     final token = await getToken();
     final headers = {
       'Content-Type': 'application/json',
-      'X-Platform': Platform.isIOS ? 'ios' : 'android',
-      'X-Client-Platform': Platform.isIOS ? 'ios-app' : 'android-app',
-      'User-Agent': 'Arosaje-Mobile-App/${Platform.isIOS ? "iOS" : "Android"}',
+      'X-Platform': kIsWeb ? 'web' : 'mobile',
+      'X-Client-Platform': kIsWeb ? 'web-app' : 'mobile-app',
+      'User-Agent': 'Arosaje-Mobile-App/${kIsWeb ? "Web" : "Mobile"}',
     };
 
     if (token != null) {
@@ -156,8 +156,9 @@ class ApiService {
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
+      final String apiUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
       final response = await http.post(
-        Uri.parse('$baseUrl/auth/login'),
+        Uri.parse('$apiUrl/auth/login'),
         headers: <String, String>{
           'Content-Type': 'application/x-www-form-urlencoded',
         },
@@ -173,9 +174,6 @@ class ApiService {
         print('Login failed: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to login: ${response.statusCode}');
       }
-    } on SocketException catch (e) {
-      print('Connection error during login: $e');
-      throw Exception('Connection failed. Please check if the server is running and accessible.');
     } on TimeoutException catch (e) {
       print('Timeout error during login: $e');
       throw Exception('Request timeout. Please check your internet connection.');

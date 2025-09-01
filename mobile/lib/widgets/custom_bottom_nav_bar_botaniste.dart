@@ -30,12 +30,16 @@ class CustomBottomNavBarBotaniste extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Accueil',
+            icon: Icon(Icons.eco),
+            label: 'Gardes',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.comment),
-            label: 'Commentaires',
+            icon: Icon(Icons.chat),
+            label: 'Messages',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.science),
+            label: 'Rapports',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

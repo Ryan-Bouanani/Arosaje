@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:developer' as developer;
 
 class AdviceService {
-  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://10.0.2.2:8000';
+  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
   late final StorageService _storageService;
 
   static Future<AdviceService> init() async {
@@ -26,25 +26,14 @@ class AdviceService {
       },
     );
 
-    developer.log('Status code: ${response.statusCode}');
-    developer.log('Response body: ${response.body}');
-
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
-      developer.log('JSON Response: $jsonResponse');
       
-      if (jsonResponse == null) {
-        developer.log('Response is null');
-        return [];
-      }
-
-      if (!jsonResponse.containsKey('advices')) {
-        developer.log('Response does not contain advices key');
+      if (jsonResponse == null || !jsonResponse.containsKey('advices')) {
         return [];
       }
 
       final List<dynamic> advices = jsonResponse['advices'] ?? [];
-      developer.log('Nombre de conseils trouvés: ${advices.length}');
       
       return advices.map((data) {
         try {
@@ -59,7 +48,7 @@ class AdviceService {
             'plant': data['plant'] ?? <String, dynamic>{},
           };
         } catch (e) {
-          developer.log('Erreur lors du mapping d\'un conseil: $e');
+          // Ignore malformed advice data
           return <String, dynamic>{};
         }
       }).where((map) => map.isNotEmpty).toList();
@@ -73,8 +62,6 @@ class AdviceService {
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
-    developer.log('Envoi de la requête getPendingAdviceRequests');
-    developer.log('URL: $baseUrl/advices/pending-requests?skip=$skip&limit=$limit');
 
     final response = await http.get(
       Uri.parse('$baseUrl/advices/pending-requests?skip=$skip&limit=$limit'),
@@ -84,25 +71,15 @@ class AdviceService {
       },
     );
 
-    developer.log('Status code: ${response.statusCode}');
-    developer.log('Response body: ${response.body}');
 
     if (response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
-      developer.log('JSON Response: $jsonResponse');
       
-      if (jsonResponse == null) {
-        developer.log('Response is null');
-        return [];
-      }
-
-      if (!jsonResponse.containsKey('advices')) {
-        developer.log('Response does not contain advices key');
+      if (jsonResponse == null || !jsonResponse.containsKey('advices')) {
         return [];
       }
 
       final List<dynamic> advices = jsonResponse['advices'] ?? [];
-      developer.log('Nombre de conseils en attente trouvés: ${advices.length}');
       
       return advices.map((data) {
         try {
@@ -117,7 +94,7 @@ class AdviceService {
             'plant': data['plant'] ?? <String, dynamic>{},
           };
         } catch (e) {
-          developer.log('Erreur lors du mapping d\'un conseil: $e');
+          // Ignore malformed advice data
           return <String, dynamic>{};
         }
       }).where((map) => map.isNotEmpty).toList();
@@ -134,8 +111,6 @@ class AdviceService {
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
-    developer.log('Création d\'un nouveau conseil');
-    developer.log('Plant ID: $plantId');
 
     final response = await http.post(
       Uri.parse('$baseUrl/advices/'),
@@ -149,15 +124,11 @@ class AdviceService {
       }),
     );
 
-    developer.log('Status code: ${response.statusCode}');
-    developer.log('Response body: ${response.body}');
 
     if (response.statusCode == 201 || response.statusCode == 200) {
       final jsonResponse = json.decode(response.body);
-      developer.log('Conseil créé avec succès');
       return jsonResponse;
     } else {
-      developer.log('Erreur lors de la création du conseil');
       throw Exception('Échec de la création du conseil');
     }
   }
@@ -184,5 +155,62 @@ class AdviceService {
     }
     
     developer.log('Conseil supprimé avec succès');
+  }
+
+  /// Récupère tous les conseils pour une plante donnée
+  Future<List<Map<String, dynamic>>> getAdvicesForPlant(int plantId, {int skip = 0, int limit = 100}) async {
+    final token = await _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    developer.log('Récupération des conseils pour la plante $plantId');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/advices/plant/$plantId?skip=$skip&limit=$limit'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+
+    if (response.statusCode == 200) {
+      final jsonResponse = json.decode(response.body);
+      developer.log('JSON Response: $jsonResponse');
+      
+      if (jsonResponse == null) {
+        developer.log('Response is null');
+        return [];
+      }
+
+      if (!jsonResponse.containsKey('advices')) {
+        developer.log('Response does not contain advices key');
+        return [];
+      }
+
+      final List<dynamic> advices = jsonResponse['advices'] ?? [];
+      developer.log('Nombre de conseils trouvés pour la plante: ${advices.length}');
+      
+      return advices.map((data) {
+        try {
+          return <String, dynamic>{
+            'id': data['id'] ?? 0,
+            'texte': data['texte'] ?? '',
+            'plant_id': data['plant_id'] ?? 0,
+            'status': data['status'] ?? 'PENDING',
+            'created_at': data['created_at'],
+            'updated_at': data['updated_at'],
+            'botanist_id': data['botanist_id'] ?? 0,
+            'botanist': data['botanist'] ?? <String, dynamic>{},
+            'plant': data['plant'] ?? <String, dynamic>{},
+          };
+        } catch (e) {
+          // Ignore malformed advice data
+          return <String, dynamic>{};
+        }
+      }).where((map) => map.isNotEmpty).toList();
+    } else {
+      developer.log('Erreur: ${response.statusCode} - ${response.body}');
+      return [];
+    }
   }
 } 

@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mobile/services/care_report_service.dart';
+
+// Import conditionnel pour File (éviter sur web)
+import 'dart:io' if (dart.library.html) 'dart:io' show File;
 
 class RapportDeGarde extends StatefulWidget {
-  const RapportDeGarde({super.key});
+  final int? plantCareId;
+  
+  const RapportDeGarde({super.key, this.plantCareId});
 
   @override
   _RapportDeGardeState createState() => _RapportDeGardeState();
 }
 
 class _RapportDeGardeState extends State<RapportDeGarde> {
-  File? _imageFile;
+  dynamic _imageFile; // File sur mobile, null sur web
+  Uint8List? _webImage;
   final ImagePicker _picker = ImagePicker();
   final TextEditingController _descriptionController = TextEditingController();
+  
+  late final CareReportService _careReportService;
+  bool _isLoading = false;
+  bool _isInitialized = false;
 
   // Valeurs pour les listes déroulantes
   String _hydratationLevel = 'Moyen';
@@ -22,13 +34,136 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
   // Liste des options disponibles
   final List<String> _niveaux = ['Bas', 'Moyen', 'Bon'];
 
+  @override
+  void initState() {
+    super.initState();
+    _initializeService();
+  }
+
+  Future<void> _initializeService() async {
+    try {
+      _careReportService = await CareReportService.init();
+      setState(() {
+        _isInitialized = true;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur d\'initialisation: ${e.toString()}')),
+      );
+    }
+  }
+
   Future<void> _pickImage() async {
     final XFile? pickedFile =
         await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      if (kIsWeb) {
+        // Pour le web, lire les bytes de l'image
+        print('🌐 Mode WEB détecté - Lecture des bytes...');
+        final bytes = await pickedFile.readAsBytes();
+        print('📸 Image chargée: ${bytes.length} bytes');
+        print('🔄 FORCE RELOAD TEST - ${DateTime.now()}');
+        setState(() {
+          _webImage = bytes;
+          _imageFile = null; // Clear mobile file
+        });
+      } else {
+        // Pour mobile, utiliser File
+        if (!kIsWeb) {
+          setState(() {
+            _imageFile = File(pickedFile.path);
+            _webImage = null; // Clear web bytes
+          });
+        }
+      }
+    }
+  }
+
+  Future<void> _submitReport() async {
+    if (widget.plantCareId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur: ID de garde manquant')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      print('🔄 Début création rapport...');
+      // Créer le rapport
+      final report = await _careReportService.createCareReport(
+        plantCareId: widget.plantCareId!,
+        healthLevel: _santePlante,
+        hydrationLevel: _hydratationLevel,
+        vitalityLevel: _vitaliteLevel,
+        description: _descriptionController.text.trim().isNotEmpty 
+            ? _descriptionController.text.trim() 
+            : null,
+      );
+
+      // Upload la photo si sélectionnée
+      if (kIsWeb && _webImage != null) {
+        print('🖼️ Uploading web image...');
+        final photoResult = await _careReportService.uploadCareReportPhoto(
+          report['id'],
+          _webImage!, // Pass bytes for web
+        );
+        print('✅ Photo uploaded: ${photoResult['photo_url']}');
+      } else if (!kIsWeb && _imageFile != null) {
+        print('🖼️ Uploading mobile image...');
+        final photoResult = await _careReportService.uploadCareReportPhoto(
+          report['id'],
+          _imageFile!.path, // Pass path for mobile
+        );
+        print('✅ Photo uploaded: ${photoResult['photo_url']}');
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Rapport de séance envoyé avec succès !'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pop(context, true); // Retourner avec succès
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
       setState(() {
-        _imageFile = File(pickedFile.path);
+        _isLoading = false;
       });
+    }
+  }
+
+  Widget _getImageWidget() {
+    if (kIsWeb && _webImage != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8.0),
+        child: Image.memory(
+          _webImage!,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else if (!kIsWeb && _imageFile != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8.0),
+        child: Image.file(
+          _imageFile as File,
+          fit: BoxFit.cover,
+        ),
+      );
+    } else {
+      return const Center(
+        child: Text('Aucune image sélectionnée'),
+      );
     }
   }
 
@@ -50,17 +185,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(8.0),
               ),
-              child: _imageFile != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8.0),
-                      child: Image.file(
-                        _imageFile!,
-                        fit: BoxFit.cover,
-                      ),
-                    )
-                  : const Center(
-                      child: Text('Aucune image sélectionnée'),
-                    ),
+              child: _getImageWidget(),
             ),
 
             // Bouton pour ajouter une photo
@@ -186,9 +311,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
-          onPressed: () {
-            // Action à effectuer lors de l'envoi du rapport
-          },
+          onPressed: _isLoading || !_isInitialized ? null : _submitReport,
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green,
             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -196,8 +319,10 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text(
-            'Envoyer le rapport',
+          child: _isLoading 
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text(
+            'Envoyer le rapport de séance',
             style: TextStyle(
               color: Colors.white,
               fontSize: 16,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile/models/conversation.dart';
 import 'package:mobile/models/message.dart';
 import 'package:mobile/services/api_service.dart';
@@ -17,6 +18,35 @@ class MessageService {
   Stream<Map<String, dynamic>> get onRead => _readController.stream;
 
   MessageService(this._apiService);
+
+  // Créer une conversation avec un botaniste
+  Future<Map<String, dynamic>> createBotanistConversation(int plantId) async {
+    try {
+      final response = await _apiService.post(
+        '/messages/conversations/botanist?plant_id=$plantId',
+        {},
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Erreur lors de la création de la conversation avec le botaniste: $e');
+    }
+  }
+
+  // Envoyer un message via l'API REST
+  Future<void> sendMessageViaAPI(int conversationId, String content) async {
+    try {
+      final response = await _apiService.post(
+        '/messages/$conversationId',
+        {
+          'content': content,
+          'conversation_id': conversationId
+        },
+      );
+      print('Message sent via API: $response');
+    } catch (e) {
+      throw Exception('Erreur lors de l\'envoi du message: $e');
+    }
+  }
 
   // Méthodes API REST
   Future<List<Conversation>> getUserConversations({
@@ -101,7 +131,8 @@ class MessageService {
       }
       
       // Passer le token comme paramètre de query dans l'URL
-      final wsUrl = Uri.parse('${ApiService.baseUrl.replaceFirst("http", "ws")}/ws/$conversationId?token=$token');
+      final String apiUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
+      final wsUrl = Uri.parse('${apiUrl.replaceFirst("http", "ws")}/ws/$conversationId?token=$token');
       
       _channel = WebSocketChannel.connect(wsUrl);
 
@@ -146,11 +177,12 @@ class MessageService {
     await _reconnectToConversation(conversationId);
   }
 
-  void sendMessage(String content) {
-    if (_channel != null) {
+  void sendMessage(String content, {int? conversationId}) {
+    if (_channel != null && conversationId != null) {
       _channel!.sink.add(jsonEncode({
         'type': 'message',
         'content': content,
+        'conversation_id': conversationId,
       }));
     }
   }

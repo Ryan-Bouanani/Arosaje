@@ -2,27 +2,52 @@ import 'package:flutter/foundation.dart';
 import 'package:mobile/models/conversation.dart';
 import 'package:mobile/models/message.dart';
 import 'package:mobile/services/message_service.dart';
+import 'package:mobile/services/websocket_manager.dart';
+import 'package:mobile/services/api_service.dart';
 import 'dart:async';
 
 class MessageProvider extends ChangeNotifier {
   final MessageService _messageService;
+  final WebSocketManager _webSocketManager = WebSocketManager();
+  final ApiService _apiService = ApiService();
+  
   List<Conversation> _conversations = [];
   Map<int, List<Message>> _messages = {};
   Map<int, bool> _typingStatus = {};
   bool _isLoading = false;
   String? _error;
-  StreamSubscription<Message>? _messageSubscription;
-  StreamSubscription<Map<String, dynamic>>? _typingSubscription;
-  StreamSubscription<Map<String, dynamic>>? _readSubscription;
+  ConnectionState _connectionState = ConnectionState.disconnected;
+  
+  StreamSubscription<dynamic>? _messageSubscription;
+  StreamSubscription<ConnectionState>? _stateSubscription;
+  StreamSubscription<String>? _errorSubscription;
   int? _currentConversationId;
 
-  MessageProvider(this._messageService);
+  MessageProvider(this._messageService) {
+    _initializeWebSocketListeners();
+  }
 
   List<Conversation> get conversations => _conversations;
   List<Message> getMessages(int conversationId) => _messages[conversationId] ?? [];
   bool isUserTyping(int conversationId) => _typingStatus[conversationId] ?? false;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  ConnectionState get connectionState => _connectionState;
+  bool get isConnected => _connectionState == ConnectionState.connected;
+  
+  void _initializeWebSocketListeners() {
+    // Écouter les changements d'état de connexion
+    _stateSubscription = _webSocketManager.onStateChange.listen((state) {
+      _connectionState = state;
+      notifyListeners();
+    });
+    
+    // Écouter les erreurs
+    _errorSubscription = _webSocketManager.onError.listen((error) {
+      _error = error;
+      notifyListeners();
+    });
+  }
 
   Future<void> loadConversations() async {
     try {
@@ -75,113 +100,180 @@ class MessageProvider extends ChangeNotifier {
 
   Future<void> connectToWebSocket(int conversationId) async {
     try {
-      print('Connecting to WebSocket for conversation $conversationId');
+      // Connexion WebSocket
       _currentConversationId = conversationId;
       
-      // Fermer les anciennes connexions
-      await _closeWebSocketSubscriptions();
+      // Obtenir le token d'authentification
+      final token = await _apiService.getToken();
+      if (token == null) {
+        throw Exception('No authentication token available');
+      }
       
-      // Se connecter au WebSocket
-      await _messageService.connectToConversation(conversationId);
-
-      // Écouter les nouveaux messages
-      _messageSubscription = _messageService.onMessage.listen((message) {
-        print('New message received: ${message.content} for conversation ${message.conversationId}');
-        if (message.conversationId == conversationId) {
+      // Se déconnecter de l'ancienne conversation si nécessaire
+      if (_webSocketManager.isConnected) {
+        await _webSocketManager.disconnect();
+      }
+      
+      // Se connecter à la nouvelle conversation
+      await _webSocketManager.connect(
+        token: token,
+        conversationId: conversationId,
+      );
+      
+      // Écouter les messages WebSocket
+      _messageSubscription?.cancel();
+      _messageSubscription = _webSocketManager.onMessage.listen((data) {
+        _handleWebSocketMessage(data, conversationId);
+      });
+      
+      // WebSocket connecté
+      
+    } catch (e) {
+      // Erreur WebSocket
+      _error = e.toString();
+      notifyListeners();
+    }
+  }
+  
+  void _handleWebSocketMessage(Map<String, dynamic> data, int conversationId) {
+    final messageType = data['type'];
+    // Message reçu: $messageType
+    
+    switch (messageType) {
+      case 'new_message':
+        final messageData = data['message'];
+        if (messageData != null && messageData['conversation_id'] == conversationId) {
+          final message = Message.fromJson(messageData);
+          
+          // Ajouter le message s'il n'existe pas déjà
           if (_messages[conversationId] == null) {
             _messages[conversationId] = [];
           }
           
-          // Vérifier si le message n'existe pas déjà
-          final existingMessageIndex = _messages[conversationId]!.indexWhere((m) => m.id == message.id);
-          if (existingMessageIndex == -1) {
+          final existingIndex = _messages[conversationId]!.indexWhere((m) => m.id == message.id);
+          if (existingIndex == -1) {
             _messages[conversationId]!.add(message);
-            print('Message added to conversation $conversationId. Total messages: ${_messages[conversationId]!.length}');
+            // Trier les messages par date
+            _messages[conversationId]!.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+            // Message ajouté
             notifyListeners();
-          } else {
-            print('Message already exists, skipping');
           }
         }
-      });
-
-      // Écouter les statuts de frappe
-      _typingSubscription = _messageService.onTyping.listen((data) {
-        if (data['conversation_id'] == conversationId) {
-          _typingStatus[conversationId] = data['is_typing'] ?? false;
+        break;
+        
+      case 'typing_status':
+        final convId = data['conversation_id'];
+        final isTyping = data['is_typing'] ?? false;
+        if (convId == conversationId) {
+          _typingStatus[conversationId] = isTyping;
           notifyListeners();
         }
-      });
-
-      // Écouter les marquages de lecture
-      _readSubscription = _messageService.onRead.listen((data) {
-        if (data['conversation_id'] == conversationId) {
-          final messages = _messages[conversationId];
-          if (messages != null) {
-            bool updated = false;
-            for (int i = 0; i < messages.length; i++) {
-              if (!messages[i].isRead) {
-                // Créer un nouveau message avec isRead = true
-                final updatedMessage = Message(
-                  id: messages[i].id,
-                  content: messages[i].content,
-                  senderId: messages[i].senderId,
-                  conversationId: messages[i].conversationId,
-                  createdAt: messages[i].createdAt,
-                  updatedAt: messages[i].updatedAt,
-                  isRead: true,
-                );
-                messages[i] = updatedMessage;
-                updated = true;
-              }
-            }
-            if (updated) {
-              notifyListeners();
+        break;
+        
+      case 'messages_read':
+        final convId = data['conversation_id'];
+        if (convId == conversationId && _messages[conversationId] != null) {
+          // Marquer tous les messages comme lus
+          bool updated = false;
+          for (int i = 0; i < _messages[conversationId]!.length; i++) {
+            if (!_messages[conversationId]![i].isRead) {
+              _messages[conversationId]![i] = Message(
+                id: _messages[conversationId]![i].id,
+                content: _messages[conversationId]![i].content,
+                senderId: _messages[conversationId]![i].senderId,
+                conversationId: _messages[conversationId]![i].conversationId,
+                createdAt: _messages[conversationId]![i].createdAt,
+                updatedAt: _messages[conversationId]![i].updatedAt,
+                isRead: true,
+              );
+              updated = true;
             }
           }
+          if (updated) {
+            notifyListeners();
+          }
         }
-      });
-      
-      print('WebSocket listeners set up successfully');
-      
-    } catch (e) {
-      _error = e.toString();
-      notifyListeners();
-      print('Erreur lors de la connexion WebSocket: $e');
+        break;
     }
   }
 
   Future<void> _closeWebSocketSubscriptions() async {
     await _messageSubscription?.cancel();
-    await _typingSubscription?.cancel();
-    await _readSubscription?.cancel();
+    await _stateSubscription?.cancel();
+    await _errorSubscription?.cancel();
     _messageSubscription = null;
-    _typingSubscription = null;
-    _readSubscription = null;
+    _stateSubscription = null;
+    _errorSubscription = null;
   }
 
-  void sendMessage(int conversationId, String content) {
-    print('Sending message: $content');
-    _messageService.sendMessage(content);
+  Future<void> sendMessage(int conversationId, String content) async {
+    try {
+      // Envoi du message
+      
+      // Si WebSocket connecté, envoyer via WebSocket
+      if (_webSocketManager.isConnected) {
+        _webSocketManager.sendMessage({
+          'type': 'message',
+          'content': content,
+          'conversation_id': conversationId,
+        });
+        // Envoyé via WebSocket
+      } else {
+        // Sinon, utiliser l'API REST comme fallback
+        // Utilisation API REST
+        await _messageService.sendMessageViaAPI(conversationId, content);
+        
+        // Recharger les messages après l'envoi via REST
+        await loadMessages(conversationId);
+      }
+    } catch (e) {
+      print('Error sending message: $e');
+      _error = e.toString();
+      notifyListeners();
+    }
   }
 
   void sendTypingStatus(int conversationId, bool isTyping) {
-    _messageService.sendTypingStatus(isTyping);
+    if (_webSocketManager.isConnected) {
+      _webSocketManager.sendMessage({
+        'type': 'typing',
+        'is_typing': isTyping,
+        'conversation_id': conversationId,
+      });
+    }
   }
 
   void markMessagesAsRead(int conversationId) {
-    _messageService.markMessagesAsRead();
+    if (_webSocketManager.isConnected) {
+      _webSocketManager.sendMessage({
+        'type': 'read',
+        'conversation_id': conversationId,
+      });
+    }
   }
 
   void disconnectWebSocket() {
-    print('Disconnecting WebSocket');
-    _messageService.disconnect();
+    // Déconnexion WebSocket
+    _webSocketManager.disconnect();
     _closeWebSocketSubscriptions();
     _currentConversationId = null;
+  }
+
+  // Méthode pour vider le cache lors du changement d'utilisateur
+  void clearCache() {
+    _conversations.clear();
+    _messages.clear();
+    _typingStatus.clear();
+    _error = null;
+    _isLoading = false;
+    disconnectWebSocket();
+    notifyListeners();
   }
 
   @override
   void dispose() {
     _closeWebSocketSubscriptions();
+    _webSocketManager.dispose();
     _messageService.dispose();
     super.dispose();
   }

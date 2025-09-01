@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/providers/message_provider.dart';
 import 'package:mobile/models/message.dart';
 import 'package:mobile/models/conversation.dart';
@@ -36,14 +37,13 @@ class _ChatScreenState extends State<ChatScreen> {
     // Initialiser le UserService
     _userService = UserService(ApiService());
     
-    // Récupérer l'ID utilisateur une seule fois au début
+    // Récupérer l'ID utilisateur depuis SharedPreferences (même source que BotanistChatScreen)
     try {
-      final userService = _userService!;
-      final userData = await userService.getCurrentUser();
-      if (userData != null && userData['id'] != null) {
-        _currentUserId = userData['id'];
-      }
+      final prefs = await SharedPreferences.getInstance();
+      _currentUserId = prefs.getInt('userId');
+      print('[ChatScreen] Retrieved userId from storage: $_currentUserId');
     } catch (e) {
+      print('[ChatScreen] Error retrieving userId: $e');
       // En cas d'erreur, on laisse _currentUserId à null
     }
     
@@ -94,9 +94,9 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
-  void _handleSendMessage() {
+  Future<void> _handleSendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
-      context
+      await context
           .read<MessageProvider>()
           .sendMessage(widget.conversationId, _messageController.text.trim());
       _messageController.clear();
@@ -285,6 +285,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         
                         // Utiliser le cache pour éviter les appels répétés
                         final isCurrentUser = _currentUserId != null && message.senderId == _currentUserId;
+                        
+                        // Debug logs pour tracer le problème
+                        if (message.senderId != null) {
+                          print('[ChatScreen] Message ${message.id}: senderId=${message.senderId}, currentUserId=$_currentUserId, isCurrentUser=$isCurrentUser');
+                        }
                             
                             return Container(
                           margin: const EdgeInsets.symmetric(vertical: 3),

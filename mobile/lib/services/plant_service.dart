@@ -1,12 +1,16 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile/models/plant.dart';
 import 'package:mobile/services/storage_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+// Import conditionnel pour File (éviter sur web)
+import 'dart:io' if (dart.library.html) 'dart:io' show File;
+
 class PlantService {
-  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://10.0.2.2:8000';
+  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
   late final StorageService _storageService;
 
   static Future<PlantService> init() async {
@@ -26,8 +30,8 @@ class PlantService {
   Future<Plant> createPlant({
     required String nom,
     String? espece,
-    String? description,
-    File? imageFile,
+    dynamic imageFile, // File sur mobile
+    Uint8List? webImage, // Bytes sur web
   }) async {
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
@@ -43,12 +47,17 @@ class PlantService {
 
     request.fields['nom'] = nom;
     if (espece != null) request.fields['espece'] = espece;
-    if (description != null) request.fields['description'] = description;
 
-    if (imageFile != null) {
+    if (kIsWeb && webImage != null) {
+      request.files.add(http.MultipartFile.fromBytes(
+        'photo',
+        webImage,
+        filename: 'photo.jpg',
+      ));
+    } else if (!kIsWeb && imageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
         'photo',
-        imageFile.path,
+        (imageFile as File).path,
       ));
     }
 
@@ -163,6 +172,36 @@ class PlantService {
       return Plant.fromJson(data);
     } else {
       throw Exception('Échec du chargement des détails de la plante');
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePlant({
+    required int plantId,
+    String? nom,
+  }) async {
+    final token = await _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    final Map<String, dynamic> updateData = {};
+    if (nom != null) updateData['nom'] = nom;
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/plants/$plantId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(updateData),
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['photo'] != null) {
+        data['photo'] = _buildPhotoUrl(data['photo']);
+      }
+      return data;
+    } else {
+      throw Exception('Échec de la mise à jour de la plante: ${response.statusCode} - ${response.body}');
     }
   }
 } 

@@ -4,9 +4,11 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'views/home_screen.dart';
+import 'views/auth_wrapper.dart';
 import 'services/api_service.dart';
 import 'services/message_service.dart';
 import 'providers/message_provider.dart';
+import 'providers/plant_care_advice_provider.dart';
 
 Future<void> main() async {
   try {
@@ -36,6 +38,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => MessageProvider(messageService),
         ),
+        ChangeNotifierProvider(
+          create: (_) => PlantCareAdviceProvider(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -63,7 +68,7 @@ class MyApp extends StatelessWidget {
           Locale('en', 'US'),
         ],
         locale: const Locale('fr', 'FR'),
-        home: const AccueilPage(),
+        home: const AuthWrapper(),
       ),
     );
   }

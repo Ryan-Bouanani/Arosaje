@@ -328,8 +328,6 @@ class _PlantDetailBotanisteState extends State<PlantDetailBotaniste> {
                                     Text('Nom: ${_plant?.nom ?? 'Non spécifié'}'),
                                     if (_plant?.espece != null)
                                       Text('Espèce: ${_plant!.espece}'),
-                                    if (_plant?.description != null)
-                                      Text('Description: ${_plant!.description}'),
                                   ],
                                 ),
                               ),

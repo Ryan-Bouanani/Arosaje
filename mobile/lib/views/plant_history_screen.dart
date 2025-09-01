@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mobile/views/plant_care_details_screen.dart';
+import 'package:mobile/services/plant_care_service.dart';
+import 'package:mobile/services/storage_service.dart';
 
 class PlantHistoryScreen extends StatefulWidget {
   const PlantHistoryScreen({super.key});
@@ -13,52 +16,69 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+  
+  late final PlantCareService _plantCareService;
+  late final StorageService _storageService;
+  bool _isInitialized = false;
+  bool isLoading = true;
+  String? error;
 
-  final List<Map<String, String>> plantsConfiees = [
-    {
-      'name': 'Plante A',
-      'type': 'Rose rouge',
-      'date': '10/15/2021',
-      'gardien': 'Marie',
-      'image': 'assets/monstera.webp',
-    },
-    {
-      'name': 'Plante B',
-      'type': 'Lys blanc',
-      'date': '09/27/2021',
-      'gardien': 'Jean',
-      'image': 'assets/ficus.png',
-    },
-    {
-      'name': 'Plante C',
-      'type': 'Orchidée violette',
-      'date': '08/02/2021',
-      'gardien': 'Sophie',
-      'image': 'assets/monstera.webp',
-    },
-  ];
-
-  final List<Map<String, String>> plantsGardees = [
-    {
-      'name': 'Plante D',
-      'type': 'Ficus',
-      'date': '11/05/2021',
-      'gardien': 'Paul',
-      'image': 'assets/ficus.png',
-    },
-    {
-      'name': 'Plante E',
-      'type': 'Cactus',
-      'date': '07/19/2021',
-      'gardien': 'Emma',
-      'image': 'assets/monstera.webp',
-    },
-  ];
+  List<Map<String, dynamic>> plantsConfiees = [];
+  List<Map<String, dynamic>> plantsGardees = [];
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    try {
+      _storageService = await StorageService.init();
+      _plantCareService = await PlantCareService.init();
+      setState(() {
+        _isInitialized = true;
+      });
+      await _loadHistory();
+    } catch (e) {
+      setState(() {
+        error = 'Erreur d\'initialisation: ${e.toString()}';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadHistory() async {
+    if (!_isInitialized) return;
+    
+    try {
+      setState(() {
+        isLoading = true;
+        error = null;
+      });
+
+      // Charger l'historique des plantes confiées (je suis propriétaire)
+      final completedOwned = await _plantCareService.getCompletedOwnedPlants();
+      
+      // Charger l'historique des plantes gardées (je suis gardien)
+      final completedCaretaking = await _plantCareService.getCompletedCaretakingPlants();
+
+      if (mounted) {
+        setState(() {
+          plantsConfiees = completedOwned;
+          plantsGardees = completedCaretaking;
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = e.toString();
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -74,7 +94,10 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
       appBar: AppBar(
         title: const Text("Historique"),
         actions: [
-          IconButton(icon: const Icon(Icons.notifications), onPressed: () {}),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadHistory,
+          ),
         ],
         bottom: TabBar(
           controller: _tabController,
@@ -99,14 +122,11 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
                 });
               },
               decoration: InputDecoration(
-                hintText: "Recherche",
+                hintText: "Rechercher...",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                filled: true,
-                fillColor: Colors.grey[200],
               ),
             ),
           ),
@@ -114,8 +134,8 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _buildPlantList(plantsConfiees),
-                _buildPlantList(plantsGardees),
+                _buildPlantConfieesTab(),
+                _buildPlantGardeesTab(),
               ],
             ),
           ),
@@ -124,56 +144,175 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
     );
   }
 
-  Widget _buildPlantList(List<Map<String, String>> plants) {
-    final filteredPlants =
-        plants
-            .where(
-              (plant) => plant['name']!.toLowerCase().contains(_searchQuery),
-            )
-            .toList();
+  Widget _buildPlantConfieesTab() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null) {
+      return Center(child: Text('Erreur: $error'));
+    }
+
+    final filteredCares = plantsConfiees
+        .where((care) => 
+          care['plant'] != null && 
+          care['plant']['nom'] != null && 
+          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+        .toList();
+
+    if (filteredCares.isEmpty) {
+      return const Center(child: Text('Aucune garde terminée'));
+    }
 
     return ListView.builder(
       padding: const EdgeInsets.all(8),
-      itemCount: filteredPlants.length,
+      itemCount: filteredCares.length,
       itemBuilder: (context, index) {
-        final plant = filteredPlants[index];
-        return Column(
-          children: [
-            ListTile(
-              leading: CircleAvatar(
-                backgroundImage: AssetImage(plant['image']!),
-                backgroundColor: Colors.grey[200],
-              ),
-              title: Text(
-                plant['name']!,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              subtitle: Text(plant['type']!),
-              trailing: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    "Date: ${plant['date']}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+        final care = filteredCares[index];
+        final plant = care['plant'];
+        final caretaker = care['caretaker'];
+        final endDate = DateTime.parse(care['end_date']);
+        
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          child: ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PlantCareDetailsScreen(
+                    isCurrentPlant: false,
+                    careId: care['id'],
                   ),
-                  Text("Gardien: ${plant['gardien']}"),
-                ],
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => const PlantCareDetailsScreen(
-                          isCurrentPlant: false,
-                          careId: 1,
-                        ),
-                  ),
-                );
-              },
+                ),
+              );
+            },
+            leading: CircleAvatar(
+              backgroundColor: Colors.grey[200],
+              child: plant['photo'] != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.network(
+                        plant['photo'],
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(Icons.local_florist, color: Colors.green[700]);
+                        },
+                      ),
+                    )
+                  : Icon(Icons.local_florist, color: Colors.green[700]),
             ),
-            const Divider(),
-          ],
+            title: Text(plant['nom'] ?? 'Plante'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Espèce: ${plant['espece'] ?? 'Non spécifiée'}'),
+                if (caretaker != null)
+                  Text('Gardé par ${caretaker['prenom'] ?? ''} ${caretaker['nom'] ?? ''}'),
+                Text('Terminé le ${DateFormat('dd/MM/yyyy').format(endDate)}'),
+              ],
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Terminé',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPlantGardeesTab() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null) {
+      return Center(child: Text('Erreur: $error'));
+    }
+
+    final filteredCares = plantsGardees
+        .where((care) => 
+          care['plant'] != null && 
+          care['plant']['nom'] != null && 
+          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+        .toList();
+
+    if (filteredCares.isEmpty) {
+      return const Center(child: Text('Aucune garde terminée'));
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(8),
+      itemCount: filteredCares.length,
+      itemBuilder: (context, index) {
+        final care = filteredCares[index];
+        final plant = care['plant'];
+        final owner = care['owner'];
+        final endDate = DateTime.parse(care['end_date']);
+        
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 5),
+          child: ListTile(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PlantCareDetailsScreen(
+                    isCurrentPlant: false,
+                    careId: care['id'],
+                  ),
+                ),
+              );
+            },
+            leading: CircleAvatar(
+              backgroundColor: Colors.grey[200],
+              child: plant['photo'] != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: Image.network(
+                        plant['photo'],
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Icon(Icons.local_florist, color: Colors.green[700]);
+                        },
+                      ),
+                    )
+                  : Icon(Icons.local_florist, color: Colors.green[700]),
+            ),
+            title: Text(plant['nom'] ?? 'Plante'),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Espèce: ${plant['espece'] ?? 'Non spécifiée'}'),
+                if (owner != null)
+                  Text('Propriétaire: ${owner['prenom'] ?? ''} ${owner['nom'] ?? ''}'),
+                Text('Terminé le ${DateFormat('dd/MM/yyyy').format(endDate)}'),
+              ],
+            ),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Terminé',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
         );
       },
     );

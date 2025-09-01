@@ -22,78 +22,100 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
   bool _isLoading = true;
   String? _error;
   LatLng? _userLocation;
+  bool _locationLoading = true;
 
-  // Données des plantes avec localisation
-  final List<Map<String, dynamic>> _nearbyPlants = [
-    {
-      'id': 1,
-      'nom': 'Monstera Deliciosa',
-      'espece': 'Monstera',
-      'photo': 'https://example.com/photos/monstera.jpg',
-      'location': const LatLng(48.8566, 2.3522), // Paris
-      'address': '12 Rue de Rivoli, 75001 Paris',
-    },
-    {
-      'id': 2,
-      'nom': 'Ficus Lyrata',
-      'espece': 'Ficus',
-      'photo': 'https://example.com/photos/ficus.jpg',
-      'location': const LatLng(48.8606, 2.3376), // Louvre
-      'address': '36 Quai des Orfèvres, 75001 Paris',
-    },
-    {
-      'id': 3,
-      'nom': 'Calathea Orbifolia',
-      'espece': 'Calathea',
-      'photo': 'https://example.com/photos/calathea.jpg',
-      'location': const LatLng(48.8738, 2.2950), // Arc de Triomphe
-      'address': '8 Avenue Montaigne, 75008 Paris',
-    },
-    {
-      'id': 4,
-      'nom': 'Pilea Peperomioides',
-      'espece': 'Pilea',
-      'photo': 'https://example.com/photos/pilea.jpg',
-      'location': const LatLng(48.8649, 2.3800), // Bastille
-      'address': '15 Rue de la Roquette, 75011 Paris',
-    },
-  ];
+  // Liste des gardes disponibles (remplace les données hardcodées)
+  List<Map<String, dynamic>> _availableCares = [];
+  
 
-  // Point central de la carte (Paris)
-  final LatLng _center = const LatLng(48.8566, 2.3522);
+  // Point central de la carte (Toujours le centre de la France)
+  LatLng get _center => const LatLng(46.7, 2.2);
 
   String formatDateNumber(int number) {
     return number.toString().padLeft(2, '0');
+  }
+
+  String _formatDate(String? dateString) {
+    if (dateString == null) return '';
+    try {
+      final date = DateTime.parse(dateString);
+      return '${formatDateNumber(date.day)}/${formatDateNumber(date.month)}/${date.year}';
+    } catch (e) {
+      return dateString;
+    }
   }
 
   @override
   void initState() {
     super.initState();
     _initializeService();
-    _getUserLocation();
+    _getUserLocationWithTimeout();
+  }
+
+  Future<void> _getUserLocationWithTimeout() async {
+    try {
+      // Essayer d'obtenir la position avec timeout de 8 secondes
+      await Future.any([
+        _getUserLocation(),
+        Future.delayed(const Duration(seconds: 8)),
+      ]);
+    } catch (e) {
+      print("Timeout ou erreur géolocalisation: $e");
+    } finally {
+      // Toujours arrêter le loading après 8 secondes max
+      if (mounted) {
+        setState(() {
+          _locationLoading = false;
+        });
+      }
+    }
   }
 
   Future<void> _getUserLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
+      if (!serviceEnabled) {
+        setState(() {
+          _locationLoading = false;
+        });
+        return;
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationLoading = false;
+          });
+          return;
+        }
       }
-      if (permission == LocationPermission.deniedForever) return;
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationLoading = false;
+        });
+        return;
+      }
 
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 6),
       );
 
-      setState(() {
-        _userLocation = LatLng(position.latitude, position.longitude);
-      });
+      if (mounted) {
+        setState(() {
+          _userLocation = LatLng(position.latitude, position.longitude);
+          _locationLoading = false;
+        });
+      }
     } catch (e) {
       print("Erreur localisation: $e");
+      if (mounted) {
+        setState(() {
+          _locationLoading = false;
+        });
+      }
     }
   }
 
@@ -121,6 +143,8 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
       if (mounted) {
         setState(() {
           _pendingCares = cares;
+          // Convertir les gardes réelles au format map avec localisation
+          _availableCares = _convertCaresToMapFormat(cares);
           _isLoading = false;
         });
       }
@@ -132,6 +156,42 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
         });
       }
     }
+  }
+
+  // Convertir les gardes API au format attendu par la carte
+  List<Map<String, dynamic>> _convertCaresToMapFormat(List<Map<String, dynamic>> cares) {
+    return cares.map((care) {
+      LatLng location;
+      
+      // Utiliser les vraies coordonnées si disponibles
+      if (care['latitude'] != null && care['longitude'] != null) {
+        location = LatLng(
+          care['latitude'].toDouble(),
+          care['longitude'].toDouble(),
+        );
+      } else {
+        // Fallback sur centre de la France par défaut si pas de coordonnées
+        location = const LatLng(46.7, 2.2);
+        print('Garde ${care['id']} sans coordonnées, utilisation du centre de la France par défaut');
+      }
+      
+      return {
+        'id': care['id'],
+        'plant': care['plant'],
+        'location': location,
+        'localisation': care['localisation'] ?? 'Localisation non spécifiée',
+        'care_instructions': care['care_instructions'] ?? 'Aucune instruction spécifique',
+        'start_date': care['start_date'],
+        'end_date': care['end_date'],
+        'owner': care['owner'],
+        'status': care['status'],
+      };
+    }).toList();
+  }
+
+  // Récupérer les plantes à afficher (vraies gardes uniquement)
+  List<Map<String, dynamic>> _getPlantsToShow() {
+    return _availableCares;
   }
 
   // Widget pour afficher la carte
@@ -152,64 +212,96 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: FlutterMap(
-          options: MapOptions(
-            initialCenter: _center, // Change 'center' to 'initialCenter'
-            initialZoom: 13.0, // Change 'zoom' to 'initialZoom'
-          ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'com.example.app',
-            ),
-            MarkerLayer(
-              markers: [
-                if (_userLocation != null)
-                  Marker(
-                    point: _userLocation!,
-                    width: 40,
-                    height: 40,
-                    child: const Icon(
-                      Icons.person_pin_circle,
-                      color: Colors.blue,
-                      size: 30,
+        child: _locationLoading
+          ? Container(
+              color: Colors.grey[100],
+              child: const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Colors.green,
                     ),
-                  ),
-                ..._nearbyPlants
-                    .map(
-                      (plant) => Marker(
-                        point: plant['location'],
+                    SizedBox(height: 16),
+                    Text(
+                      'Localisation en cours...',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Centrage sur votre position',
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : FlutterMap(
+              options: MapOptions(
+                initialCenter: _center, // Toujours centré sur la France
+                initialZoom: 5.0, // Vue France complète incluant Lille
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.example.app',
+                ),
+                MarkerLayer(
+                  markers: [
+                    if (_userLocation != null)
+                      Marker(
+                        point: _userLocation!,
                         width: 40,
                         height: 40,
-                        child: GestureDetector(
-                          onTap: () {
-                            _showPlantDetails(plant);
-                          },
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.green,
-                            ),
-                            child: const Icon(
-                              Icons.local_florist,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.person_pin_circle,
+                          color: Colors.blue,
+                          size: 30,
                         ),
                       ),
-                    )
-                    .toList(),
+                    ..._getPlantsToShow()
+                        .map(
+                          (care) => Marker(
+                            point: care['location'],
+                            width: 40,
+                            height: 40,
+                            child: GestureDetector(
+                              onTap: () {
+                                _showPlantDetails(care);
+                              },
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.green,
+                                ),
+                                child: const Icon(
+                                  Icons.local_florist,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
       ),
     );
   }
 
-  // Afficher les détails d'une plante sur la carte
-  void _showPlantDetails(Map<String, dynamic> plant) {
+  // Afficher les détails d'une garde disponible
+  void _showPlantDetails(Map<String, dynamic> care) {
+    final plant = care['plant'] ?? {};
+    final owner = care['owner'] ?? {};
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -259,14 +351,22 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          plant['nom'],
+                          plant['nom'] ?? 'Plante inconnue',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          plant['espece'],
+                          'de ${owner['prenom'] ?? ''} ${owner['nom'] ?? 'Propriétaire'}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        Text(
+                          plant['espece'] ?? 'Espèce inconnue',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -284,11 +384,66 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      plant['address'],
+                      care['localisation'] ?? 'Localisation non spécifiée',
                       style: TextStyle(color: Colors.grey[800]),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 16),
+              // Dates de garde
+              if (care['start_date'] != null && care['end_date'] != null) ...[
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, color: Colors.green[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${_formatDate(care['start_date'])} - ${_formatDate(care['end_date'])}',
+                        style: TextStyle(
+                          color: Colors.grey[800],
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              // Instructions
+              if (care['care_instructions'] != null && care['care_instructions'].toString().isNotEmpty) ...[
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.green[700], size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        care['care_instructions'],
+                        style: TextStyle(color: Colors.grey[800]),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+              ],
+              // Statut
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.green[100],
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'DISPONIBLE',
+                  style: TextStyle(
+                    color: Colors.green[700],
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               SizedBox(
@@ -296,7 +451,16 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    // Ici vous pourriez naviguer vers une page de détails de la plante
+                    // Naviguer vers les détails de la garde
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PlantCareDetailsScreen(
+                          isCurrentPlant: false,
+                          careId: care['id'],
+                        ),
+                      ),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -306,7 +470,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text('Voir les détails'),
+                  child: const Text('Proposer de garder'),
                 ),
               ),
             ],
@@ -450,9 +614,10 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          itemCount: _nearbyPlants.length,
+          itemCount: _getPlantsToShow().length,
           itemBuilder: (context, index) {
-            final plant = _nearbyPlants[index];
+            final care = _getPlantsToShow()[index];
+            final plant = care['plant'] ?? {};
             return Card(
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
@@ -490,13 +655,13 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                           ),
                 ),
                 title: Text(
-                  plant['nom'],
+                  plant['nom'] ?? 'Plante inconnue',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(plant['espece']),
+                    Text('${plant['espece'] ?? 'Espèce inconnue'} - ${(care['owner'] != null) ? '${care['owner']['prenom']} ${care['owner']['nom']}' : 'Propriétaire inconnu'}'),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -508,7 +673,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            plant['address'],
+                            care['localisation'] ?? 'Localisation non spécifiée',
                             style: const TextStyle(fontSize: 12),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -518,7 +683,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     ),
                   ],
                 ),
-                onTap: () => _showPlantDetails(plant),
+                onTap: () => _showPlantDetails(care),
               ),
             );
           },
@@ -540,7 +705,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Plantes à proximité',
+                  'Gardes disponibles près de chez vous',
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
@@ -551,7 +716,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Plantes à garder proche de vous',
+                      'Demandes de garde actives',
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -676,13 +841,18 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const AddPlantScreen(),
                         ),
                       );
+                      if (result == true) {
+                        setState(() {
+                          _loadPendingCares();
+                        });
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,

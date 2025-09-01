@@ -3,7 +3,12 @@ import '../services/auth_service.dart';
 import '../models/user.dart';
 
 class InscriptionValidationScreen extends StatefulWidget {
-  const InscriptionValidationScreen({super.key});
+  final bool showAppBar;
+  
+  const InscriptionValidationScreen({
+    super.key, 
+    this.showAppBar = true,
+  });
 
   @override
   State<InscriptionValidationScreen> createState() =>
@@ -88,40 +93,18 @@ class _InscriptionValidationScreenState
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Validation des inscriptions',
-          style: TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Container(
+    final body = Container(
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          border: Border.all(
+          border: widget.showAppBar ? Border.all(
             color: Colors.blue,
             width: 2,
-          ),
+          ) : null,
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              const Text(
-                'Validation des inscriptions',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
               if (_isLoading)
                 const Expanded(
                   child: Center(child: CircularProgressIndicator()),
@@ -227,7 +210,26 @@ class _InscriptionValidationScreenState
             ],
           ),
         ),
-      ),
-    );
+      );
+
+    if (widget.showAppBar) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Validation des inscriptions',
+            style: TextStyle(color: Colors.black),
+          ),
+          backgroundColor: Colors.white,
+          elevation: 1,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: body,
+      );
+    } else {
+      return body;
+    }
   }
 }

@@ -1,9 +1,14 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/services/plant_care_service.dart';
+import 'package:mobile/widgets/address_autocomplete_field.dart';
 import 'package:intl/intl.dart';
+
+// Import conditionnel pour File (éviter sur web)
+import 'dart:io' if (dart.library.html) 'dart:io' show File;
 
 class AddPlantScreen extends StatefulWidget {
   const AddPlantScreen({Key? key}) : super(key: key);
@@ -15,7 +20,8 @@ class AddPlantScreen extends StatefulWidget {
 class _AddPlantScreenState extends State<AddPlantScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isFirstStep = true;
-  File? _imageFile;
+  dynamic _imageFile; // File sur mobile, null sur web
+  Uint8List? _webImage;
   late PlantService _plantService;
   late PlantCareService _plantCareService;
   int? _createdPlantId;
@@ -23,7 +29,6 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   // Contrôleurs pour les champs de la plante
   final _nomController = TextEditingController();
   final _especeController = TextEditingController();
-  final _descriptionController = TextEditingController();
 
   // Contrôleurs pour les champs de la garde
   final _localisationController = TextEditingController();
@@ -47,7 +52,6 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   void dispose() {
     _nomController.dispose();
     _especeController.dispose();
-    _descriptionController.dispose();
     _localisationController.dispose();
     _careInstructionsController.dispose();
     super.dispose();
@@ -56,9 +60,22 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+      if (kIsWeb) {
+        // Pour le web, lire les bytes de l'image
+        final bytes = await pickedFile.readAsBytes();
+        setState(() {
+          _webImage = bytes;
+          _imageFile = null; // Clear mobile file
+        });
+      } else {
+        // Pour mobile, utiliser File
+        if (!kIsWeb) {
+          setState(() {
+            _imageFile = File(pickedFile.path);
+            _webImage = null; // Clear web bytes
+          });
+        }
+      }
     }
   }
 
@@ -100,8 +117,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
         final plant = await _plantService.createPlant(
           nom: _nomController.text,
           espece: _especeController.text,
-          description: _descriptionController.text,
           imageFile: _imageFile,
+          webImage: _webImage,
         );
         setState(() {
           _createdPlantId = plant.id;
@@ -125,12 +142,60 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           localisation: _localisationController.text,
           careInstructions: _careInstructionsController.text,
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors de la création de la garde: $e')),
         );
       }
+    }
+  }
+
+  Widget _getImageWidget() {
+    if (kIsWeb && _webImage != null) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Image.memory(
+            _webImage!,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else if (!kIsWeb && _imageFile != null) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8.0),
+          child: Image.file(
+            _imageFile as File,
+            fit: BoxFit.cover,
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.grey[300]!, width: 2, style: BorderStyle.solid),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_photo_alternate, size: 50, color: Colors.grey),
+              SizedBox(height: 8),
+              Text('Ajouter une photo', style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+      );
     }
   }
 
@@ -154,27 +219,37 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_imageFile != null)
-          Image.file(
-            _imageFile!,
-            height: 200,
-            fit: BoxFit.cover,
-          ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.camera),
-              icon: const Icon(Icons.camera_alt),
-              label: const Text('Photo'),
+        _getImageWidget(),
+        const SizedBox(height: 8),
+        // Sur Flutter Web, afficher un sélecteur unique car la caméra n'est pas supportée
+        kIsWeb 
+          ? Center(
+              child: ElevatedButton.icon(
+                onPressed: () => _pickImage(ImageSource.gallery),
+                icon: const Icon(Icons.photo_library),
+                label: const Text('Sélectionner une image'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Photo'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () => _pickImage(ImageSource.gallery),
+                  icon: const Icon(Icons.photo_library),
+                  label: const Text('Galerie'),
+                ),
+              ],
             ),
-            ElevatedButton.icon(
-              onPressed: () => _pickImage(ImageSource.gallery),
-              icon: const Icon(Icons.photo_library),
-              label: const Text('Galerie'),
-            ),
-          ],
-        ),
         const SizedBox(height: 16),
         TextFormField(
           controller: _nomController,
@@ -218,28 +293,6 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
             ),
           ),
           validator: (value) => value?.isEmpty ?? true ? 'Champ requis' : null,
-        ),
-        const SizedBox(height: 16),
-        TextFormField(
-          controller: _descriptionController,
-          decoration: InputDecoration(
-            labelText: 'Description',
-            filled: true,
-            fillColor: Colors.green.withOpacity(0.1),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide.none,
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.green),
-            ),
-          ),
-          maxLines: 3,
         ),
         const SizedBox(height: 24),
         ElevatedButton(
@@ -289,10 +342,20 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        TextFormField(
-          controller: _localisationController,
+        AddressAutocompleteField(
+          onAddressSelected: (address, lat, lng) {
+            setState(() {
+              _localisationController.text = address;
+            });
+            // Les coordonnées seront automatiquement géocodées côté serveur
+            // mais on pourrait les stocker ici pour une utilisation future
+            print('Adresse sélectionnée: $address');
+            print('Coordonnées: lat=$lat, lng=$lng');
+          },
+          initialValue: _localisationController.text,
+          labelText: 'Localisation',
+          hintText: 'Entrez l\'adresse de votre plante',
           decoration: InputDecoration(
-            labelText: 'Localisation',
             filled: true,
             fillColor: Colors.green.withOpacity(0.1),
             border: OutlineInputBorder(
@@ -307,8 +370,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Colors.green),
             ),
+            prefixIcon: Icon(Icons.location_on, color: Colors.green[700]),
           ),
-          validator: (value) => value?.isEmpty ?? true ? 'Champ requis' : null,
         ),
         const SizedBox(height: 16),
         TextFormField(

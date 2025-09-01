@@ -1,31 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/views/plant_history_screen.dart';
 import 'package:mobile/widgets/logout_dialog.dart';
 import 'package:mobile/views/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/auth_service.dart';
+import 'package:mobile/services/plant_care_advice_service.dart';
+import 'package:mobile/services/profile_service.dart';
 import 'package:mobile/models/user.dart';
 import 'package:mobile/services/storage_service.dart';
-import 'package:mobile/utils/password_validator.dart';
+import 'base_page_botaniste.dart';
+import '../models/plant_care_advice.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/message_provider.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class BotanistProfileScreen extends StatefulWidget {
+  const BotanistProfileScreen({super.key});
 
   @override
-  State<SettingsPage> createState() => _SettingsPageState();
+  State<BotanistProfileScreen> createState() => _BotanistProfileScreenState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
   User? _user;
   bool _isLoading = true;
   String? _error;
+  final ProfileService _profileService = ProfileService();
+  final PlantCareAdviceService _plantCareAdviceService = PlantCareAdviceService();
+  AdviceStats? _stats;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _loadBotanistStats();
   }
 
   Future<void> _loadUserData() async {
@@ -53,6 +59,28 @@ class _SettingsPageState extends State<SettingsPage> {
       setState(() {
         _error = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadBotanistStats() async {
+    try {
+      final adviceStats = await _plantCareAdviceService.getAdviceStats();
+      
+      setState(() {
+        _stats = adviceStats;
+      });
+    } catch (e) {
+      // Gérer silencieusement l'erreur des stats
+      setState(() {
+        _stats = AdviceStats(
+          totalToReview: 0,
+          totalReviewed: 0,
+          urgentCount: 0,
+          followUpCount: 0,
+          pendingValidation: 0,
+          myAdviceCount: 0,
+        );
       });
     }
   }
@@ -90,74 +118,158 @@ class _SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Paramètres"),
-        automaticallyImplyLeading: false,
-      ),
-      body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : _error != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+    return BasePageBotaniste(
+      currentIndex: 3,
+      body: Scaffold(
+        appBar: AppBar(
+          title: const Text("Profil Botaniste"),
+          backgroundColor: Colors.green,
+          foregroundColor: Colors.white,
+          automaticallyImplyLeading: false,
+        ),
+        body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Erreur: $_error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    ElevatedButton(
+                      onPressed: _loadUserData,
+                      child: const Text('Réessayer'),
+                    ),
+                  ],
+                ),
+              )
+            : ListView(
+                padding: const EdgeInsets.all(16.0),
                 children: [
-                  Text(
-                    'Erreur: $_error',
-                    style: const TextStyle(color: Colors.red),
+                  // Section Statistiques Botaniste
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Mes Statistiques',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  'Mes Conseils', 
+                                  '${_stats?.myAdviceCount ?? 0}', 
+                                  Icons.assignment,
+                                  Colors.blue,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildStatCard(
+                                  'Validés', 
+                                  '${_stats?.myValidatedCount ?? 0}', 
+                                  Icons.check_circle,
+                                  Colors.green,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: _buildStatCard(
+                                  'Validations Faites', 
+                                  '${_stats?.myValidationsDoneCount ?? 0}', 
+                                  Icons.verified_user,
+                                  Colors.orange,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  ElevatedButton(
-                    onPressed: _loadUserData,
-                    child: const Text('Réessayer'),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Section Informations Personnelles
+                  buildListTile(
+                    title: "Email",
+                    subtitle: _user?.email ?? '',
+                    onTap: () => _showChangeEmailDialog(context),
+                  ),
+                  buildListTile(
+                    title: "Nom complet",
+                    subtitle: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}",
+                    onTap: () => _showChangeFullNameDialog(context),
+                  ),
+                  buildListTile(
+                    title: "Numéro de téléphone",
+                    subtitle: _user?.telephone ?? 'Non renseigné',
+                    onTap: () => _showChangePhoneDialog(context),
+                  ),
+                  buildListTile(
+                    title: "Ville/Région",
+                    subtitle: _user?.localisation ?? 'Non renseignée',
+                    onTap: () => _showChangeCityDialog(context),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Section Actions
+                  buildListTile(
+                    title: "Changer de mot de passe",
+                    onTap: () => _showChangePasswordDialog(context),
+                  ),
+                  buildListTile(
+                    title: "Déconnexion",
+                    onTap: () => _handleLogout(context),
                   ),
                 ],
               ),
-            )
-          : ListView(
-              padding: const EdgeInsets.all(16.0),
-              children: [
-                buildListTile(
-                  title: "Email",
-                  subtitle: _user?.email ?? '',
-                  onTap: () => _showChangeEmailDialog(context),
-                ),
-                buildListTile(
-                  title: "Nom complet",
-                  subtitle: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}",
-                  onTap: () => _showChangeFullNameDialog(context),
-                ),
-                buildListTile(
-                  title: "Numéro de téléphone",
-                  subtitle: _user?.telephone ?? 'Non renseigné',
-                  onTap: () => _showChangePhoneDialog(context),
-                ),
-                buildListTile(
-                  title: "Ville/Région",
-                  subtitle: _user?.localisation ?? 'Non renseignée',
-                  onTap: () => _showChangeCityDialog(context),
-                ),
-                const SizedBox(height: 16),
-                buildListTile(
-                  title: "Historique des Gardes",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PlantHistoryScreen(),
-                      ),
-                    );
-                  },
-                ),
-                buildListTile(
-                  title: "Changer de mot de passe",
-                  onTap: () => _showChangePasswordDialog(context),
-                ),
-                buildListTile(
-                  title: "Déconnexion",
-                  onTap: () => _handleLogout(context),
-                ),
-              ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
+          ),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: color,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 
@@ -192,6 +304,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  // Reprise des méthodes de dialogue de la page de profil existante
   void _showChangePasswordDialog(BuildContext context) {
     final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
@@ -228,67 +341,29 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 20.0),
                 _buildTextField(currentPasswordController, "Mot de passe actuel"),
-
                 const SizedBox(height: 10.0),
                 _buildTextField(newPasswordController, "Nouveau mot de passe"),
-                
                 const SizedBox(height: 10.0),
                 _buildTextField(confirmPasswordController, "Confirmez le nouveau mot de passe"),
-                
                 const SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: () async {
-                    final currentPassword = currentPasswordController.text.trim();
-                    final newPassword = newPasswordController.text.trim();
-                    final confirmPassword = confirmPasswordController.text.trim();
-                    
-                    // Validations
-                    if (currentPassword.isEmpty) {
+                    if (newPasswordController.text != confirmPasswordController.text) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text("Le mot de passe actuel est requis"),
+                          content: Text("Les mots de passe ne correspondent pas."),
                           backgroundColor: Colors.red,
                         ),
                       );
                       return;
                     }
-                    
-                    // Validation CNIL du nouveau mot de passe
-                    final validationResult = PasswordValidator.validateCNILPolicy(newPassword);
-                    if (!validationResult.isValid) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(validationResult.errors.join('\n')),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    if (newPassword != confirmPassword) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Les mots de passe ne correspondent pas"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    Navigator.pop(context);
                     
                     try {
-                      final authService = await AuthService.getInstance();
-                      final storageService = await StorageService.init();
-                      final token = storageService.getToken();
-                      
-                      if (token == null) {
-                        throw Exception('Non authentifié');
-                      }
-                      
-                      // Appeler l'API sécurisée pour changer le mot de passe
-                      await authService.changePassword(token, currentPassword, newPassword);
-                      
+                      await _profileService.changePassword(
+                        currentPassword: currentPasswordController.text,
+                        newPassword: newPasswordController.text,
+                      );
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Mot de passe mis à jour avec succès !"),
@@ -296,9 +371,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       );
                     } catch (e) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Erreur: ${e.toString()}"),
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -367,19 +443,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildTextField(newEmailController, "Saisir nouvelle adresse e-mail"),
                 const SizedBox(height: 20.0),
                 ElevatedButton(
-                  onPressed: () {
-                    if (newEmailController.text.contains('@')) {
+                  onPressed: () async {
+                    if (!newEmailController.text.contains('@')) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text("Veuillez entrer un email valide"),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    try {
+                      await _profileService.updateProfile(
+                        email: newEmailController.text,
+                      );
                       Navigator.pop(context);
+                      await _loadUserData();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Email mis à jour avec succès !"),
                           backgroundColor: Colors.green,
                         ),
                       );
-                    } else {
+                    } catch (e) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Veuillez entrer un email valide"),
+                        SnackBar(
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -410,9 +501,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showChangeFullNameDialog(BuildContext context) {
-    final fullNameController = TextEditingController(
-      text: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}".trim()
-    );
+    final fullNameController = TextEditingController();
 
     showDialog(
       context: context,
@@ -448,44 +537,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: () async {
-                    final fullName = fullNameController.text.trim();
-                    if (fullName.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text("Le nom ne peut pas être vide"),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    
-                    // Séparer le nom complet en prénom et nom
-                    final parts = fullName.split(' ');
-                    final prenom = parts.first;
-                    final nom = parts.length > 1 ? parts.sublist(1).join(' ') : '';
-                    
-                    Navigator.pop(context);
+                    final names = fullNameController.text.trim().split(' ');
+                    if (names.isEmpty) return;
                     
                     try {
-                      final authService = await AuthService.getInstance();
-                      final storageService = await StorageService.init();
-                      final token = storageService.getToken();
-                      
-                      if (token == null) {
-                        throw Exception('Non authentifié');
-                      }
-                      
-                      // Appeler l'API pour mettre à jour le profil
-                      final updatedUser = await authService.updateProfile(token, {
-                        'prenom': prenom,
-                        'nom': nom,
-                      });
-                      
-                      // Mettre à jour l'état local
-                      setState(() {
-                        _user = User.fromJson(updatedUser);
-                      });
-                      
+                      await _profileService.updateProfile(
+                        prenom: names.first,
+                        nom: names.length > 1 ? names.sublist(1).join(' ') : names.first,
+                      );
+                      Navigator.pop(context);
+                      await _loadUserData();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Nom complet mis à jour avec succès !"),
@@ -493,9 +554,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       );
                     } catch (e) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Erreur: ${e.toString()}"),
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -517,9 +579,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showChangePhoneDialog(BuildContext context) {
-    final phoneController = TextEditingController(
-      text: _user?.telephone ?? ''
-    );
+    final phoneController = TextEditingController();
 
     showDialog(
       context: context,
@@ -555,29 +615,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: () async {
-                    final phone = phoneController.text.trim();
-                    
-                    Navigator.pop(context);
-                    
                     try {
-                      final authService = await AuthService.getInstance();
-                      final storageService = await StorageService.init();
-                      final token = storageService.getToken();
-                      
-                      if (token == null) {
-                        throw Exception('Non authentifié');
-                      }
-                      
-                      // Appeler l'API pour mettre à jour le profil
-                      final updatedUser = await authService.updateProfile(token, {
-                        'telephone': phone.isNotEmpty ? phone : null,
-                      });
-                      
-                      // Mettre à jour l'état local
-                      setState(() {
-                        _user = User.fromJson(updatedUser);
-                      });
-                      
+                      await _profileService.updateProfile(
+                        telephone: phoneController.text,
+                      );
+                      Navigator.pop(context);
+                      await _loadUserData();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Numéro mis à jour avec succès !"),
@@ -585,9 +628,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       );
                     } catch (e) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Erreur: ${e.toString()}"),
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
                           backgroundColor: Colors.red,
                         ),
                       );
@@ -609,9 +653,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showChangeCityDialog(BuildContext context) {
-    final cityController = TextEditingController(
-      text: _user?.localisation ?? ''
-    );
+    final cityController = TextEditingController();
 
     showDialog(
       context: context,
@@ -647,29 +689,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 20.0),
                 ElevatedButton(
                   onPressed: () async {
-                    final city = cityController.text.trim();
-                    
-                    Navigator.pop(context);
-                    
                     try {
-                      final authService = await AuthService.getInstance();
-                      final storageService = await StorageService.init();
-                      final token = storageService.getToken();
-                      
-                      if (token == null) {
-                        throw Exception('Non authentifié');
-                      }
-                      
-                      // Appeler l'API pour mettre à jour le profil
-                      final updatedUser = await authService.updateProfile(token, {
-                        'localisation': city.isNotEmpty ? city : null,
-                      });
-                      
-                      // Mettre à jour l'état local
-                      setState(() {
-                        _user = User.fromJson(updatedUser);
-                      });
-                      
+                      await _profileService.updateProfile(
+                        localisation: cityController.text,
+                      );
+                      Navigator.pop(context);
+                      await _loadUserData();
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text("Ville mise à jour avec succès !"),
@@ -677,9 +702,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       );
                     } catch (e) {
+                      Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text("Erreur: ${e.toString()}"),
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
                           backgroundColor: Colors.red,
                         ),
                       );

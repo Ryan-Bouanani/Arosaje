@@ -127,6 +127,53 @@ class AuthService {
       throw Exception('Erreur lors de la récupération du profil: ${e.toString()}');
     }
   }
+  
+  Future<Map<String, dynamic>> updateProfile(String token, Map<String, dynamic> updates) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+        body: json.encode(updates),
+      );
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return data;
+      } else {
+        throw Exception(data['detail'] ?? 'Échec de la mise à jour du profil');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la mise à jour du profil: ${e.toString()}');
+    }
+  }
+  
+  Future<Map<String, dynamic>> changePassword(String token, String currentPassword, String newPassword) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/change-password'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json'
+        },
+        body: json.encode({
+          'current_password': currentPassword,
+          'new_password': newPassword,
+        }),
+      );
+
+      final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return data;
+      } else {
+        throw Exception(data['detail'] ?? 'Échec du changement de mot de passe');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors du changement de mot de passe: ${e.toString()}');
+    }
+  }
 
   Future<List<User>> getPendingAccounts() async {
     try {
@@ -199,6 +246,84 @@ class AuthService {
       }
     } catch (e) {
       throw Exception('Erreur lors du rejet du compte : $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getAdminStats() async {
+    try {
+      final token = _storageService.getToken();
+      if (token == null) {
+        throw Exception('Token non trouvé');
+      }
+
+      final response = await _dio.get(
+        '/admin/stats',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Erreur lors de la récupération des statistiques');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des statistiques : $e');
+    }
+  }
+
+  Future<List<User>> getVerifiedUsers() async {
+    try {
+      final token = _storageService.getToken();
+      if (token == null) {
+        throw Exception('Token non trouvé');
+      }
+
+      final response = await _dio.get(
+        '/admin/verified-users',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> usersJson = response.data;
+        return usersJson.map((json) => User.fromJson(json)).toList();
+      } else {
+        throw Exception('Erreur lors de la récupération des utilisateurs');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors de la récupération des utilisateurs : $e');
+    }
+  }
+
+  Future<void> changeUserRole(int userId, String newRole) async {
+    try {
+      final token = _storageService.getToken();
+      if (token == null) {
+        throw Exception('Token non trouvé');
+      }
+
+      final response = await _dio.put(
+        '/admin/change-role/$userId',
+        data: {'role': newRole},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Erreur lors du changement de rôle');
+      }
+    } catch (e) {
+      throw Exception('Erreur lors du changement de rôle : $e');
     }
   }
 

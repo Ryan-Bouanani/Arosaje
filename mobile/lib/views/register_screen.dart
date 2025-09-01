@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/services/auth_service.dart';
 import 'package:mobile/views/login_screen.dart';
+import 'package:mobile/utils/password_validator.dart';
 
 class InscriptionPage extends StatefulWidget {
   const InscriptionPage({super.key});
@@ -292,8 +293,10 @@ class _InscriptionPageState extends State<InscriptionPage> {
                         if (value == null || value.isEmpty) {
                           return 'Veuillez entrer votre mot de passe';
                         }
-                        if (value.length < 6) {
-                          return 'Le mot de passe doit contenir au moins 6 caractères';
+                        
+                        final validationResult = PasswordValidator.validateCNILPolicy(value);
+                        if (!validationResult.isValid) {
+                          return validationResult.errors.join('\n');
                         }
                         return null;
                       },

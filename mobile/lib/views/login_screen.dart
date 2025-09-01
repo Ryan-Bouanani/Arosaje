@@ -4,9 +4,10 @@ import 'package:mobile/services/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/storage_service.dart';
 import 'home_after_login_screen.dart';
-import 'home_after_login_admin.dart';
+import 'admin_dashboard.dart';
 import 'home_screen.dart';
 import 'inscription_validation_screen.dart';
+import 'botanist_advice_main_screen.dart';
 
 // Constantes pour les rôles
 class UserRoles {
@@ -36,6 +37,10 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _authServiceFuture = AuthService.getInstance();
     _initializeStorage();
+    
+    // Valeurs par défaut pour faciliter les tests
+    _emailController.text = 'user@arosaje.fr';
+    _passwordController.text = 'epsi691';
   }
 
   Future<void> _initializeStorage() async {
@@ -55,10 +60,10 @@ class _LoginScreenState extends State<LoginScreen> {
     Widget targetScreen;
     switch (role.toUpperCase()) {
       case UserRoles.ADMIN:
-        targetScreen = const InscriptionValidationScreen();
+        targetScreen = const AdminDashboard();
         break;
       case UserRoles.BOTANIST:
-        targetScreen = const HomeAfterLoginAdmin();
+        targetScreen = const BotanistAdviceMainScreen();
         break;
       case UserRoles.USER:
         targetScreen = const HomeAfterLogin();
@@ -286,6 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                     ),

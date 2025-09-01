@@ -11,7 +11,7 @@ from utils.password import verify_password
 from crud.user import user as user_crud
 from schemas.token import TokenData
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     """Crée un token JWT"""

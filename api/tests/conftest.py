@@ -37,7 +37,7 @@ def test_user_email():
 @pytest.fixture
 def test_password():
     """Mot de passe de test"""
-    return "test123secure"
+    return "TestPassword123456"
 
 @pytest.fixture
 def admin_email():

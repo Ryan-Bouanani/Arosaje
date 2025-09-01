@@ -40,60 +40,6 @@ async def get_advice_stats(
     """Statistiques personnelles du botaniste"""
     return plant_care_advice.get_advice_stats(db, current_user.id)
 
-@router.post("/debug/test-simple")
-async def debug_test_simple():
-    """Test endpoint POST sans body"""
-    return {"status": "POST works without body"}
-
-@router.post("/debug/test-json")
-async def debug_test_json(request_data: dict):
-    """Test simple du parsing JSON"""
-    return {"received": request_data, "status": "success"}
-
-@router.post("/debug/test-advice-schema")
-async def debug_test_advice_schema(advice_data: dict):
-    """Test du schéma PlantCareAdviceCreate - manual parsing"""
-    try:
-        # Manual parsing to debug
-        from schemas.plant_care_advice import PlantCareAdviceCreate
-        parsed_data = PlantCareAdviceCreate(**advice_data)
-        return {
-            "received": parsed_data.dict(),
-            "status": "manual_parse_success"
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "received_data": advice_data,
-            "status": "manual_parse_failed"
-        }
-
-@router.get("/debug/plant-cares", response_model=List[Dict[str, Any]])
-async def debug_plant_cares(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """Endpoint de debug pour voir toutes les plant cares"""
-    from models.plant_care import PlantCare
-    from models.plant import Plant
-    from models.user import User
-    
-    results = db.query(
-        PlantCare,
-        Plant.nom.label('plant_name'),
-        User.prenom.label('owner_name')
-    ).join(Plant).join(User).all()
-    
-    return [
-        {
-            'id': result.PlantCare.id,
-            'plant_name': result.plant_name,
-            'owner_name': result.owner_name,
-            'status': result.PlantCare.status.value,
-            'created_at': result.PlantCare.created_at.isoformat() if result.PlantCare.created_at else None
-        }
-        for result in results
-    ]
 
 @router.get("/to-review", response_model=List[Dict[str, Any]])
 async def get_plant_cares_to_review(

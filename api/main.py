@@ -11,35 +11,10 @@ from models.user import User
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
 
-from fastapi.openapi.docs import (
-    get_swagger_ui_html,
-    get_swagger_ui_oauth2_redirect_html,
-)
-
 app = FastAPI(
     title=PROJECT_NAME,
-    version=VERSION,
-    docs_url=None,  # Désactiver le docs par défaut
-    redoc_url=None  # Désactiver redoc par défaut
+    version=VERSION
 )
-
-# Override OpenAPI version pour compatibilité Swagger UI v4.15.5
-def custom_openapi():
-    if app.openapi_schema:
-        return app.openapi_schema
-    
-    from fastapi.openapi.utils import get_openapi
-    openapi_schema = get_openapi(
-        title=app.title,
-        version=app.version,
-        openapi_version="3.0.3",
-        description="API A'rosa-je",
-        routes=app.routes,
-    )
-    app.openapi_schema = openapi_schema
-    return app.openapi_schema
-
-app.openapi = custom_openapi
 
 # Créer les tables si elles n'existent pas
 print("🔧 Création des tables...")
@@ -90,11 +65,9 @@ app.middleware("http")(monitoring_middleware)
 @app.middleware("http")
 async def add_utf8_header(request, call_next):
     response = await call_next(request)
-    # Ne pas forcer le Content-Type pour les pages HTML (docs, redoc, etc)
-    if request.url.path not in ["/docs", "/redoc", "/openapi.json", app.swagger_ui_oauth2_redirect_url]:
-        # Ne modifier le Content-Type que si c'est déjà du JSON
-        if "application/json" in response.headers.get("content-type", ""):
-            response.headers["Content-Type"] = "application/json; charset=utf-8"
+    # Ne modifier le Content-Type que si c'est déjà du JSON
+    if "application/json" in response.headers.get("content-type", ""):
+        response.headers["Content-Type"] = "application/json; charset=utf-8"
     return response
 
 # Monter le dossier static pour les images
@@ -133,21 +106,6 @@ app.include_router(care_report.router, prefix="/care-reports", tags=["care-repor
 app.include_router(botanist_report_advice.router, prefix="/botanist-advice", tags=["botanist-advice"])
 app.include_router(plant_care_advice.router)
 app.include_router(geocoding.router)
-
-# Endpoints custom pour Swagger UI avec version stable
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=app.title + " - Swagger UI",
-        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-        swagger_js_url="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui-bundle.js",
-        swagger_css_url="https://unpkg.com/swagger-ui-dist@4.15.5/swagger-ui.css",
-    )
-
-@app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
-async def swagger_ui_redirect():
-    return get_swagger_ui_oauth2_redirect_html()
 
 @app.get("/")
 def read_root():

@@ -36,26 +36,7 @@ async def upload_care_report_photo(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Ajouter une photo à un rapport de séance
-    
-    **Exemple de requête** (multipart/form-data) :
-    
-    ```
-    POST /care-reports/8/photo
-    Content-Type: multipart/form-data
-    Authorization: Bearer token...
-    
-    photo=[fichier image.jpg]
-    ```
-    
-    **Réponse** :
-    ```
-    {
-        "message": "Photo uploadée avec succès",
-        "photo_url": "/uploads/care_reports/a1b2c3d4-e5f6.jpg"
-    }
-    ```
+    """Add photo to a care report
     
     **Formats supportés** : JPG, JPEG, PNG, GIF
     
@@ -63,9 +44,6 @@ async def upload_care_report_photo(
     - Seul l'auteur du rapport peut ajouter une photo
     - Le rapport doit exister
     - Une seule photo par rapport (remplace la précédente si elle existe)
-    
-    **Codes d'erreur** :
-    - 404 : Rapport non trouvé ou non autorisé
     """
     # Vérifier que le rapport existe et appartient à l'utilisateur
     report = db.query(CareReportModel).filter(
@@ -104,41 +82,7 @@ def get_reports_by_plant_care(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Historique des rapports pour une garde spécifique
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /care-reports/plant-care/12
-    Authorization: Bearer token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 8,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Arrosage effectué, feuilles nettoyées.",
-            "care_date": "2024-02-03T09:30:00",
-            "notes": "Plante en bonne santé.",
-            "photo_url": "/uploads/care_reports/a1b2c3d4.jpg",
-            "created_at": "2024-02-03T09:35:00"
-        },
-        {
-            "id": 12,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Arrosage et fertilisation.",
-            "care_date": "2024-02-06T10:15:00",
-            "notes": "Ajout d'engrais liquide.",
-            "photo_url": null,
-            "created_at": "2024-02-06T10:20:00"
-        }
-    ]
-    ```
+    """Historique des rapports pour une garde spécifique
     
     **Tri** : Rapports triés par date de soin (plus récent en premier)
     
@@ -151,41 +95,7 @@ def get_my_reports(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Tous mes rapports de séances d'entretien
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /care-reports/my-reports
-    Authorization: Bearer token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 8,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Arrosage effectué, feuilles nettoyées.",
-            "care_date": "2024-02-03T09:30:00",
-            "notes": "Plante en bonne santé.",
-            "photo_url": "/uploads/care_reports/a1b2c3d4.jpg",
-            "created_at": "2024-02-03T09:35:00"
-        },
-        {
-            "id": 15,
-            "plant_care_id": 18,
-            "caretaker_id": 7,
-            "description": "Rempotage et arrosage.",
-            "care_date": "2024-02-05T14:00:00",
-            "notes": "Nouveau pot plus grand, terre fraîche.",
-            "photo_url": "/uploads/care_reports/b2c3d4e5.jpg",
-            "created_at": "2024-02-05T14:10:00"
-        }
-    ]
-    ```
+    """Tous mes rapports de séances d'entretien
     
     **Utilisation** : Suivi de l'activité du gardien, portfolio des soins
     
@@ -200,45 +110,7 @@ def get_reports_for_botanist(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Rapports nécessitant l'avis d'un botaniste
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /care-reports/for-botanist?skip=0&limit=20
-    Authorization: Bearer botanist_token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 8,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Taches brunes sur les feuilles après arrosage.",
-            "care_date": "2024-02-03T09:30:00",
-            "notes": "Les taches sont apparues après l'arrosage.",
-            "photo_url": "/uploads/care_reports/problem_leaves.jpg",
-            "created_at": "2024-02-03T09:35:00",
-            "plant_care": {
-                "plant": {
-                    "nom": "Monstera Deliciosa",
-                    "espece": "Monstera deliciosa"
-                },
-                "owner": {
-                    "nom": "Dupont",
-                    "prenom": "Jean"
-                }
-            },
-            "caretaker": {
-                "nom": "Martin",
-                "prenom": "Alice"
-            }
-        }
-    ]
-    ```
+    """Rapports nécessitant l'avis d'un botaniste
     
     **Filtrage** : Exclut les rapports déjà commentés par ce botaniste
     
@@ -257,50 +129,7 @@ def get_reports_with_my_advice(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Rapports déjà commentés par ce botaniste
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /care-reports/with-my-advice?skip=0&limit=20
-    Authorization: Bearer botanist_token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 5,
-            "plant_care_id": 8,
-            "caretaker_id": 3,
-            "description": "Feuilles qui jaunissent.",
-            "care_date": "2024-01-30T14:20:00",
-            "notes": "Plusieurs feuilles deviennent jaunes.",
-            "photo_url": "/uploads/care_reports/yellow_leaves.jpg",
-            "created_at": "2024-01-30T14:25:00",
-            "plant_care": {
-                "plant": {
-                    "nom": "Ficus Benjamin",
-                    "espece": "Ficus benjamina"
-                },
-                "owner": {
-                    "nom": "Moreau",
-                    "prenom": "Sophie"
-                }
-            },
-            "caretaker": {
-                "nom": "Dupont",
-                "prenom": "Jean"
-            },
-            "my_advice": {
-                "id": 3,
-                "advice_text": "Jaunissement normal : réduisez l'arrosage et placez dans un endroit plus lumineux.",
-                "created_at": "2024-01-30T16:45:00"
-            }
-        }
-    ]
-    ```
+    """Rapports déjà commentés par ce botaniste
     
     **Utilisation** : Portfolio des conseils donnés, suivi des cas traités
     
@@ -317,41 +146,7 @@ def get_reports_for_my_plants(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """
-    Rapports des gardes de mes plantes (propriétaires)
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /care-reports/my-plants
-    Authorization: Bearer token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 8,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Arrosage effectué, feuilles nettoyées.",
-            "care_date": "2024-02-03T09:30:00",
-            "notes": "Votre Monstera se porte très bien !",
-            "photo_url": "/uploads/care_reports/healthy_plant.jpg",
-            "created_at": "2024-02-03T09:35:00"
-        },
-        {
-            "id": 11,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Arrosage léger, rotation de la plante.",
-            "care_date": "2024-02-05T16:00:00",
-            "notes": "Rotation pour une croissance uniforme.",
-            "photo_url": null,
-            "created_at": "2024-02-05T16:05:00"
-        }
-    ]
-    ```
+    """Rapports des gardes de mes plantes (propriétaires)
     
     **Utilisation** :
     - Suivi des soins apportés à mes plantes

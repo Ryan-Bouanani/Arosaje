@@ -187,55 +187,17 @@ async def update_advice(
     """
     Modifier un conseil existant (crée une nouvelle version)
     
-    **Exemple de requête** :
-    
-    ```
-    PUT /plant-care-advice/15
-    Authorization: Bearer botanist_token...
-    ```
-    
-    ```
-    {
-        "title": "Optimisation de l'arrosage - Mise à jour",
-        "advice_text": "Après observation, je recommande plutôt un arrosage tous les 5-7 jours car l'environnement semble plus sec que prévu.",
-        "priority": "urgent",
-        "recommendations": "Augmenter légèrement la fréquence. Surveiller les feuilles pour détecter le stress hydrique."
-    }
-    ```
-    
-    **Réponse** :
-    ```
-    {
-        "id": 16,
-        "plant_care_id": 12,
-        "botanist_id": 2,
-        "title": "Optimisation de l'arrosage - Mise à jour",
-        "advice_text": "Après observation, je recommande plutôt un arrosage tous les 5-7 jours car l'environnement semble plus sec que prévu.",
-        "priority": "urgent",
-        "recommendations": "Augmenter légèrement la fréquence. Surveiller les feuilles pour détecter le stress hydrique.",
-        "validation_status": "pending",
-        "is_current_version": true,
-        "version": 2,
-        "parent_advice_id": 15,
-        "created_at": "2024-02-11T10:15:00",
-        "botanist": {
-            "nom": "Botaniste",
-            "prenom": "Expert"
-        }
-    }
-    ```
-    
-    **Système de versioning** :
+    Système de versioning :
     - Crée une nouvelle version du conseil
     - L'ancienne version reste dans l'historique
     - Seule la dernière version est "current"
     - Lien de parenté avec parent_advice_id
     
-    **Restrictions** :
+    Restrictions :
     - Seul l'auteur du conseil peut le modifier
     - Réinitialise le statut de validation à "pending"
     
-    🔒 **Accès réservé aux botanistes**
+    Accès réservé aux botanistes
     """
     
     updated_advice = plant_care_advice.update_advice(
@@ -276,57 +238,20 @@ async def validate_advice(
     """
     Valider ou rejeter le conseil d'un autre botaniste
     
-    **Exemple de requête** :
-    
-    ```
-    POST /plant-care-advice/15/validate
-    Authorization: Bearer botanist_token...
-    ```
-    
-    ```
-    {
-        "validation_status": "validated",
-        "validation_comment": "Excellent conseil, très pertinent pour ce type de plante. Les fréquences d'arrosage sont parfaitement adaptées."
-    }
-    ```
-    
-    **Réponse** :
-    ```
-    {
-        "id": 15,
-        "plant_care_id": 12,
-        "botanist_id": 2,
-        "title": "Optimisation de l'arrosage",
-        "advice_text": "Pour cette Monstera, je recommande un arrosage tous les 7-10 jours...",
-        "priority": "normal",
-        "validation_status": "validated",
-        "validated_by": 3,
-        "validation_comment": "Excellent conseil, très pertinent pour ce type de plante.",
-        "validated_at": "2024-02-11T14:20:00",
-        "is_current_version": true,
-        "version": 1,
-        "created_at": "2024-02-10T15:30:00",
-        "validator": {
-            "nom": "Martin",
-            "prenom": "Dr. Pierre"
-        }
-    }
-    ```
-    
-    **Statuts de validation** :
+    Statuts de validation :
     - validated : Conseil approuvé par un pair
     - rejected : Conseil contesté (avec commentaire obligatoire)
     
-    **Règles de validation croisée** :
+    Règles de validation croisée :
     - Un botaniste ne peut pas valider ses propres conseils
     - Seuls les autres botanistes peuvent valider
     - Commentaire obligatoire pour les rejets
     
-    **Actions automatiques** :
+    Actions automatiques :
     - Notification à l'auteur du conseil
     - Mise à jour des statistiques du botaniste
     
-    🔒 **Accès réservé aux botanistes**
+    Accès réservé aux botanistes
     """
     
     validated_advice = plant_care_advice.validate_advice(

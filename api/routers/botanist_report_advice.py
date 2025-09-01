@@ -28,33 +28,6 @@ async def create_botanist_advice_on_report(
     """
     Créer un avis de botaniste sur un rapport de séance
     
-    **Exemple de requête** :
-    
-    ```
-    POST /botanist-report-advice/
-    Authorization: Bearer botanist_token...
-    ```
-    
-    ```
-    {
-        "care_report_id": 8,
-        "advice_text": "Les taches brunes observées sont probablement dues à un excès d'humidité. Réduisez l'arrosage et améliorez la ventilation autour de la plante."
-    }
-    ```
-    ```
-    
-    **Réponse** :
-    ```
-    {
-        "id": 5,
-        "care_report_id": 8,
-        "botanist_id": 2,
-        "advice_text": "Les taches brunes observées sont probablement dues à un excès d'humidité. Réduisez l'arrosage et améliorez la ventilation autour de la plante.",
-        "created_at": "2024-02-03T16:45:00",
-        "updated_at": "2024-02-03T16:45:00"
-    }
-    ```
-    
     🔒 **Accès réservé aux botanistes**
     """
     if current_user.role != UserRole.BOTANIST:
@@ -79,30 +52,6 @@ def get_advices_for_care_report(
 ):
     """
     Tous les avis botaniques pour un rapport spécifique
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /botanist-report-advice/care-report/8
-    Authorization: Bearer token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 5,
-            "care_report_id": 8,
-            "botanist_id": 2,
-            "advice_text": "Taches dues à l'excès d'humidité. Réduire l'arrosage.",
-            "created_at": "2024-02-03T16:45:00",
-            "botanist": {
-                "nom": "Dr. Botaniste",
-                "prenom": "Expert"
-            }
-        }
-    ]
-    ```
     """
     return crud_advice.get_botanist_advices_by_care_report(db, care_report_id)
 
@@ -115,32 +64,6 @@ async def update_botanist_advice(
 ):
     """
     Modifier un avis de botaniste existant
-    
-    **Exemple de requête** :
-    
-    ```
-    PUT /botanist-report-advice/5
-    Authorization: Bearer botanist_token...
-    ```
-    
-    ```
-    {
-        "advice_text": "Mise à jour : Après réflexion, les taches peuvent aussi être dues à une eau trop calcaire. Utilisez de l'eau filtrée et réduisez l'arrosage."
-    }
-    ```
-    ```
-    
-    **Réponse** :
-    ```
-    {
-        "id": 5,
-        "care_report_id": 8,
-        "botanist_id": 2,
-        "advice_text": "Mise à jour : Après réflexion, les taches peuvent aussi être dues à une eau trop calcaire. Utilisez de l'eau filtrée et réduisez l'arrosage.",
-        "created_at": "2024-02-03T16:45:00",
-        "updated_at": "2024-02-04T09:15:00"
-    }
-    ```
     
     **Restriction** : Seul l'auteur de l'avis peut le modifier
     
@@ -166,41 +89,6 @@ def get_my_advised_reports(
 ):
     """
     Rapports sur lesquels j'ai donné un avis (portfolio botaniste)
-    
-    **Exemple de requête** :
-    
-    ```
-    GET /botanist-report-advice/my-advised-reports
-    Authorization: Bearer botanist_token...
-    ```
-    
-    **Réponse** :
-    ```
-    [
-        {
-            "id": 8,
-            "plant_care_id": 12,
-            "caretaker_id": 7,
-            "description": "Taches brunes sur les feuilles",
-            "care_date": "2024-02-03T09:30:00",
-            "photo_url": "/uploads/care_reports/taches_brunes.jpg",
-            "plant_care": {
-                "plant": {
-                    "nom": "Monstera Deliciosa",
-                    "espece": "Monstera deliciosa"
-                },
-                "owner": {
-                    "nom": "Dupont",
-                    "prenom": "Jean"
-                }
-            },
-            "my_advice": {
-                "advice_text": "Taches dues à l'excès d'humidité...",
-                "created_at": "2024-02-03T16:45:00"
-            }
-        }
-    ]
-    ```
     
     **Utilisation** : Portfolio des interventions, suivi des conseils donnés
     

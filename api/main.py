@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine, SessionLocal
-from routers import auth, plant, monitoring, photo, plant_care, advice, message, debug, ws, admin, metrics
+from routers import auth, plant, monitoring, photo, plant_care, advice, message, ws, admin, metrics
 from routers import care_report, botanist_report_advice, geocoding, plant_care_advice
 import os
 from scripts.init_data import init_data
@@ -98,7 +98,6 @@ app.include_router(photo.router)
 app.include_router(plant_care.router)
 app.include_router(advice.router)
 app.include_router(message.router)
-app.include_router(debug.router)
 app.include_router(ws.router)
 app.include_router(admin.router)
 app.include_router(metrics.router)

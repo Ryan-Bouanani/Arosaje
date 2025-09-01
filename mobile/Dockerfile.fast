@@ -1,0 +1,30 @@
+# Dockerfile optimisé pour Flutter Web
+FROM nginx:alpine
+
+# Copier les fichiers web pré-construits
+WORKDIR /usr/share/nginx/html
+
+# Copier la configuration nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copier les assets et fichiers Flutter
+COPY assets/ ./assets/
+COPY web/ ./
+COPY lib/ ./lib/
+COPY pubspec.yaml ./
+
+# Créer des fichiers HTML basiques pour Flutter Web
+RUN echo '<!DOCTYPE html>' > index.html && \
+    echo '<html>' >> index.html && \
+    echo '<head>' >> index.html && \
+    echo '  <meta charset="UTF-8">' >> index.html && \
+    echo '  <title>A'\''rosa-je Mobile</title>' >> index.html && \
+    echo '  <link rel="manifest" href="manifest.json">' >> index.html && \
+    echo '</head>' >> index.html && \
+    echo '<body>' >> index.html && \
+    echo '  <div id="app">Loading A'\''rosa-je...</div>' >> index.html && \
+    echo '  <script>window.location.href="http://localhost:3000";</script>' >> index.html && \
+    echo '</body>' >> index.html && \
+    echo '</html>' >> index.html
+
+EXPOSE 5000

@@ -1,6 +1,6 @@
 from typing import List, Optional
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.plant_care import PlantCare, CareStatus
 from models.message import ConversationType
 from schemas.plant_care import PlantCareCreate, PlantCareUpdate
@@ -21,8 +21,11 @@ class CRUDPlantCare:
         return db_obj
 
     def get(self, db: Session, id: int) -> Optional[PlantCare]:
-        """Récupérer une garde par son ID"""
-        return db.query(PlantCare).filter(PlantCare.id == id).first()
+        """Récupérer une garde par son ID avec les relations owner et plant"""
+        return db.query(PlantCare).options(
+            joinedload(PlantCare.owner),
+            joinedload(PlantCare.plant)
+        ).filter(PlantCare.id == id).first()
 
     def get_multi(
         self,
@@ -44,6 +47,13 @@ class CRUDPlantCare:
         if status is not None:
             query = query.filter(PlantCare.status == status)
         
+        # Trier par updated_at pour les gardiens (dernière prise en premier)
+        # Trier par created_at pour les propriétaires (plus récente créée en premier)
+        if caretaker_id is not None:
+            query = query.order_by(PlantCare.updated_at.desc())
+        else:
+            query = query.order_by(PlantCare.created_at.desc())
+            
         return query.offset(skip).limit(limit).all()
 
     def get_available_cares(

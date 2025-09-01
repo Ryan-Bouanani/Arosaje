@@ -19,7 +19,7 @@ def read_plants(
     limit: int = 100,
     owner_id: Optional[int] = Query(None)
 ):
-    """Liste toutes les plantes avec pagination optionnelle"""
+    """Lister toutes les plantes avec pagination optionnelle"""
     if owner_id:
         plants = plant.get_by_owner(db, owner_id=owner_id, skip=skip, limit=limit)
     else:
@@ -30,18 +30,16 @@ def read_plants(
 async def create_plant(
     nom: str = Form(...),
     espece: str = Form(None),
-    description: str = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Crée une nouvelle plante"""
+    """Créer une nouvelle plante"""
     try:
         # Créer l'objet PlantCreate avec les données du formulaire
         plant_data = {
             "nom": nom,
             "espece": espece,
-            "description": description,
             "owner_id": current_user.id
         }
 
@@ -65,7 +63,7 @@ def read_plant(
     plant_id: int,
     db: Session = Depends(get_db)
 ):
-    """Récupère une plante spécifique"""
+    """Récupérer une plante spécifique par son ID"""
     db_plant = plant.get(db=db, id=plant_id)
     if db_plant is None:
         raise HTTPException(status_code=404, detail="Plant not found")
@@ -78,7 +76,7 @@ def update_plant(
     plant_id: int,
     plant_in: PlantUpdate
 ):
-    """Met à jour une plante"""
+    """Mettre à jour les informations d'une plante"""
     db_plant = plant.get(db=db, id=plant_id)
     if db_plant is None:
         raise HTTPException(status_code=404, detail="Plant not found")
@@ -90,7 +88,7 @@ def delete_plant(
     db: Session = Depends(get_db),
     plant_id: int
 ):
-    """Supprime une plante"""
+    """Supprimer définitivement une plante"""
     db_plant = plant.get(db=db, id=plant_id)
     if db_plant is None:
         raise HTTPException(status_code=404, detail="Plant not found")

@@ -5,7 +5,7 @@ router = APIRouter(prefix="/metrics", tags=["monitoring"])
 
 @router.get("")
 async def get_prometheus_metrics():
-    """Endpoint pour exposer les métriques Prometheus"""
+    """Métriques au format Prometheus"""
     metrics_data = monitoring_service.get_prometheus_metrics()
     return Response(
         content=metrics_data,
@@ -14,7 +14,7 @@ async def get_prometheus_metrics():
 
 @router.get("/health")
 async def monitoring_health():
-    """Health check pour le système de monitoring"""
+    """Health check du système de monitoring"""
     return {
         "status": "healthy",
         "timestamp": "2024-01-01T00:00:00Z",

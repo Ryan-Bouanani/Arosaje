@@ -129,7 +129,7 @@ class CRUDMessage:
                     })
                 
                 # Si c'est une conversation de type plant_care, récupérer les infos de la plante
-                if conversation.type.value == "plant_care" and conversation.related_id:
+                if conversation.type and conversation.type.value == "plant_care" and conversation.related_id:
                     # Récupérer la garde de plante
                     plant_care = db.query(PlantCare).filter(PlantCare.id == conversation.related_id).first()
                     if plant_care:
@@ -166,8 +166,15 @@ class CRUDMessage:
                 result.append(conv_dict)
             
             print(f"DEBUG: Returning {len(result)} conversations")
-            if result:
-                print(f"DEBUG: First conversation: {result[0]['id']} - {result[0].get('last_message', {}).get('content', 'No message')}")
+            if result and len(result) > 0 and result[0] is not None:
+                first_conv = result[0]
+                if isinstance(first_conv, dict) and 'id' in first_conv:
+                    last_msg_content = 'No message'
+                    if first_conv.get('last_message') and isinstance(first_conv['last_message'], dict):
+                        last_msg_content = first_conv['last_message'].get('content', 'No message')
+                    print(f"DEBUG: First conversation: {first_conv['id']} - {last_msg_content}")
+                else:
+                    print(f"DEBUG: First conversation is invalid: {type(first_conv)}")
             
             return result
             

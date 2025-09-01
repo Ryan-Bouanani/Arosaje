@@ -9,7 +9,7 @@ from utils.security import create_access_token, get_current_user
 from utils.password import verify_password, get_password_hash
 from crud.user import user as user_crud
 from schemas.token import Token
-from schemas.user import UserCreate, User, UserRoleUpdate
+from schemas.user import UserCreate, User, UserRoleUpdate, UserUpdate
 from models.user import UserRole
 from services.email.email_service import EmailService
 from services.monitoring_service import monitoring_service
@@ -30,7 +30,7 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ) -> Any:
-    """Login avec OAuth2 form"""
+    """Authentification utilisateur avec OAuth2"""
     user = user_crud.get_by_email(db, email=form_data.username)
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(
@@ -124,7 +124,7 @@ async def read_users_me(
     request: Request,
     current_user = Depends(get_current_user)
 ):
-    """Renvoie les informations de l'utilisateur connecté"""
+    """Récupérer le profil de l'utilisateur connecté"""
     # Détecter la plateforme
     platform = detect_platform(request)
     
@@ -141,7 +141,7 @@ async def logout(
     request: Request,
     current_user: User = Depends(get_current_user)
 ):
-    """Logout de l'utilisateur"""
+    """Déconnexion de l'utilisateur"""
     # Détecter la plateforme
     platform = detect_platform(request)
     
@@ -200,4 +200,65 @@ async def update_user_role(
     )
     
     # Mettre à jour le rôle
-    return user_crud.update_role(db, db_obj=user, role=role_update.role) 
+    return user_crud.update_role(db, db_obj=user, role=role_update.role)
+
+@router.put("/profile", response_model=User)
+async def update_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Any:
+    """Mettre à jour le profil de l'utilisateur connecté"""
+    
+    # Si l'email est modifié, vérifier qu'il n'est pas déjà utilisé
+    if user_update.email and user_update.email != current_user.email:
+        existing = user_crud.get_by_email(db, email=user_update.email)
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Cet email est déjà utilisé"
+            )
+    
+    # Si le mot de passe est fourni, le hasher
+    if user_update.password:
+        user_update.password = get_password_hash(user_update.password)
+    
+    # Mettre à jour l'utilisateur
+    updated_user = user_crud.update(db, db_obj=current_user, obj_in=user_update)
+    
+    return updated_user
+
+from pydantic import BaseModel
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+) -> Any:
+    """Changer le mot de passe avec vérification de l'ancien"""
+    
+    # Vérifier l'ancien mot de passe
+    if not verify_password(request.current_password, current_user.password):
+        raise HTTPException(
+            status_code=400,
+            detail="Mot de passe actuel incorrect"
+        )
+    
+    # Valider le nouveau mot de passe
+    if len(request.new_password) < 6:
+        raise HTTPException(
+            status_code=400,
+            detail="Le nouveau mot de passe doit contenir au moins 6 caractères"
+        )
+    
+    # Mettre à jour le mot de passe
+    hashed_password = get_password_hash(request.new_password)
+    user_update = UserUpdate(password=hashed_password)
+    updated_user = user_crud.update(db, db_obj=current_user, obj_in=user_update)
+    
+    return {"message": "Mot de passe mis à jour avec succès"} 

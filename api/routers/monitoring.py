@@ -10,5 +10,5 @@ router = APIRouter(
 
 @router.get("/stats")
 async def get_stats():
-    """Récupère les statistiques de monitoring de l'API"""
+    """Statistiques de monitoring de l'API"""
     return get_monitoring_stats() 

@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from .base import BaseSchema, IDSchema
 from models.user import UserRole
+from utils.password import validate_password_policy
 
 class UserBase(BaseSchema):
     nom: str
@@ -13,6 +14,15 @@ class UserBase(BaseSchema):
 class UserCreate(UserBase):
     password: str
     role: Optional[UserRole] = UserRole.USER
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        """Valide la politique de mot de passe CNIL"""
+        is_valid, errors = validate_password_policy(v)
+        if not is_valid:
+            raise ValueError("; ".join(errors))
+        return v
 
 class UserUpdate(BaseSchema):
     nom: Optional[str] = None
@@ -21,6 +31,16 @@ class UserUpdate(BaseSchema):
     telephone: Optional[str] = None
     localisation: Optional[str] = None
     password: Optional[str] = None
+    
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v):
+        """Valide la politique de mot de passe CNIL si le mot de passe est fourni"""
+        if v is not None:
+            is_valid, errors = validate_password_policy(v)
+            if not is_valid:
+                raise ValueError("; ".join(errors))
+        return v
 
 class UserRoleUpdate(BaseModel):
     role: UserRole

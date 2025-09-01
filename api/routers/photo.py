@@ -23,7 +23,7 @@ async def upload_photo(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Upload une nouvelle photo pour une plante"""
+    """Uploader une photo pour une plante"""
     try:
         # Vérifier le type de fichier
         if not ImageHandler.is_valid_image(file):
@@ -69,7 +69,7 @@ def get_plant_photos(
     plant_id: int,
     db: Session = Depends(get_db)
 ) -> Dict[str, List[PhotoResponse]]:
-    """Récupère toutes les photos d'une plante"""
+    """Galerie de photos d'une plante"""
     return photo_crud.get_plant_photos(db=db, plant_id=plant_id)
 
 @router.delete("/{photo_id}")
@@ -78,7 +78,7 @@ def delete_photo(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user)
 ):
-    """Supprime une photo"""
+    """Supprimer définitivement une photo"""
     if photo_crud.delete_with_file(db=db, id=photo_id):
         return {"message": "Photo supprimée avec succès"}
     raise HTTPException(status_code=404, detail="Photo non trouvée") 

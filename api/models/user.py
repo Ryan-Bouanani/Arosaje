@@ -28,6 +28,10 @@ class User(Base):
     created_advices = relationship("Advice", back_populates="botanist")
     messages = relationship("Message", back_populates="sender")
     conversations = relationship("ConversationParticipant", back_populates="user")
+    
+    # Relations pour les conseils botaniques
+    given_advice = relationship("PlantCareAdvice", foreign_keys="[PlantCareAdvice.botanist_id]", back_populates="botanist")
+    validated_advice = relationship("PlantCareAdvice", foreign_keys="[PlantCareAdvice.validator_id]", back_populates="validator")
 
     # Relations pour le statut
     typing_status = relationship("UserTypingStatus", back_populates="user", uselist=True)

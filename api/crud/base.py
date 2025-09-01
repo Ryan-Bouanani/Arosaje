@@ -31,6 +31,10 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
             for key, value in filters.items():
                 if hasattr(self.model, key):
                     query = query.filter(getattr(self.model, key) == value)
+        
+        # Trier par created_at desc pour avoir les plus récentes en premier
+        if hasattr(self.model, 'created_at'):
+            query = query.order_by(self.model.created_at.desc())
                     
         return query.offset(skip).limit(limit).all()
 

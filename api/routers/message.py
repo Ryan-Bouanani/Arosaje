@@ -6,6 +6,7 @@ from utils.security import get_current_user
 from utils.rate_limiter import RateLimiter
 from crud.message import message
 from models.message import ConversationType, Message as MessageModel, ConversationParticipant
+from models.user import User as UserModel, UserRole
 from schemas.message import (
     Message,
     MessageCreate,
@@ -67,7 +68,7 @@ async def get_conversation_messages(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Récupérer les messages d'une conversation"""
+    """Récupérer les messages d'une conversation avec pagination"""
     if not conversation_id or not conversation_id.isdigit():
         raise HTTPException(
             status_code=400,
@@ -89,7 +90,7 @@ async def create_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Créer un nouveau message"""
+    """Envoyer un nouveau message dans une conversation"""
     try:
         if not conversation_id or not conversation_id.isdigit():
             raise HTTPException(
@@ -174,7 +175,7 @@ def get_unread_messages_count(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ) -> List[Dict[str, int]]:
-    """Récupère le nombre de messages non lus pour l'utilisateur courant"""
+    """Nombre total de messages non lus de l'utilisateur"""
     try:
         return message.get_unread_count(db, current_user.id)
     except Exception as e:
@@ -190,7 +191,7 @@ async def get_user_conversations(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    """Récupérer toutes les conversations de l'utilisateur"""
+    """Liste de toutes les conversations de l'utilisateur"""
     try:
         conversations = message.get_user_conversations(
             db,
@@ -266,6 +267,82 @@ async def get_typing_users(
         }
         for status in typing_users
     ]
+
+@router.post("/{conversation_id}", response_model=Message)
+async def send_message(
+    conversation_id: int,
+    message_data: MessageCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Envoyer un message dans une conversation"""
+    # Vérifier que la conversation existe
+    conversation = message.get_conversation(db, conversation_id)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation non trouvée")
+    
+    # Vérifier que l'utilisateur participe à la conversation
+    participants = message.get_conversation_participants(db, conversation_id)
+    if not any(p.id == current_user.id for p in participants):
+        raise HTTPException(status_code=403, detail="Vous ne participez pas à cette conversation")
+    
+    # Créer le message
+    new_message = message.create_message(
+        db=db,
+        message=message_data,
+        sender_id=current_user.id
+    )
+    
+    return new_message
+
+@router.post("/conversations/botanist", response_model=Conversation)
+async def create_botanist_conversation(
+    plant_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Créer une conversation avec un botaniste pour une plante"""
+    # Stratégie simple : rotation entre les botanistes disponibles
+    import random
+    
+    # Récupérer tous les botanistes
+    botanists = db.query(UserModel).filter(UserModel.role == UserRole.BOTANIST).all()
+    
+    if not botanists:
+        raise HTTPException(
+            status_code=404,
+            detail="Aucun botaniste disponible pour le moment"
+        )
+    
+    # Sélectionner un botaniste de manière équitable (rotation aléatoire)
+    botanist = random.choice(botanists)
+    
+    # Récupérer le nom de la plante
+    from crud.plant import plant as plant_crud
+    plant = plant_crud.get(db, id=plant_id)
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plante non trouvée")
+    
+    # Créer la conversation
+    conversation = message.create_conversation(
+        db=db,
+        participant_ids=[current_user.id, botanist.id],
+        conversation_type=ConversationType.BOTANICAL_ADVICE,
+        related_id=plant_id,
+        initiator_id=current_user.id
+    )
+    
+    # Créer un message automatique d'introduction avec le nom de la plante
+    intro_message = message.create_message(
+        db=db,
+        message=MessageCreate(
+            conversation_id=conversation.id,
+            content=f"Bonjour, j'aimerais avoir des conseils pour l'entretien de ma plante '{plant.nom}'{f' ({plant.espece})' if plant.espece else ''}. Pouvez-vous m'aider ?"
+        ),
+        sender_id=current_user.id
+    )
+    
+    return conversation
 
 @router.get("/auth/test")
 async def test_auth(

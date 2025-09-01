@@ -1,3 +1,8 @@
 {
-  "zencoder.enableRepoIndexing": true
+  "zencoder.enableRepoIndexing": true,
+  "dart.flutterSdkPath": "C:\\Users\\ryan4\\Downloads\\flutter",
+  "dart.sdkPath": "C:\\Users\\ryan4\\Downloads\\flutter\\bin\\cache\\dart-sdk",
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Users\\ryan4\\Downloads\\flutter\\bin;${env:PATH}"
+  }
 }

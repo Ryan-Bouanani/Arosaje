@@ -7,6 +7,8 @@ from models.user import User, UserRole
 from schemas.user import User as UserSchema
 from crud.user import user as user_crud
 from services.email.email_service import EmailService
+from models.plant_care import PlantCare
+from models.plant_care_advice import PlantCareAdvice
 
 router = APIRouter(
     prefix="/admin",
@@ -50,7 +52,7 @@ async def get_pending_verifications(
     db: Session = Depends(get_db),
     current_user: dict = Depends(check_admin_rights)
 ):
-    """Liste tous les comptes en attente de vérification"""
+    """Lister tous les comptes en attente de vérification"""
     return db.query(User).filter(User.is_verified == False).all()
 
 @router.post("/verify/{user_id}")
@@ -60,7 +62,7 @@ async def verify_user(
     db: Session = Depends(get_db),
     current_user: dict = Depends(check_admin_rights)
 ):
-    """Vérifie un compte utilisateur"""
+    """Vérifier un compte utilisateur"""
     user = user_crud.get(db, id=user_id)
     if not user:
         raise HTTPException(
@@ -89,7 +91,7 @@ async def reject_user(
     db: Session = Depends(get_db),
     current_user: dict = Depends(check_admin_rights)
 ):
-    """Rejette un compte utilisateur"""
+    """Rejeter et supprimer un compte utilisateur"""
     user = user_crud.get(db, id=user_id)
     if not user:
         raise HTTPException(
@@ -112,4 +114,101 @@ async def reject_user(
         user_name=user_name
     )
 
-    return {"message": "Compte rejeté et supprimé avec succès"} 
+    return {"message": "Compte rejeté et supprimé avec succès"}
+
+@router.get("/stats")
+async def get_admin_stats(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(check_admin_rights)
+):
+    """Statistiques pour le dashboard administrateur"""
+    try:
+        # Compter les utilisateurs
+        total_users = db.query(User).count()
+        pending_users = db.query(User).filter(User.is_verified == False).count()
+        
+        # Compter les gardes actives (statuts IN_PROGRESS et ACCEPTED)
+        active_cares = db.query(PlantCare).filter(
+            PlantCare.status.in_(['IN_PROGRESS', 'ACCEPTED'])
+        ).count()
+        
+        # Compter les conseils donnés
+        total_advices = db.query(PlantCareAdvice).count()
+        
+        return {
+            "total_users": total_users,
+            "pending_users": pending_users,
+            "active_cares": active_cares,
+            "total_advices": total_advices
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors de la récupération des statistiques: {str(e)}"
+        )
+
+@router.get("/verified-users", response_model=List[UserSchema])
+async def get_verified_users(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(check_admin_rights)
+):
+    """Lister tous les utilisateurs vérifiés et actifs"""
+    return db.query(User).filter(User.is_verified == True).all()
+
+@router.put("/change-role/{user_id}")
+async def change_user_role(
+    user_id: int,
+    role_data: dict,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(check_admin_rights)
+):
+    """Modifier le rôle d'un utilisateur"""
+    user = user_crud.get(db, id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    # Valider le nouveau rôle
+    new_role = role_data.get('role', '').upper()
+    valid_roles = ['USER', 'BOTANIST', 'ADMIN']
+    
+    if new_role not in valid_roles:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rôle invalide. Rôles valides: {valid_roles}"
+        )
+    
+    # Convertir en UserRole enum
+    try:
+        user_role = UserRole(new_role.lower())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Rôle invalide: {new_role}"
+        )
+    
+    # Éviter qu'un admin change son propre rôle
+    if user.id == current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Vous ne pouvez pas changer votre propre rôle"
+        )
+    
+    # Mettre à jour le rôle
+    user.role = user_role
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    
+    return {
+        "message": f"Rôle de l'utilisateur {user.prenom} {user.nom} changé vers {new_role}",
+        "user": {
+            "id": user.id,
+            "nom": user.nom,
+            "prenom": user.prenom,
+            "email": user.email,
+            "role": user.role.value
+        }
+    } 

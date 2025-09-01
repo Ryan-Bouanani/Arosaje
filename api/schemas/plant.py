@@ -5,7 +5,6 @@ from .base import BaseSchema, IDSchema
 class PlantBase(BaseSchema):
     nom: str
     espece: Optional[str] = None
-    description: Optional[str] = None
     photo: Optional[str] = None
     owner_id: int
 

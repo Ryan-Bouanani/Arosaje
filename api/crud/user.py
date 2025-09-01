@@ -26,6 +26,17 @@ class CRUDUser:
         db.refresh(db_obj)
         return db_obj
 
+    def update(self, db: Session, *, db_obj: User, obj_in) -> User:
+        """Mettre à jour un utilisateur avec les données fournies"""
+        update_data = obj_in.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            if hasattr(db_obj, field) and value is not None:
+                setattr(db_obj, field, value)
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        return db_obj
+    
     def update_role(self, db: Session, *, db_obj: User, role: UserRole) -> User:
         db_obj.role = role
         db.add(db_obj)

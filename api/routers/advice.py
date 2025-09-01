@@ -21,7 +21,7 @@ def get_my_advices(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Obtenir tous les conseils donnés par le botaniste connecté"""
+    """Portfolio des conseils du botaniste connecté"""
     
     if current_user.role != UserRole.BOTANIST:
         raise HTTPException(status_code=403, detail="Seuls les botanistes peuvent accéder à leurs conseils")
@@ -38,7 +38,7 @@ def get_pending_advice_requests(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Obtenir toutes les demandes de conseils en attente"""
+    """Demandes de conseils en attente de traitement"""
     if current_user.role != UserRole.BOTANIST:
         raise HTTPException(status_code=403, detail="Seuls les botanistes peuvent voir les demandes de conseils")
     advices = crud_advice.get_pending_requests(db, skip=skip, limit=limit)
@@ -50,7 +50,7 @@ def create_advice(
     db: Session = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Créer un nouveau conseil (réservé aux botanistes)"""
+    """Créer un nouveau conseil botanique"""
     return crud_advice.create_advice(db=db, advice=advice, botanist_id=current_user.id)
 
 @router.get("/plant/{plant_id}", response_model=AdviceResponse)

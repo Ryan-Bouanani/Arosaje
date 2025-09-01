@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi import HTTPException
 from models.advice import Advice, AdviceStatus
 from models.user import User, UserRole
@@ -8,10 +8,20 @@ def get_advice(db: Session, advice_id: int):
     return db.query(Advice).filter(Advice.id == advice_id).first()
 
 def get_advices_by_plant(db: Session, plant_id: int, skip: int = 0, limit: int = 100):
-    return db.query(Advice).filter(Advice.plant_id == plant_id).offset(skip).limit(limit).all()
+    return db.query(Advice)\
+        .options(joinedload(Advice.plant))\
+        .filter(Advice.plant_id == plant_id)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def get_advices_by_botanist(db: Session, botanist_id: int, skip: int = 0, limit: int = 100):
-    return db.query(Advice).filter(Advice.botanist_id == botanist_id).offset(skip).limit(limit).all()
+    return db.query(Advice)\
+        .options(joinedload(Advice.plant))\
+        .filter(Advice.botanist_id == botanist_id)\
+        .offset(skip)\
+        .limit(limit)\
+        .all()
 
 def create_advice(db: Session, advice: AdviceCreate, botanist_id: int):
     # Vérifier si l'utilisateur est un botaniste
@@ -65,6 +75,7 @@ def delete_advice(db: Session, advice_id: int):
 def get_pending_requests(db: Session, skip: int = 0, limit: int = 100):
     """Récupérer toutes les demandes de conseils en attente"""
     return db.query(Advice)\
+        .options(joinedload(Advice.plant))\
         .filter(Advice.status == AdviceStatus.PENDING)\
         .offset(skip)\
         .limit(limit)\

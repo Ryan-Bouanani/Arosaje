@@ -25,9 +25,18 @@ class AdviceUpdate(BaseModel):
     texte: Optional[str] = None
     status: Optional[AdviceStatus] = None
 
+# Schéma pour Plant (simple)
+class PlantSimple(BaseModel):
+    id: int
+    nom: str
+    espece: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
 # Pour les réponses individuelles
 class Advice(AdviceBase):
-    pass
+    plant: Optional[PlantSimple] = None
 
 # Pour les réponses contenant une liste
 class AdviceResponse(BaseModel):

@@ -203,7 +203,6 @@ async def update_profile(
     return updated_user
 
 
-
 class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str

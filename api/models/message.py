@@ -4,9 +4,11 @@ from datetime import datetime
 from utils.database import Base
 import enum
 
+
 class ConversationType(str, enum.Enum):
     PLANT_CARE = "plant_care"
     BOTANICAL_ADVICE = "botanical_advice"
+
 
 class Conversation(Base):
     __tablename__ = "conversations"
@@ -18,17 +20,30 @@ class Conversation(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relations
-    messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
-    participants = relationship("ConversationParticipant", back_populates="conversation", cascade="all, delete-orphan")
+    messages = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan"
+    )
+    participants = relationship(
+        "ConversationParticipant",
+        back_populates="conversation",
+        cascade="all, delete-orphan",
+    )
     plant_care = relationship("PlantCare", back_populates="conversation", uselist=False)
-    typing_users = relationship("UserTypingStatus", back_populates="conversation", cascade="all, delete-orphan")
+    typing_users = relationship(
+        "UserTypingStatus", back_populates="conversation", cascade="all, delete-orphan"
+    )
+
 
 class ConversationParticipant(Base):
     __tablename__ = "conversation_participants"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     last_read_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
@@ -41,16 +56,23 @@ class ConversationParticipant(Base):
             "id": int(self.id),
             "conversation_id": int(self.conversation_id),
             "user_id": int(self.user_id),
-            "last_read_at": self.last_read_at.isoformat() if self.last_read_at else None
+            "last_read_at": (
+                self.last_read_at.isoformat() if self.last_read_at else None
+            ),
         }
+
 
 class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     content = Column(String(2000), nullable=False)
-    sender_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False)
+    sender_id = Column(
+        Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_read = Column(Boolean, default=False)
@@ -68,5 +90,5 @@ class Message(Base):
             "conversation_id": int(self.conversation_id),
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),
-            "is_read": bool(self.is_read)
-        } 
+            "is_read": bool(self.is_read),
+        }

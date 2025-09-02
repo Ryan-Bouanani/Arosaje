@@ -1,5 +1,5 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, File, UploadFile, Form
+from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Form
 from sqlalchemy.orm import Session
 from crud.plant import plant
 from schemas.plant import Plant, PlantCreate, PlantUpdate
@@ -7,17 +7,15 @@ from utils.database import get_db
 from utils.security import get_current_user
 from utils.image_handler import ImageHandler
 
-router = APIRouter(
-    prefix="/plants",
-    tags=["plants"]
-)
+router = APIRouter(prefix="/plants", tags=["plants"])
+
 
 @router.get("/", response_model=List[Plant])
 def read_plants(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    owner_id: Optional[int] = Query(None)
+    owner_id: Optional[int] = Query(None),
 ):
     """Lister toutes les plantes avec pagination optionnelle"""
     if owner_id:
@@ -26,22 +24,19 @@ def read_plants(
         plants = plant.get_multi(db, skip=skip, limit=limit)
     return plants
 
+
 @router.post("/", response_model=Plant)
 async def create_plant(
     nom: str = Form(...),
     espece: str = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     """Créer une nouvelle plante"""
     try:
         # Créer l'objet PlantCreate avec les données du formulaire
-        plant_data = {
-            "nom": nom,
-            "espece": espece,
-            "owner_id": current_user.id
-        }
+        plant_data = {"nom": nom, "espece": espece, "owner_id": current_user.id}
 
         # Si une photo est fournie, la sauvegarder
         if photo:
@@ -54,27 +49,22 @@ async def create_plant(
         return result
     except Exception as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Erreur lors de la création de la plante: {str(e)}"
+            status_code=500, detail=f"Erreur lors de la création de la plante: {str(e)}"
         )
 
+
 @router.get("/{plant_id}", response_model=Plant)
-def read_plant(
-    plant_id: int,
-    db: Session = Depends(get_db)
-):
+def read_plant(plant_id: int, db: Session = Depends(get_db)):
     """Récupérer une plante spécifique par son ID"""
     db_plant = plant.get(db=db, id=plant_id)
     if db_plant is None:
         raise HTTPException(status_code=404, detail="Plant not found")
     return db_plant
 
+
 @router.put("/{plant_id}", response_model=Plant)
 def update_plant(
-    *,
-    db: Session = Depends(get_db),
-    plant_id: int,
-    plant_in: PlantUpdate
+    *, db: Session = Depends(get_db), plant_id: int, plant_in: PlantUpdate
 ):
     """Mettre à jour les informations d'une plante"""
     db_plant = plant.get(db=db, id=plant_id)
@@ -82,14 +72,11 @@ def update_plant(
         raise HTTPException(status_code=404, detail="Plant not found")
     return plant.update(db=db, db_obj=db_plant, obj_in=plant_in)
 
+
 @router.delete("/{plant_id}", response_model=Plant)
-def delete_plant(
-    *,
-    db: Session = Depends(get_db),
-    plant_id: int
-):
+def delete_plant(*, db: Session = Depends(get_db), plant_id: int):
     """Supprimer définitivement une plante"""
     db_plant = plant.get(db=db, id=plant_id)
     if db_plant is None:
         raise HTTPException(status_code=404, detail="Plant not found")
-    return plant.delete(db=db, id=plant_id) 
+    return plant.delete(db=db, id=plant_id)

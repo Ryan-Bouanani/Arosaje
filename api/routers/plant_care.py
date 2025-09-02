@@ -1,6 +1,6 @@
 from typing import List, Optional
 import logging
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile, status, Query
+from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 from utils.database import get_db
@@ -11,48 +11,56 @@ from crud.plant import plant as plant_crud
 from crud.user import user as user_crud
 from models.plant_care import CareStatus, PlantCare as PlantCareModel
 from models.user import User as UserModel
-from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareUpdate, PlantCareInDB
+from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB
 from schemas.user import User
 from crud.message import message
 from models.message import ConversationType
-from schemas.message import MessageCreate
 from services.email.email_service import EmailService
 from services.geocoding_service import geocoding_service
 
-router = APIRouter(
-    prefix="/plant-care",
-    tags=["plant-care"]
-)
+router = APIRouter(prefix="/plant-care", tags=["plant-care"])
+
 
 @router.post("/", response_model=PlantCare)
 async def create_plant_care(
     *,
     db: Session = Depends(get_db),
     plant_care_in: PlantCareCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Créer une demande de garde de plante"""
     try:
-        logging.info(f"Tentative de création d'une garde pour la plante {plant_care_in.plant_id}")
-        
+        logging.info(
+            f"Tentative de création d'une garde pour la plante {plant_care_in.plant_id}"
+        )
+
         # Vérifier que la plante existe
         plant = plant_crud.get(db, id=plant_care_in.plant_id)
         if not plant:
             logging.error(f"Plante {plant_care_in.plant_id} non trouvée")
             raise HTTPException(status_code=404, detail="Plante non trouvée")
-        
+
         # Vérifier que l'utilisateur est bien le propriétaire de la plante
         if plant.owner_id != current_user.id:
-            logging.error(f"L'utilisateur {current_user.id} n'est pas le propriétaire de la plante {plant_care_in.plant_id}")
-            raise HTTPException(status_code=403, detail="Vous n'êtes pas le propriétaire de cette plante")
-        
+            logging.error(
+                f"L'utilisateur {current_user.id} n'est pas le propriétaire de la plante {plant_care_in.plant_id}"
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="Vous n'êtes pas le propriétaire de cette plante",
+            )
+
         # Vérifier que le gardien existe si un gardien est spécifié
         if plant_care_in.caretaker_id is not None:
-            caretaker = db.query(UserModel).filter(UserModel.id == plant_care_in.caretaker_id).first()
+            caretaker = (
+                db.query(UserModel)
+                .filter(UserModel.id == plant_care_in.caretaker_id)
+                .first()
+            )
             if not caretaker:
                 logging.error(f"Gardien {plant_care_in.caretaker_id} non trouvé")
                 raise HTTPException(status_code=404, detail="Gardien non trouvé")
-        
+
         # Géocoder l'adresse si fournie
         if plant_care_in.localisation:
             logging.info(f"Géocodage de l'adresse: {plant_care_in.localisation}")
@@ -62,8 +70,10 @@ async def create_plant_care(
                 plant_care_in.longitude = coords[1]
                 logging.info(f"Coordonnées obtenues: {coords}")
             else:
-                logging.warning(f"Impossible de géocoder l'adresse: {plant_care_in.localisation}")
-        
+                logging.warning(
+                    f"Impossible de géocoder l'adresse: {plant_care_in.localisation}"
+                )
+
         logging.info("Création de la garde...")
         result = plant_care.create(db, obj_in=plant_care_in, owner_id=current_user.id)
         logging.info(f"Garde créée avec succès: {result.id}")
@@ -73,7 +83,10 @@ async def create_plant_care(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logging.error(f"Erreur lors de la création de la garde: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la création de la garde: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erreur lors de la création de la garde: {str(e)}"
+        )
+
 
 @router.get("/", response_model=List[PlantCare])
 def read_plant_cares(
@@ -83,25 +96,30 @@ def read_plant_cares(
     status: Optional[CareStatus] = None,
     as_owner: Optional[bool] = None,
     as_caretaker: Optional[bool] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Lister les gardes de plantes avec filtres"""
     if as_owner is True:
-        return plant_care.get_multi(db, skip=skip, limit=limit, owner_id=current_user.id, status=status)
+        return plant_care.get_multi(
+            db, skip=skip, limit=limit, owner_id=current_user.id, status=status
+        )
     elif as_caretaker is True:
-        return plant_care.get_multi(db, skip=skip, limit=limit, caretaker_id=current_user.id, status=status)
+        return plant_care.get_multi(
+            db, skip=skip, limit=limit, caretaker_id=current_user.id, status=status
+        )
     elif as_owner is False:
         # Récupérer les gardes disponibles (en attente et créées par d'autres utilisateurs)
-        return plant_care.get_available_cares(db, current_user_id=current_user.id, skip=skip, limit=limit)
+        return plant_care.get_available_cares(
+            db, current_user_id=current_user.id, skip=skip, limit=limit
+        )
     else:
         # Par défaut, retourner une liste vide
         return []
 
+
 @router.get("/{care_id}", response_model=PlantCareInDB)
 def get_plant_care(
-    care_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    care_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
     """Récupérer les détails complets d'une garde spécifique"""
     db_care = plant_care.get(db=db, id=care_id)
@@ -109,30 +127,31 @@ def get_plant_care(
         raise HTTPException(status_code=404, detail="Garde non trouvée")
     return db_care
 
+
 @router.put("/{care_id}/status", response_model=PlantCareInDB)
 async def update_plant_care_status(
-    care_id: int,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    care_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
 ):
     """Accepter une garde de plante"""
     db_care = plant_care.get(db=db, id=care_id)
     if db_care is None:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
-    
+
     if db_care.status != CareStatus.PENDING:
         raise HTTPException(status_code=400, detail="Cette garde n'est plus disponible")
-    
+
     if db_care.owner_id == current_user.id:
-        raise HTTPException(status_code=400, detail="Vous ne pouvez pas accepter votre propre garde")
-    
+        raise HTTPException(
+            status_code=400, detail="Vous ne pouvez pas accepter votre propre garde"
+        )
+
     # Créer une conversation
     conversation = message.create_conversation(
         db=db,
         participant_ids=[db_care.owner_id, current_user.id],
         conversation_type=ConversationType.PLANT_CARE,
         related_id=care_id,
-        initiator_id=current_user.id
+        initiator_id=current_user.id,
     )
 
     # Mettre à jour la garde directement
@@ -158,105 +177,116 @@ async def update_plant_care_status(
         start_date=db_care.start_date.strftime("%d/%m/%Y"),
         end_date=db_care.end_date.strftime("%d/%m/%Y"),
         location=db_care.localisation,
-        conversation_id=str(conversation.id)
+        conversation_id=str(conversation.id),
     )
 
     return db_care
+
 
 @router.post("/{care_id}/photos/start", response_model=PlantCare)
 async def upload_start_photo(
     care_id: int,
     photo: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Uploader la photo de début de garde"""
     db_care = plant_care.get(db, id=care_id)
     if not db_care:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
-    
+
     if db_care.status != CareStatus.ACCEPTED:
         raise HTTPException(status_code=400, detail="La garde doit être acceptée")
-    
+
     if db_care.caretaker_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Seul le gardien peut uploader la photo de début")
-    
+        raise HTTPException(
+            status_code=403, detail="Seul le gardien peut uploader la photo de début"
+        )
+
     # Vérifier si l'image est valide
     if not ImageHandler.is_valid_image(photo):
         raise HTTPException(
             status_code=400,
-            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF"
+            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF",
         )
-    
+
     # Sauvegarder l'image
     _, photo_url = await ImageHandler.save_image(photo, f"plant_care_start_{care_id}")
     db_care = plant_care.add_photo(db, db_obj=db_care, photo_url=photo_url)
-    
+
     # Mettre à jour le statut
     return plant_care.update_status(db, db_obj=db_care, status=CareStatus.IN_PROGRESS)
+
 
 @router.post("/{care_id}/photos/end", response_model=PlantCare)
 async def upload_end_photo(
     care_id: int,
     photo: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Uploader la photo de fin de garde"""
     db_care = plant_care.get(db, id=care_id)
     if not db_care:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
-    
+
     if db_care.status != CareStatus.IN_PROGRESS:
         raise HTTPException(status_code=400, detail="La garde doit être en cours")
-    
+
     if db_care.caretaker_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Seul le gardien peut uploader la photo de fin")
-    
+        raise HTTPException(
+            status_code=403, detail="Seul le gardien peut uploader la photo de fin"
+        )
+
     # Vérifier si l'image est valide
     if not ImageHandler.is_valid_image(photo):
         raise HTTPException(
             status_code=400,
-            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF"
+            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF",
         )
-    
+
     # Sauvegarder l'image
     _, photo_url = await ImageHandler.save_image(photo, f"plant_care_end_{care_id}")
-    db_care = plant_care.add_photo(db, db_obj=db_care, photo_url=photo_url, is_end_photo=True)
-    
+    db_care = plant_care.add_photo(
+        db, db_obj=db_care, photo_url=photo_url, is_end_photo=True
+    )
+
     # Mettre à jour le statut
     return plant_care.update_status(db, db_obj=db_care, status=CareStatus.COMPLETED)
+
 
 @router.put("/{care_id}/complete", response_model=PlantCare)
 async def complete_plant_care_by_owner(
     care_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Terminer une garde manuellement"""
     db_care = plant_care.get(db, id=care_id)
     if not db_care:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
-    
+
     # Vérifier que l'utilisateur est le propriétaire de la garde
     if db_care.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Seul le propriétaire peut terminer cette garde")
-    
+        raise HTTPException(
+            status_code=403, detail="Seul le propriétaire peut terminer cette garde"
+        )
+
     # Vérifier que la garde peut être terminée
     if db_care.status not in [CareStatus.ACCEPTED, CareStatus.IN_PROGRESS]:
         raise HTTPException(
-            status_code=400, 
-            detail="Seules les gardes acceptées ou en cours peuvent être terminées"
+            status_code=400,
+            detail="Seules les gardes acceptées ou en cours peuvent être terminées",
         )
-    
+
     # Terminer la garde
     db_care = plant_care.update_status(db, db_obj=db_care, status=CareStatus.COMPLETED)
-    
+
     # Envoyer une notification au gardien si il y en a un
     if db_care.caretaker_id:
         caretaker = user_crud.get(db, id=db_care.caretaker_id)
         plant = plant_crud.get(db, id=db_care.plant_id)
-        
+
         # Email de notification
         email_service = EmailService()
         try:
@@ -264,125 +294,128 @@ async def complete_plant_care_by_owner(
                 caretaker_email=caretaker.email,
                 caretaker_name=caretaker.get_full_name(),
                 owner_name=current_user.get_full_name(),
-                plant_name=plant.nom
+                plant_name=plant.nom,
             )
         except Exception as e:
             print(f"Erreur envoi email: {e}")
-    
+
     return db_care
+
 
 @router.get("/by-plant/{plant_id}", response_model=PlantCareInDB)
 def get_plant_care_by_plant(
     plant_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """Récupérer une garde par l'ID de la plante"""
-    
+
     # Vérifier que la plante existe
     plant = plant_crud.get(db, id=plant_id)
-    
+
     # Si la plante n'existe pas, créer une plante fictive pour la démonstration
     if not plant:
         # Créer une plante fictive basée sur l'ID pour la démonstration
         fake_plants = {
-            1: {'nom': 'Monstera Deliciosa', 'espece': 'Monstera'},
-            2: {'nom': 'Ficus Lyrata', 'espece': 'Ficus'},
-            3: {'nom': 'Calathea Orbifolia', 'espece': 'Calathea'},
-            4: {'nom': 'Pilea Peperomioides', 'espece': 'Pilea'}
+            1: {"nom": "Monstera Deliciosa", "espece": "Monstera"},
+            2: {"nom": "Ficus Lyrata", "espece": "Ficus"},
+            3: {"nom": "Calathea Orbifolia", "espece": "Calathea"},
+            4: {"nom": "Pilea Peperomioides", "espece": "Pilea"},
         }
-        
+
         if plant_id in fake_plants:
             fake_plant_data = fake_plants[plant_id]
-            
+
             # Retourner une garde fictive pour la plante de démonstration
             fake_care_data = {
-                'id': 0,
-                'plant_id': plant_id,
-                'owner_id': current_user.id,
-                'caretaker_id': None,
-                'start_date': datetime.now(),
-                'end_date': datetime.now(),
-                'status': 'pending',
-                'care_instructions': f'Cette {fake_plant_data["nom"]} est disponible pour la garde',
-                'localisation': 'Plante de démonstration - Paris',
-                'start_photo_url': None,
-                'end_photo_url': None,
-                'conversation_id': None,
-                'created_at': datetime.now(),
-                'updated_at': datetime.now(),
-                'plant': {
-                    'id': plant_id,
-                    'nom': fake_plant_data['nom'],
-                    'espece': fake_plant_data['espece'],
-                    'photo': None
+                "id": 0,
+                "plant_id": plant_id,
+                "owner_id": current_user.id,
+                "caretaker_id": None,
+                "start_date": datetime.now(),
+                "end_date": datetime.now(),
+                "status": "pending",
+                "care_instructions": f'Cette {fake_plant_data["nom"]} est disponible pour la garde',
+                "localisation": "Plante de démonstration - Paris",
+                "start_photo_url": None,
+                "end_photo_url": None,
+                "conversation_id": None,
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "plant": {
+                    "id": plant_id,
+                    "nom": fake_plant_data["nom"],
+                    "espece": fake_plant_data["espece"],
+                    "photo": None,
                 },
-                'owner': {
-                    'id': current_user.id,
-                    'nom': current_user.nom,
-                    'prenom': current_user.prenom,
-                    'email': current_user.email
-                }
+                "owner": {
+                    "id": current_user.id,
+                    "nom": current_user.nom,
+                    "prenom": current_user.prenom,
+                    "email": current_user.email,
+                },
             }
             return fake_care_data
         else:
             raise HTTPException(status_code=404, detail="Plante non trouvée")
-    
+
     # Vérifier que l'utilisateur a le droit de voir cette plante (seulement pour les vraies plantes)
     if plant.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Vous n'avez pas accès à cette plante")
-    
+        raise HTTPException(
+            status_code=403, detail="Vous n'avez pas accès à cette plante"
+        )
+
     # Récupérer la garde la plus récente pour cette plante avec les relations
     db_care = (
         db.query(PlantCareModel)
-        .options(
-            joinedload(PlantCareModel.owner),
-            joinedload(PlantCareModel.plant)
-        )
+        .options(joinedload(PlantCareModel.owner), joinedload(PlantCareModel.plant))
         .filter(PlantCareModel.plant_id == plant_id)
         .order_by(PlantCareModel.created_at.desc())
         .first()
     )
-    
+
     # Si aucune garde n'existe, créer une structure de garde fictive pour afficher les détails de la plante
     if db_care is None:
         from datetime import datetime
-        from schemas.plant_care import PlantCareInDB
-        
+
         # Récupérer les informations du propriétaire
         owner = user_crud.get(db, id=plant.owner_id)
-        
+
         # Créer une garde fictive pour pouvoir afficher les détails de la plante
         fake_care_data = {
-            'id': 0,  # ID fictif
-            'plant_id': plant_id,
-            'owner_id': plant.owner_id,
-            'caretaker_id': None,
-            'start_date': datetime.now(),
-            'end_date': datetime.now(),
-            'status': 'pending',
-            'care_instructions': 'Aucune garde active pour cette plante',
-            'localisation': 'Emplacement de la plante non spécifié',
-            'start_photo_url': None,
-            'end_photo_url': None,
-            'conversation_id': None,
-            'created_at': datetime.now(),
-            'updated_at': datetime.now(),
-            'plant': {
-                'id': plant.id,
-                'nom': plant.nom,
-                'espece': plant.espece,
-                'photo': plant.photo
+            "id": 0,  # ID fictif
+            "plant_id": plant_id,
+            "owner_id": plant.owner_id,
+            "caretaker_id": None,
+            "start_date": datetime.now(),
+            "end_date": datetime.now(),
+            "status": "pending",
+            "care_instructions": "Aucune garde active pour cette plante",
+            "localisation": "Emplacement de la plante non spécifié",
+            "start_photo_url": None,
+            "end_photo_url": None,
+            "conversation_id": None,
+            "created_at": datetime.now(),
+            "updated_at": datetime.now(),
+            "plant": {
+                "id": plant.id,
+                "nom": plant.nom,
+                "espece": plant.espece,
+                "photo": plant.photo,
             },
-            'owner': {
-                'id': owner.id,
-                'nom': owner.nom,
-                'prenom': owner.prenom,
-                'email': owner.email
-            } if owner else None
+            "owner": (
+                {
+                    "id": owner.id,
+                    "nom": owner.nom,
+                    "prenom": owner.prenom,
+                    "email": owner.email,
+                }
+                if owner
+                else None
+            ),
         }
-        
+
         # Retourner les données directement au format attendu
         return fake_care_data
-        
+
     return db_care

@@ -3,10 +3,12 @@ from sqlalchemy.orm import relationship
 import enum
 from utils.database import Base
 
+
 class UserRole(str, enum.Enum):
     USER = "user"
     BOTANIST = "botanist"
     ADMIN = "admin"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -19,21 +21,33 @@ class User(Base):
     telephone = Column(String)
     localisation = Column(String)
     role = Column(Enum(UserRole), default=UserRole.USER)
-    is_verified = Column(Boolean, default=False)  # Par défaut, les comptes ne sont pas vérifiés
+    is_verified = Column(
+        Boolean, default=False
+    )  # Par défaut, les comptes ne sont pas vérifiés
 
     # Relations
     owned_plants = relationship("Plant", back_populates="owner")
-    plants_given_for_care = relationship("PlantCare", foreign_keys="[PlantCare.owner_id]", back_populates="owner")
-    plants_taken_for_care = relationship("PlantCare", foreign_keys="[PlantCare.caretaker_id]", back_populates="caretaker")
+    plants_given_for_care = relationship(
+        "PlantCare", foreign_keys="[PlantCare.owner_id]", back_populates="owner"
+    )
+    plants_taken_for_care = relationship(
+        "PlantCare", foreign_keys="[PlantCare.caretaker_id]", back_populates="caretaker"
+    )
     messages = relationship("Message", back_populates="sender")
     conversations = relationship("ConversationParticipant", back_populates="user")
-    
+
     # Relations pour les conseils botaniques
-    given_advice = relationship("Advice", foreign_keys="[Advice.botanist_id]", back_populates="botanist")
-    validated_advice = relationship("Advice", foreign_keys="[Advice.validator_id]", back_populates="validator")
+    given_advice = relationship(
+        "Advice", foreign_keys="[Advice.botanist_id]", back_populates="botanist"
+    )
+    validated_advice = relationship(
+        "Advice", foreign_keys="[Advice.validator_id]", back_populates="validator"
+    )
 
     # Relations pour le statut
-    typing_status = relationship("UserTypingStatus", back_populates="user", uselist=True)
+    typing_status = relationship(
+        "UserTypingStatus", back_populates="user", uselist=True
+    )
     presence = relationship("UserPresence", back_populates="user", uselist=False)
 
     def get_full_name(self) -> str:

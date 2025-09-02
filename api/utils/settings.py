@@ -37,7 +37,10 @@ USE_CREDENTIALS = True
 VALIDATE_CERTS = True
 
 # Configuration CORS
-CORS_ALLOW_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://web:3000,http://localhost:5000,http://mobile:5000").split(",")
+CORS_ALLOW_ORIGINS = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000,http://web:3000,http://localhost:5000,http://mobile:5000",
+).split(",")
 CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"]
 CORS_ALLOW_HEADERS = [
     "Content-Type",
@@ -46,5 +49,5 @@ CORS_ALLOW_HEADERS = [
     "Origin",
     "X-Requested-With",
     "Access-Control-Request-Method",
-    "Access-Control-Request-Headers"
+    "Access-Control-Request-Headers",
 ]

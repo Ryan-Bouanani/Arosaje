@@ -1,27 +1,41 @@
 """Modèles SQLAlchemy pour la nouvelle structure PostgreSQL."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, Enum, ForeignKey, JSON
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    JSON,
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 import enum
 
 Base = declarative_base()
 
+
 class UserRole(str, enum.Enum):
     USER = "user"
     BOTANIST = "botanist"
     ADMIN = "admin"
+
 
 class UserStatus(str, enum.Enum):
     ONLINE = "online"
     OFFLINE = "offline"
     AWAY = "away"
 
+
 class AdviceStatus(str, enum.Enum):
     PENDING = "pending"
     VALIDATED = "validated"
     REJECTED = "rejected"
+
 
 class CareStatus(str, enum.Enum):
     PENDING = "pending"
@@ -31,9 +45,11 @@ class CareStatus(str, enum.Enum):
     COMPLETED = "completed"
     CANCELLED = "cancelled"
 
+
 class ConversationType(str, enum.Enum):
     PLANT_CARE = "plant_care"
     BOTANICAL_ADVICE = "botanical_advice"
+
 
 class User(Base):
     __tablename__ = "users"
@@ -58,9 +74,16 @@ class User(Base):
     owned_plants = relationship("Plant", back_populates="owner")
     created_advices = relationship("Advice", back_populates="botanist")
     sent_messages = relationship("Message", back_populates="sender")
-    plant_cares_given = relationship("PlantCare", foreign_keys="[PlantCare.owner_id]", back_populates="owner")
-    plant_cares_taken = relationship("PlantCare", foreign_keys="[PlantCare.caretaker_id]", back_populates="caretaker")
-    conversation_participations = relationship("ConversationParticipant", back_populates="user")
+    plant_cares_given = relationship(
+        "PlantCare", foreign_keys="[PlantCare.owner_id]", back_populates="owner"
+    )
+    plant_cares_taken = relationship(
+        "PlantCare", foreign_keys="[PlantCare.caretaker_id]", back_populates="caretaker"
+    )
+    conversation_participations = relationship(
+        "ConversationParticipant", back_populates="user"
+    )
+
 
 class UserPresence(Base):
     __tablename__ = "user_presence"
@@ -74,18 +97,22 @@ class UserPresence(Base):
     # Relations
     user = relationship("User", back_populates="presence")
 
+
 class UserTypingStatus(Base):
     __tablename__ = "user_typing_status"
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"))
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE")
+    )
     is_typing = Column(Boolean, default=False)
     last_typed_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
     user = relationship("User", back_populates="typing_status")
     conversation = relationship("Conversation", back_populates="typing_users")
+
 
 class Plant(Base):
     __tablename__ = "plants"
@@ -108,6 +135,7 @@ class Plant(Base):
     advices = relationship("Advice", back_populates="plant")
     care_sessions = relationship("PlantCare", back_populates="plant")
 
+
 class Photo(Base):
     __tablename__ = "photos"
 
@@ -123,6 +151,7 @@ class Photo(Base):
 
     # Relations
     plant = relationship("Plant", back_populates="photos")
+
 
 class Advice(Base):
     __tablename__ = "advices"
@@ -140,6 +169,7 @@ class Advice(Base):
     botanist = relationship("User", back_populates="created_advices")
     plant = relationship("Plant", back_populates="advices")
 
+
 class PlantCare(Base):
     __tablename__ = "plant_cares"
 
@@ -147,7 +177,9 @@ class PlantCare(Base):
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"))
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     caretaker_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="SET NULL"))
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="SET NULL")
+    )
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
     status = Column(Enum(CareStatus), default=CareStatus.PENDING)
@@ -164,9 +196,14 @@ class PlantCare(Base):
 
     # Relations
     plant = relationship("Plant", back_populates="care_sessions")
-    owner = relationship("User", foreign_keys=[owner_id], back_populates="plant_cares_given")
-    caretaker = relationship("User", foreign_keys=[caretaker_id], back_populates="plant_cares_taken")
+    owner = relationship(
+        "User", foreign_keys=[owner_id], back_populates="plant_cares_given"
+    )
+    caretaker = relationship(
+        "User", foreign_keys=[caretaker_id], back_populates="plant_cares_taken"
+    )
     conversation = relationship("Conversation", back_populates="plant_care")
+
 
 class Conversation(Base):
     __tablename__ = "conversations"
@@ -180,9 +217,12 @@ class Conversation(Base):
 
     # Relations
     messages = relationship("Message", back_populates="conversation")
-    participants = relationship("ConversationParticipant", back_populates="conversation")
+    participants = relationship(
+        "ConversationParticipant", back_populates="conversation"
+    )
     typing_users = relationship("UserTypingStatus", back_populates="conversation")
     plant_care = relationship("PlantCare", back_populates="conversation", uselist=False)
+
 
 class Message(Base):
     __tablename__ = "messages"
@@ -190,7 +230,9 @@ class Message(Base):
     id = Column(Integer, primary_key=True)
     content = Column(String, nullable=False)
     sender_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"))
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE")
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_read = Column(Boolean, default=False)
@@ -200,14 +242,17 @@ class Message(Base):
     sender = relationship("User", back_populates="sent_messages")
     conversation = relationship("Conversation", back_populates="messages")
 
+
 class ConversationParticipant(Base):
     __tablename__ = "conversation_participants"
 
     id = Column(Integer, primary_key=True)
-    conversation_id = Column(Integer, ForeignKey("conversations.id", ondelete="CASCADE"))
+    conversation_id = Column(
+        Integer, ForeignKey("conversations.id", ondelete="CASCADE")
+    )
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"))
     last_read_at = Column(DateTime, default=datetime.utcnow)
 
     # Relations
     conversation = relationship("Conversation", back_populates="participants")
-    user = relationship("User", back_populates="conversation_participations") 
+    user = relationship("User", back_populates="conversation_participations")

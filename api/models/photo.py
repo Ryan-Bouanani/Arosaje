@@ -3,6 +3,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from utils.database import Base
 
+
 class Photo(Base):
     __tablename__ = "photos"
 
@@ -12,7 +13,7 @@ class Photo(Base):
     description = Column(String, nullable=True)
     type = Column(String, nullable=False)  # 'plant', 'garde_start', 'garde_end'
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Relations
     plant_id = Column(Integer, ForeignKey("plants.id"))
-    plant = relationship("Plant", back_populates="photos") 
+    plant = relationship("Plant", back_populates="photos")

@@ -1,22 +1,24 @@
 """
 Tests unitaires pour le service d'email
 """
+
 import pytest
-from unittest.mock import Mock, patch, AsyncMock
+from unittest.mock import patch
 
 
 class TestEmailService:
     """Tests pour le service d'envoi d'email"""
-    
+
     def test_email_service_import(self):
         """Test d'import du service email"""
         try:
             from services.email.email_service import EmailService
+
             assert EmailService is not None
         except ImportError:
             pytest.skip("EmailService non disponible")
-    
-    @patch('services.email.email_service.settings')
+
+    @patch("services.email.email_service.settings")
     def test_email_service_initialization(self, mock_settings):
         """Test d'initialisation du service email avec mock settings"""
         try:
@@ -31,29 +33,29 @@ class TestEmailService:
             mock_settings.MAIL_SSL_TLS = False
             mock_settings.USE_CREDENTIALS = True
             mock_settings.VALIDATE_CERTS = True
-            
+
             from services.email.email_service import EmailService
-            
-            with patch('services.email.email_service.FastMail'):
+
+            with patch("services.email.email_service.FastMail"):
                 email_service = EmailService()
                 assert email_service is not None
-                
+
         except Exception as e:
             # Le service peut nécessiter des dépendances spécifiques
             pytest.skip(f"EmailService initialization failed: {e}")
-    
+
     def test_email_service_structure(self):
         """Test de la structure du service email"""
         try:
             from services.email.email_service import EmailService
-            
+
             # Vérifier que la classe existe
             assert EmailService is not None
-            assert hasattr(EmailService, '__init__')
-            
+            assert hasattr(EmailService, "__init__")
+
             # Les méthodes spécifiques peuvent être testées si elles existent
-            if hasattr(EmailService, 'send_email'):
-                assert callable(getattr(EmailService, 'send_email'))
-                
+            if hasattr(EmailService, "send_email"):
+                assert callable(getattr(EmailService, "send_email"))
+
         except ImportError:
             pytest.skip("EmailService non disponible pour le test de structure")

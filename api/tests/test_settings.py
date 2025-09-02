@@ -11,4 +11,4 @@ VERSION = "1.0.0-test"
 
 # Configuration des chemins de test
 TEST_ASSETS_DIR = TEST_DIR / "assets"
-TEST_ASSETS_DIR.mkdir(parents=True, exist_ok=True) 
+TEST_ASSETS_DIR.mkdir(parents=True, exist_ok=True)

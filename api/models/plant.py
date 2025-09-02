@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from utils.database import Base
 
+
 class Plant(Base):
     __tablename__ = "plants"
     id = Column(Integer, primary_key=True, autoincrement=True)

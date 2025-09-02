@@ -3,15 +3,19 @@ from typing import List, Optional
 from datetime import datetime
 from enum import Enum
 
+
 class ConversationType(str, Enum):
     PLANT_CARE = "plant_care"  # Conversation propriétaire ↔ gardien
     BOTANICAL_ADVICE = "botanical_advice"  # Conversation avec un botaniste
 
+
 class MessageBase(BaseModel):
     content: str = Field(..., max_length=2000)
 
+
 class MessageCreate(MessageBase):
     conversation_id: int
+
 
 class Message(MessageBase):
     id: int
@@ -24,6 +28,7 @@ class Message(MessageBase):
     class Config:
         from_attributes = True
 
+
 class ConversationParticipant(BaseModel):
     user_id: int
     last_read_at: Optional[datetime] = None
@@ -31,12 +36,15 @@ class ConversationParticipant(BaseModel):
     class Config:
         from_attributes = True
 
+
 class ConversationBase(BaseModel):
     type: ConversationType
     related_id: Optional[int] = None  # ID de la garde ou de la demande de conseil
 
+
 class ConversationCreate(ConversationBase):
     participant_ids: List[int]
+
 
 class Conversation(ConversationBase):
     id: int
@@ -47,6 +55,7 @@ class Conversation(ConversationBase):
 
     class Config:
         from_attributes = True
+
 
 class ConversationWithLastMessage(BaseModel):
     id: int
@@ -59,4 +68,4 @@ class ConversationWithLastMessage(BaseModel):
     unread_count: int
 
     class Config:
-        from_attributes = True 
+        from_attributes = True

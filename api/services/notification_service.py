@@ -1,43 +1,42 @@
-from typing import Optional
 from sqlalchemy.orm import Session
 from models.user import User
 from models.plant_care import PlantCare
 from models.advice import Advice, AdvicePriority, ValidationStatus
 from services.email.email_service import EmailService
-import asyncio
+
 
 class NotificationService:
     def __init__(self):
         self.email_service = EmailService()
-    
+
     async def send_advice_notification(
         self,
         db: Session,
         plant_care_id: int,
         botanist_name: str,
         advice_title: str,
-        priority: AdvicePriority
+        priority: AdvicePriority,
     ):
         """Envoyer une notification au propriétaire quand un conseil est donné"""
-        
+
         # Récupérer la garde et le propriétaire
         plant_care = db.query(PlantCare).filter(PlantCare.id == plant_care_id).first()
         if not plant_care:
             return
-        
+
         owner = db.query(User).filter(User.id == plant_care.owner_id).first()
         if not owner:
             return
-        
+
         # Déterminer le niveau d'urgence du message
         priority_text = {
             AdvicePriority.URGENT: "🚨 URGENT",
             AdvicePriority.FOLLOW_UP: "📋 Suivi nécessaire",
-            AdvicePriority.NORMAL: "💡 Nouveau conseil"
+            AdvicePriority.NORMAL: "💡 Nouveau conseil",
         }.get(priority, "💡 Nouveau conseil")
-        
+
         subject = f"{priority_text} - Conseil botanique pour votre plante"
-        
+
         # Construire le message email
         email_content = f"""
         <h2>📱 A'rosa-je - Nouveau conseil botanique</h2>
@@ -71,48 +70,49 @@ class NotificationService:
             <br>Si vous ne souhaitez plus recevoir ces notifications, vous pouvez les désactiver dans les paramètres de l'application.
         </p>
         """
-        
+
         try:
             await self.email_service.send_email(
-                to_email=owner.email,
-                subject=subject,
-                html_content=email_content
+                to_email=owner.email, subject=subject, html_content=email_content
             )
-            
+
             # Marquer comme notifié dans la base
-            advice = db.query(Advice).filter(
-                Advice.plant_care_id == plant_care_id,
-                Advice.is_current_version == True
-            ).first()
+            advice = (
+                db.query(Advice)
+                .filter(
+                    Advice.plant_care_id == plant_care_id,
+                    Advice.is_current_version == True,
+                )
+                .first()
+            )
             if advice:
                 advice.owner_notified = True
                 db.commit()
-                
+
         except Exception as e:
             print(f"Erreur notification propriétaire: {e}")
-    
+
     async def send_advice_update_notification(
-        self,
-        db: Session,
-        advice_id: int,
-        botanist_name: str
+        self, db: Session, advice_id: int, botanist_name: str
     ):
         """Notifier le propriétaire qu'un conseil a été mis à jour"""
-        
+
         advice = db.query(Advice).filter(Advice.id == advice_id).first()
         if not advice:
             return
-        
-        plant_care = db.query(PlantCare).filter(PlantCare.id == advice.plant_care_id).first()
+
+        plant_care = (
+            db.query(PlantCare).filter(PlantCare.id == advice.plant_care_id).first()
+        )
         if not plant_care:
             return
-        
+
         owner = db.query(User).filter(User.id == plant_care.owner_id).first()
         if not owner:
             return
-        
-        subject = f"📝 Mise à jour - Conseil botanique pour votre plante"
-        
+
+        subject = "📝 Mise à jour - Conseil botanique pour votre plante"
+
         email_content = f"""
         <h2>📱 A'rosa-je - Conseil mis à jour</h2>
         
@@ -134,59 +134,59 @@ class NotificationService:
             </a>
         </div>
         """
-        
+
         try:
             await self.email_service.send_email(
-                to_email=owner.email,
-                subject=subject,
-                html_content=email_content
+                to_email=owner.email, subject=subject, html_content=email_content
             )
         except Exception as e:
             print(f"Erreur notification mise à jour: {e}")
-    
+
     async def send_validation_notification(
         self,
         db: Session,
         advice_id: int,
         validator_name: str,
-        validation_status: ValidationStatus
+        validation_status: ValidationStatus,
     ):
         """Notifier le botaniste auteur qu'un collègue a validé son conseil"""
-        
+
         advice = db.query(Advice).filter(Advice.id == advice_id).first()
         if not advice:
             return
-        
+
         author = db.query(User).filter(User.id == advice.botanist_id).first()
         if not author:
             return
-        
+
         # Message selon le statut de validation
         status_messages = {
             ValidationStatus.VALIDATED: {
                 "emoji": "✅",
                 "title": "Conseil validé",
                 "color": "#28a745",
-                "message": "Félicitations ! Un collègue botaniste a validé votre conseil."
+                "message": "Félicitations ! Un collègue botaniste a validé votre conseil.",
             },
             ValidationStatus.REJECTED: {
-                "emoji": "❌", 
+                "emoji": "❌",
                 "title": "Conseil rejeté",
                 "color": "#dc3545",
-                "message": "Un collègue botaniste a des réserves sur votre conseil."
+                "message": "Un collègue botaniste a des réserves sur votre conseil.",
             },
             ValidationStatus.NEEDS_REVISION: {
                 "emoji": "⚠️",
                 "title": "Révision nécessaire",
                 "color": "#ffc107",
-                "message": "Un collègue botaniste suggère des améliorations à votre conseil."
-            }
+                "message": "Un collègue botaniste suggère des améliorations à votre conseil.",
+            },
         }
-        
-        status_info = status_messages.get(validation_status, status_messages[ValidationStatus.VALIDATED])
-        
+
+        status_info = status_messages.get(
+            validation_status, status_messages[ValidationStatus.VALIDATED]
+        )
+
         subject = f"{status_info['emoji']} {status_info['title']} - A'rosa-je"
-        
+
         email_content = f"""
         <h2>📱 A'rosa-je - Validation par les pairs</h2>
         
@@ -214,42 +214,37 @@ class NotificationService:
             La validation par les pairs améliore la qualité des conseils botaniques sur A'rosa-je.
         </p>
         """
-        
+
         try:
             await self.email_service.send_email(
-                to_email=author.email,
-                subject=subject,
-                html_content=email_content
+                to_email=author.email, subject=subject, html_content=email_content
             )
-            
+
             # Marquer comme notifié
             advice.botanist_notified = True
             db.commit()
-            
+
         except Exception as e:
             print(f"Erreur notification validation: {e}")
-    
+
     async def send_urgent_advice_alert(
-        self,
-        db: Session,
-        plant_care_id: int,
-        botanist_name: str
+        self, db: Session, plant_care_id: int, botanist_name: str
     ):
         """Envoyer une alerte immédiate pour un conseil urgent"""
-        
+
         # Cette fonction peut être étendue pour envoyer des notifications push
         # via Firebase, SMS, ou autres services
-        
+
         plant_care = db.query(PlantCare).filter(PlantCare.id == plant_care_id).first()
         if not plant_care:
             return
-        
+
         owner = db.query(User).filter(User.id == plant_care.owner_id).first()
         if not owner:
             return
-        
-        subject = f"🚨 ALERTE URGENTE - Votre plante a besoin d'attention immédiate"
-        
+
+        subject = "🚨 ALERTE URGENTE - Votre plante a besoin d'attention immédiate"
+
         email_content = f"""
         <div style="background-color: #721c24; color: white; padding: 20px; text-align: center; border-radius: 8px;">
             <h1 style="margin: 0; color: white;">🚨 ALERTE URGENTE 🚨</h1>
@@ -276,13 +271,13 @@ class NotificationService:
             ⏰ Temps de réaction recommandé : IMMÉDIAT
         </p>
         """
-        
+
         try:
             await self.email_service.send_email(
                 to_email=owner.email,
                 subject=subject,
                 html_content=email_content,
-                priority=True  # Email haute priorité
+                priority=True,  # Email haute priorité
             )
         except Exception as e:
             print(f"Erreur alerte urgente: {e}")

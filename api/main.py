@@ -2,20 +2,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine, SessionLocal
-from routers import auth, plant, monitoring, photo, plant_care, advice, message, ws, admin, metrics
+from routers import (
+    auth,
+    plant,
+    monitoring,
+    photo,
+    plant_care,
+    advice,
+    message,
+    ws,
+    admin,
+    metrics,
+)
 from routers import care_report, botanist_report_advice, geocoding
 import os
 from scripts.init_data import init_data
 from models.user import User
 
-from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
+from utils.settings import PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
 from services.rgpd_cleanup_service import RGPDCleanupService
 
-app = FastAPI(
-    title=PROJECT_NAME,
-    version=VERSION
-)
+app = FastAPI(title=PROJECT_NAME, version=VERSION)
 
 # Créer les tables si elles n'existent pas
 print("🔧 Création des tables...")
@@ -25,7 +33,9 @@ print("✅ Tables créées avec succès")
 # Vérifier si c'est le premier lancement en cherchant l'utilisateur root
 db = SessionLocal()
 try:
-    root_exists = db.query(User).filter(User.email == "root@arosaje.fr").first() is not None
+    root_exists = (
+        db.query(User).filter(User.email == "root@arosaje.fr").first() is not None
+    )
     if not root_exists:
         print("🌱 Premier lancement détecté, initialisation des données...")
         init_data()
@@ -38,30 +48,31 @@ finally:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",     # Frontend web
-        "http://localhost:5001",     # Mobile app
+        "http://localhost:3000",  # Frontend web
+        "http://localhost:5001",  # Mobile app
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5001",
-        "*"                          # Temporaire pour debug complet
+        "*",  # Temporaire pour debug complet
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[
         "Accept",
-        "Accept-Language", 
+        "Accept-Language",
         "Content-Language",
         "Content-Type",
         "Authorization",
         "X-Platform",
         "X-Client-Platform",
         "User-Agent",
-        "X-Requested-With"
+        "X-Requested-With",
     ],
     expose_headers=["*"],
     max_age=3600,
 )
 
 app.middleware("http")(monitoring_middleware)
+
 
 @app.middleware("http")
 async def add_utf8_header(request, call_next):
@@ -70,6 +81,7 @@ async def add_utf8_header(request, call_next):
     if "application/json" in response.headers.get("content-type", ""):
         response.headers["Content-Type"] = "application/json; charset=utf-8"
     return response
+
 
 # Monter le dossier static pour les images
 # Utiliser le chemin absolu basé sur la racine de l'application
@@ -110,13 +122,16 @@ app.include_router(geocoding.router)
 rgpd_service = RGPDCleanupService()
 rgpd_service.start()
 
+
 @app.get("/")
 def read_root():
     return {"message": "API A'rosa-je prête !"}
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 @app.options("/{path:path}")
 async def options_handler():

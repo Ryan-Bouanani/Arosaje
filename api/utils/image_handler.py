@@ -13,6 +13,7 @@ ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"}
 MAX_IMAGE_SIZE = (1920, 1080)  # Full HD
 THUMBNAIL_SIZE = (300, 300)
 
+
 class ImageHandler:
     @staticmethod
     def is_valid_image(file: UploadFile) -> bool:
@@ -25,7 +26,7 @@ class ImageHandler:
         # Créer un nom de fichier unique
         ext = Path(file.filename).suffix.lower()
         filename = f"{type}_{uuid.uuid4()}{ext}"
-        
+
         # Choisir le dossier approprié
         if "temp" in type.lower():
             target_dir = TEMP_IMG_DIR
@@ -33,7 +34,7 @@ class ImageHandler:
             target_dir = PERSISTED_IMG_DIR
         else:
             target_dir = IMG_DIR
-            
+
         filepath = target_dir / filename
 
         # Créer le dossier si nécessaire
@@ -49,11 +50,14 @@ class ImageHandler:
             try:
                 with Image.open(filepath) as img:
                     # Convertir en RGB si nécessaire
-                    if img.mode in ('RGBA', 'P'):
-                        img = img.convert('RGB')
-                    
+                    if img.mode in ("RGBA", "P"):
+                        img = img.convert("RGB")
+
                     # Redimensionner si trop grande
-                    if img.size[0] > MAX_IMAGE_SIZE[0] or img.size[1] > MAX_IMAGE_SIZE[1]:
+                    if (
+                        img.size[0] > MAX_IMAGE_SIZE[0]
+                        or img.size[1] > MAX_IMAGE_SIZE[1]
+                    ):
                         img.thumbnail(MAX_IMAGE_SIZE, Image.Resampling.LANCZOS)
                         img.save(str(filepath), quality=85, optimize=True)
             except Exception:

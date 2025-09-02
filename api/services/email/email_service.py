@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 import jinja2
 from utils import settings
 
+
 class EmailService:
     def __init__(self):
         self.config = ConnectionConfig(
@@ -17,7 +18,7 @@ class EmailService:
             MAIL_SSL_TLS=settings.MAIL_SSL_TLS,
             USE_CREDENTIALS=settings.USE_CREDENTIALS,
             VALIDATE_CERTS=settings.VALIDATE_CERTS,
-            TEMPLATE_FOLDER=Path(__file__).parent / "templates"
+            TEMPLATE_FOLDER=Path(__file__).parent / "templates",
         )
         self.fastmail = FastMail(self.config)
         self.template_env = jinja2.Environment(
@@ -29,11 +30,11 @@ class EmailService:
         recipients: List[str],
         subject: str,
         template_name: str,
-        template_data: Dict[str, Any]
+        template_data: Dict[str, Any],
     ) -> None:
         """
         Envoie un email en utilisant un template.
-        
+
         Args:
             recipients: Liste des destinataires
             subject: Sujet de l'email
@@ -47,16 +48,13 @@ class EmailService:
             subject=subject,
             recipients=recipients,
             body=html_content,
-            subtype=MessageType.html
+            subtype=MessageType.html,
         )
 
         await self.fastmail.send_message(message)
 
     async def send_new_message_notification(
-        self,
-        recipient_email: str,
-        sender_name: str,
-        conversation_id: str
+        self, recipient_email: str, sender_name: str, conversation_id: str
     ) -> None:
         """
         Envoie une notification pour un nouveau message.
@@ -67,15 +65,11 @@ class EmailService:
             template_name="new_message",
             template_data={
                 "sender_name": sender_name,
-                "conversation_link": f"/conversations/{conversation_id}"
-            }
+                "conversation_link": f"/conversations/{conversation_id}",
+            },
         )
 
-    async def send_password_reset(
-        self,
-        recipient_email: str,
-        reset_token: str
-    ) -> None:
+    async def send_password_reset(self, recipient_email: str, reset_token: str) -> None:
         """
         Envoie un email de réinitialisation de mot de passe.
         """
@@ -83,16 +77,10 @@ class EmailService:
             recipients=[recipient_email],
             subject="Réinitialisation de votre mot de passe",
             template_name="password_reset",
-            template_data={
-                "reset_link": f"/reset-password?token={reset_token}"
-            }
+            template_data={"reset_link": f"/reset-password?token={reset_token}"},
         )
 
-    async def send_welcome_email(
-        self,
-        recipient_email: str,
-        user_name: str
-    ) -> None:
+    async def send_welcome_email(self, recipient_email: str, user_name: str) -> None:
         """
         Envoie un email de bienvenue après l'inscription.
         """
@@ -100,15 +88,11 @@ class EmailService:
             recipients=[recipient_email],
             subject="Bienvenue sur A'rosa-je !",
             template_name="welcome",
-            template_data={
-                "user_name": user_name
-            }
+            template_data={"user_name": user_name},
         )
 
     async def send_account_validated_email(
-        self,
-        recipient_email: str,
-        user_name: str
+        self, recipient_email: str, user_name: str
     ) -> None:
         """
         Envoie un email de confirmation de validation du compte.
@@ -117,15 +101,11 @@ class EmailService:
             recipients=[recipient_email],
             subject="Votre compte A'rosa-je a été validé !",
             template_name="account_validated",
-            template_data={
-                "user_name": user_name
-            }
+            template_data={"user_name": user_name},
         )
 
     async def send_account_rejected_email(
-        self,
-        recipient_email: str,
-        user_name: str
+        self, recipient_email: str, user_name: str
     ) -> None:
         """
         Envoie un email de notification de rejet du compte.
@@ -134,9 +114,7 @@ class EmailService:
             recipients=[recipient_email],
             subject="Information concernant votre compte A'rosa-je",
             template_name="account_rejected",
-            template_data={
-                "user_name": user_name
-            }
+            template_data={"user_name": user_name},
         )
 
     async def send_care_accepted_notification(
@@ -148,7 +126,7 @@ class EmailService:
         start_date: str,
         end_date: str,
         location: str,
-        conversation_id: str
+        conversation_id: str,
     ) -> None:
         """
         Envoie un email de notification quand une garde est acceptée.
@@ -164,6 +142,6 @@ class EmailService:
                 "start_date": start_date,
                 "end_date": end_date,
                 "location": location,
-                "conversation_link": f"/conversations/{conversation_id}"
-            }
-        ) 
+                "conversation_link": f"/conversations/{conversation_id}",
+            },
+        )

@@ -3,31 +3,37 @@ from datetime import datetime
 from typing import Optional, List
 from models.advice import AdvicePriority, ValidationStatus
 
+
 class AdviceBase(BaseModel):
     title: str = Field(..., max_length=255)
     content: str
     priority: AdvicePriority = AdvicePriority.NORMAL
 
+
 class AdviceCreate(AdviceBase):
     plant_care_id: int
+
 
 class AdviceUpdate(BaseModel):
     title: Optional[str] = Field(None, max_length=255)
     content: Optional[str] = None
     priority: Optional[AdvicePriority] = None
 
+
 class AdviceValidation(BaseModel):
     validation_status: ValidationStatus
     validation_comment: Optional[str] = None
+
 
 class BotanistInfo(BaseModel):
     id: int
     prenom: str
     nom: str
     email: str
-    
+
     class Config:
         from_attributes = True
+
 
 class Advice(AdviceBase):
     id: int
@@ -44,13 +50,14 @@ class Advice(AdviceBase):
     botanist_notified: bool
     created_at: datetime
     updated_at: datetime
-    
+
     # Relations
     botanist: Optional[BotanistInfo] = None
     validator: Optional[BotanistInfo] = None
-    
+
     class Config:
         from_attributes = True
+
 
 class PlantCareWithAdvice(BaseModel):
     id: int
@@ -60,27 +67,28 @@ class PlantCareWithAdvice(BaseModel):
     care_instructions: Optional[str] = None
     localisation: Optional[str] = None
     priority: AdvicePriority = AdvicePriority.NORMAL
-    
+
     # Info de la plante
     plant_name: str
     plant_species: Optional[str] = None
-    
+
     # Info propriétaire
     owner_name: str
     owner_email: str
-    
+
     # Avis actuel (si existe)
     current_advice: Optional[Advice] = None
-    
+
     # Historique des avis
     advice_history: List[Advice] = []
-    
+
     # Statut de validation global
     needs_validation: bool = False
     validation_count: int = 0
-    
+
     class Config:
         from_attributes = True
+
 
 class AdviceStats(BaseModel):
     total_to_review: int

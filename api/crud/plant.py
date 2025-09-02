@@ -1,17 +1,13 @@
-from typing import Optional, List
+from typing import List
 from sqlalchemy.orm import Session
 from models.plant import Plant
 from schemas.plant import PlantCreate, PlantUpdate
 from .base import CRUDBase
 
+
 class CRUDPlant(CRUDBase[Plant, PlantCreate, PlantUpdate]):
     def get_by_owner(
-        self, 
-        db: Session, 
-        *, 
-        owner_id: int, 
-        skip: int = 0, 
-        limit: int = 100
+        self, db: Session, *, owner_id: int, skip: int = 0, limit: int = 100
     ) -> List[Plant]:
         """Méthode spécifique pour récupérer les plantes d'un propriétaire"""
         return (
@@ -22,4 +18,5 @@ class CRUDPlant(CRUDBase[Plant, PlantCreate, PlantUpdate]):
             .all()
         )
 
-plant = CRUDPlant(Plant) 
+
+plant = CRUDPlant(Plant)

@@ -25,13 +25,12 @@ class User(Base):
     owned_plants = relationship("Plant", back_populates="owner")
     plants_given_for_care = relationship("PlantCare", foreign_keys="[PlantCare.owner_id]", back_populates="owner")
     plants_taken_for_care = relationship("PlantCare", foreign_keys="[PlantCare.caretaker_id]", back_populates="caretaker")
-    created_advices = relationship("Advice", back_populates="botanist")
     messages = relationship("Message", back_populates="sender")
     conversations = relationship("ConversationParticipant", back_populates="user")
     
     # Relations pour les conseils botaniques
-    given_advice = relationship("PlantCareAdvice", foreign_keys="[PlantCareAdvice.botanist_id]", back_populates="botanist")
-    validated_advice = relationship("PlantCareAdvice", foreign_keys="[PlantCareAdvice.validator_id]", back_populates="validator")
+    given_advice = relationship("Advice", foreign_keys="[Advice.botanist_id]", back_populates="botanist")
+    validated_advice = relationship("Advice", foreign_keys="[Advice.validator_id]", back_populates="validator")
 
     # Relations pour le statut
     typing_status = relationship("UserTypingStatus", back_populates="user", uselist=True)

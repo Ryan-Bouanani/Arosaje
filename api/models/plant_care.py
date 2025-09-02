@@ -41,4 +41,4 @@ class PlantCare(Base):
     caretaker = relationship("User", foreign_keys=[caretaker_id], back_populates="plants_taken_for_care")
     conversation = relationship("Conversation", back_populates="plant_care")
     care_reports = relationship("CareReport", back_populates="plant_care", cascade="all, delete-orphan")
-    botanist_advice = relationship("PlantCareAdvice", back_populates="plant_care", cascade="all, delete-orphan")
+    botanist_advice = relationship("Advice", back_populates="plant_care", cascade="all, delete-orphan")

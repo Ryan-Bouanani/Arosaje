@@ -1,43 +1,93 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
-from models.advice import AdviceStatus
+from models.advice import AdvicePriority, ValidationStatus
 
 class AdviceBase(BaseModel):
-    id: Optional[int] = None
-    texte: str
-    plant_id: int
-    status: Optional[AdviceStatus] = AdviceStatus.PENDING
-    botanist_id: Optional[int] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    title: str = Field(..., max_length=255)
+    content: str
+    priority: AdvicePriority = AdvicePriority.NORMAL
 
-    class Config:
-        from_attributes = True
+class AdviceCreate(AdviceBase):
+    plant_care_id: int
 
-# Pour la création d'un conseil
-class AdviceCreate(BaseModel):
-    texte: str
-    plant_id: int
-
-# Pour la mise à jour d'un conseil
 class AdviceUpdate(BaseModel):
-    texte: Optional[str] = None
-    status: Optional[AdviceStatus] = None
+    title: Optional[str] = Field(None, max_length=255)
+    content: Optional[str] = None
+    priority: Optional[AdvicePriority] = None
 
-# Schéma pour Plant (simple)
-class PlantSimple(BaseModel):
+class AdviceValidation(BaseModel):
+    validation_status: ValidationStatus
+    validation_comment: Optional[str] = None
+
+class BotanistInfo(BaseModel):
     id: int
+    prenom: str
     nom: str
-    espece: Optional[str] = None
+    email: str
     
     class Config:
         from_attributes = True
 
-# Pour les réponses individuelles
 class Advice(AdviceBase):
-    plant: Optional[PlantSimple] = None
+    id: int
+    plant_care_id: int
+    botanist_id: int
+    validation_status: ValidationStatus
+    validator_id: Optional[int] = None
+    validation_comment: Optional[str] = None
+    validated_at: Optional[datetime] = None
+    version: int
+    is_current_version: bool
+    previous_version_id: Optional[int] = None
+    owner_notified: bool
+    botanist_notified: bool
+    created_at: datetime
+    updated_at: datetime
+    
+    # Relations
+    botanist: Optional[BotanistInfo] = None
+    validator: Optional[BotanistInfo] = None
+    
+    class Config:
+        from_attributes = True
 
-# Pour les réponses contenant une liste
-class AdviceResponse(BaseModel):
-    advices: List[Advice] = []
+class PlantCareWithAdvice(BaseModel):
+    id: int
+    plant_id: int
+    start_date: datetime
+    end_date: datetime
+    care_instructions: Optional[str] = None
+    localisation: Optional[str] = None
+    priority: AdvicePriority = AdvicePriority.NORMAL
+    
+    # Info de la plante
+    plant_name: str
+    plant_species: Optional[str] = None
+    
+    # Info propriétaire
+    owner_name: str
+    owner_email: str
+    
+    # Avis actuel (si existe)
+    current_advice: Optional[Advice] = None
+    
+    # Historique des avis
+    advice_history: List[Advice] = []
+    
+    # Statut de validation global
+    needs_validation: bool = False
+    validation_count: int = 0
+    
+    class Config:
+        from_attributes = True
+
+class AdviceStats(BaseModel):
+    total_to_review: int
+    total_reviewed: int
+    urgent_count: int
+    follow_up_count: int
+    pending_validation: int
+    my_advice_count: int
+    my_validated_count: int = 0
+    my_validations_done_count: int = 0

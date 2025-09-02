@@ -68,6 +68,9 @@ class ConnectionManager:
         db.commit()
 
         # Notifier les autres participants
+        # Si is_typing = True: exclure l'expéditeur (il sait déjà qu'il tape)
+        # Si is_typing = False: inclure tout le monde (tous doivent savoir qu'il a arrêté)
+        exclude_sender = user_id if is_typing else None
         await self.broadcast_to_conversation(
             {
                 "type": "typing_status",
@@ -76,7 +79,7 @@ class ConnectionManager:
                 "is_typing": is_typing
             },
             conversation_id,
-            exclude_user_id=user_id
+            exclude_user_id=exclude_sender
         )
 
     async def handle_message(self, user_id: int, conversation_id: int, content: str, db: Session):

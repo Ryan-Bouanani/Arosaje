@@ -103,7 +103,7 @@ app.include_router(ws.router)
 app.include_router(admin.router)
 app.include_router(metrics.router)
 app.include_router(care_report.router)
-app.include_router(botanist_report_advice.router, prefix="/botanist-advice", tags=["botanist-advice"])
+app.include_router(botanist_report_advice.router)
 app.include_router(geocoding.router)
 
 # Démarrage du service RGPD

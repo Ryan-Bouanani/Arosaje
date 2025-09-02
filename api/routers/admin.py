@@ -52,7 +52,7 @@ async def get_pending_verifications(
     db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
 ):
     """Lister tous les comptes en attente de vérification"""
-    return db.query(User).filter(User.is_verified == False).all()
+    return db.query(User).filter(not User.is_verified).all()
 
 
 @router.post("/verify/{user_id}")
@@ -122,7 +122,7 @@ async def get_admin_stats(
     try:
         # Compter les utilisateurs
         total_users = db.query(User).count()
-        pending_users = db.query(User).filter(User.is_verified == False).count()
+        pending_users = db.query(User).filter(not User.is_verified).count()
 
         # Compter les gardes actives (statuts IN_PROGRESS et ACCEPTED)
         active_cares = (
@@ -165,7 +165,7 @@ async def get_verified_users(
     db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
 ):
     """Lister tous les utilisateurs vérifiés et actifs"""
-    return db.query(User).filter(User.is_verified == True).all()
+    return db.query(User).filter(User.is_verified).all()
 
 
 @router.put("/change-role/{user_id}")

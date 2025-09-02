@@ -81,7 +81,7 @@ class NotificationService:
                 db.query(Advice)
                 .filter(
                     Advice.plant_care_id == plant_care_id,
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                 )
                 .first()
             )

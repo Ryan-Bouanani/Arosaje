@@ -261,8 +261,8 @@ async def get_advice_by_id(
     🔒 **Accès réservé aux botanistes**
     """
 
-    advice = advice.get_advice_by_id(db, advice_id)
-    if not advice:
+    advice_obj = advice.get_advice_by_id(db, advice_id)
+    if not advice_obj:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Conseil non trouvé"
         )
@@ -350,7 +350,7 @@ async def get_count_by_priority(
 
     count = (
         db.query(Advice)
-        .filter(and_(Advice.is_current_version == True, Advice.priority == priority))
+        .filter(and_(Advice.is_current_version, Advice.priority == priority))
         .count()
     )
 

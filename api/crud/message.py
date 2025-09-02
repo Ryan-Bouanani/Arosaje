@@ -93,7 +93,7 @@ class CRUDMessage:
                         Message.conversation_id == conversation.id,
                         Message.sender_id != user_id,
                         Message.sender_id.isnot(None),
-                        Message.is_read == False,
+                        not Message.is_read,
                         (
                             (ConversationParticipant.last_read_at.is_(None))
                             | (
@@ -286,7 +286,7 @@ class CRUDMessage:
         """Marque tous les messages d'une conversation comme lus pour un utilisateur"""
         try:
             db.query(Message).filter(
-                Message.conversation_id == conversation_id, Message.is_read == False
+                Message.conversation_id == conversation_id, not Message.is_read
             ).update({"is_read": True})
 
             participant = (
@@ -319,7 +319,7 @@ class CRUDMessage:
                     ConversationParticipant.user_id == user_id,
                     Message.sender_id != user_id,
                     Message.sender_id.isnot(None),
-                    Message.is_read == False,
+                    not Message.is_read,
                     (
                         (ConversationParticipant.last_read_at.is_(None))
                         | (Message.created_at > ConversationParticipant.last_read_at)
@@ -420,7 +420,7 @@ class CRUDMessage:
             db.query(UserTypingStatus)
             .filter(
                 UserTypingStatus.conversation_id == conversation_id,
-                UserTypingStatus.is_typing == True,
+                UserTypingStatus.is_typing,
                 UserTypingStatus.last_typed_at >= thirty_seconds_ago,
             )
             .all()

@@ -49,7 +49,7 @@ class AdviceCRUD:
                         exists().where(
                             and_(
                                 Advice.plant_care_id == PlantCare.id,
-                                Advice.is_current_version == True,
+                                Advice.is_current_version,
                             )
                         )
                     ),
@@ -125,7 +125,7 @@ class AdviceCRUD:
             .join(Plant, PlantCare.plant_id == Plant.id)
             .join(User, PlantCare.owner_id == User.id)
             .join(Advice, PlantCare.id == Advice.plant_care_id)
-            .filter(Advice.is_current_version == True)
+            .filter(Advice.is_current_version)
         )
 
         if botanist_id:
@@ -151,7 +151,7 @@ class AdviceCRUD:
                 .filter(
                     and_(
                         Advice.plant_care_id == plant_care_id,
-                        Advice.is_current_version == True,
+                        Advice.is_current_version,
                     )
                 )
                 .first()
@@ -225,7 +225,7 @@ class AdviceCRUD:
                 .filter(
                     and_(
                         Advice.plant_care_id == advice_data.plant_care_id,
-                        Advice.is_current_version == True,
+                        Advice.is_current_version,
                     )
                 )
                 .first()
@@ -282,7 +282,7 @@ class AdviceCRUD:
             .filter(
                 and_(
                     Advice.id == advice_id,
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                     Advice.botanist_id == botanist_id,
                 )
             )
@@ -329,7 +329,7 @@ class AdviceCRUD:
             .filter(
                 and_(
                     Advice.id == advice_id,
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                     Advice.botanist_id
                     != validator_id,  # Ne peut pas valider ses propres conseils
                 )
@@ -359,7 +359,7 @@ class AdviceCRUD:
         # Gardes à examiner (sans avis actuel)
         advised_plant_cares = (
             db.query(Advice.plant_care_id)
-            .filter(Advice.is_current_version == True)
+            .filter(Advice.is_current_version)
             .subquery()
         )
 
@@ -376,7 +376,7 @@ class AdviceCRUD:
 
         # Gardes avec avis
         reviewed_count = (
-            db.query(Advice).filter(Advice.is_current_version == True).count()
+            db.query(Advice).filter(Advice.is_current_version).count()
         )
 
         # Compteurs par priorité
@@ -384,7 +384,7 @@ class AdviceCRUD:
             db.query(Advice)
             .filter(
                 and_(
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                     Advice.priority == AdvicePriority.URGENT,
                 )
             )
@@ -395,7 +395,7 @@ class AdviceCRUD:
             db.query(Advice)
             .filter(
                 and_(
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                     Advice.priority == AdvicePriority.FOLLOW_UP,
                 )
             )
@@ -407,7 +407,7 @@ class AdviceCRUD:
             db.query(Advice)
             .filter(
                 and_(
-                    Advice.is_current_version == True,
+                    Advice.is_current_version,
                     Advice.validation_status == ValidationStatus.PENDING,
                 )
             )
@@ -425,7 +425,7 @@ class AdviceCRUD:
                 .filter(
                     and_(
                         Advice.botanist_id == botanist_id,
-                        Advice.is_current_version == True,
+                        Advice.is_current_version,
                     )
                 )
                 .count()
@@ -437,7 +437,7 @@ class AdviceCRUD:
                 .filter(
                     and_(
                         Advice.botanist_id == botanist_id,
-                        Advice.is_current_version == True,
+                        Advice.is_current_version,
                         Advice.validation_status == ValidationStatus.VALIDATED,
                     )
                 )

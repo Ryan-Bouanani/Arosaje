@@ -2,6 +2,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 from utils.database import get_db
 from utils.security import create_access_token, get_current_user
@@ -202,8 +203,6 @@ async def update_profile(
     return updated_user
 
 
-from pydantic import BaseModel
-
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
@@ -232,6 +231,6 @@ async def change_password(
     # Mettre à jour le mot de passe
     hashed_password = get_password_hash(request.new_password)
     user_update = UserUpdate(password=hashed_password)
-    updated_user = user_crud.update(db, db_obj=current_user, obj_in=user_update)
+    user_crud.update(db, db_obj=current_user, obj_in=user_update)
 
     return {"message": "Mot de passe mis à jour avec succès"}

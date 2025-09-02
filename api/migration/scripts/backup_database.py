@@ -51,7 +51,7 @@ def create_backup():
         ]
 
         # Exécuter la commande
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        subprocess.run(cmd, capture_output=True, text=True, check=True)
 
         print("✅ Backup créé avec succès!")
         print(

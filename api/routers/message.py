@@ -320,7 +320,7 @@ async def create_botanist_conversation(
     )
 
     # Créer un message automatique d'introduction avec le nom de la plante
-    intro_message = message.create_message(
+    message.create_message(
         db=db,
         message=MessageCreate(
             conversation_id=conversation.id,

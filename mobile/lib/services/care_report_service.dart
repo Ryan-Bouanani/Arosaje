@@ -188,7 +188,7 @@ class CareReportService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.post(
-      Uri.parse('$baseUrl/botanist-advice/'),
+      Uri.parse('$baseUrl/botanist-advice/botanist-report-advice/'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ class CareReportService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
-      Uri.parse('$baseUrl/botanist-advice/$adviceId'),
+      Uri.parse('$baseUrl/botanist-advice/botanist-report-advice/$adviceId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

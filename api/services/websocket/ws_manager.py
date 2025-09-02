@@ -110,7 +110,6 @@ class ConnectionManager:
                 db=db, message=message_create, sender_id=user_id
             )
 
-            print(f"Message created successfully: id={new_message.id}")
 
             # Récupérer l'expéditeur pour son nom
             sender = user_crud.get(db, id=user_id)
@@ -132,7 +131,6 @@ class ConnectionManager:
                 },
             }
 
-            print(f"Broadcasting message to conversation {conversation_id}")
 
             # Envoyer le message à tous les participants connectés (y compris l'expéditeur)
             await self.broadcast_to_conversation(message_data, conversation_id)

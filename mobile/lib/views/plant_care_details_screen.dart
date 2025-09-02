@@ -8,9 +8,9 @@ import 'package:mobile/services/message_service.dart';
 import 'package:mobile/services/api_service.dart';
 import 'package:mobile/services/care_report_service.dart';
 import 'package:mobile/services/user_service.dart';
-import 'package:mobile/services/plant_care_advice_service.dart';
+import 'package:mobile/services/unified_advice_service.dart';
 import 'package:mobile/services/plant_service.dart';
-import 'package:mobile/models/plant_care_advice.dart';
+import 'package:mobile/models/advice.dart';
 import 'package:mobile/widgets/image_zoom_dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -35,11 +35,11 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   late final PlantCareService _plantCareService;
   late final CareReportService _careReportService;
   late final UserService _userService;
-  late final PlantCareAdviceService _plantCareAdviceService;
+  late final UnifiedAdviceService _plantCareAdviceService;
   late final PlantService _plantService;
   Map<String, dynamic>? _careDetails;
   List<Map<String, dynamic>> _careReports = [];
-  List<PlantCareAdvice> _plantAdvices = [];
+  List<Advice> _plantAdvices = [];
   bool _isLoading = true;
   bool _isLoadingReports = false;
   bool _isLoadingAdvices = false;
@@ -71,7 +71,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       _plantCareService = await PlantCareService.init();
       _careReportService = await CareReportService.init();
       _userService = UserService(ApiService());
-      _plantCareAdviceService = PlantCareAdviceService();
+      _plantCareAdviceService = await UnifiedAdviceService.init();
       _plantService = await PlantService.init();
       
       // Récupérer l'ID de l'utilisateur actuel
@@ -607,7 +607,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     }
   }
 
-  Widget _buildAdviceCard(PlantCareAdvice advice) {
+  Widget _buildAdviceCard(Advice advice) {
     final createdAt = advice.createdAt;
     final priority = advice.priority;
     final botanistName = advice.botanist?.fullName ?? 'Botaniste inconnu';
@@ -1472,7 +1472,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
 
     // Gardien qui peut prendre la garde
     if (_careDetails!['status']?.toString().toLowerCase() == 'pending' && 
-        _careDetails!['caretaker_id'] != _currentUserId) {
+        _careDetails!['caretaker_id'] != _currentUserId &&
+        !_isCurrentUserOwner()) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(

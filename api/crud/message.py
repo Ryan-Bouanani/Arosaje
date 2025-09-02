@@ -50,9 +50,6 @@ class CRUDMessage:
     ) -> List[Dict[str, Any]]:
         """Récupère toutes les conversations d'un utilisateur avec leurs détails"""
         try:
-            print(
-                f"DEBUG: Getting conversations for user_id={user_id}, skip={skip}, limit={limit}"
-            )
 
             # Récupérer les conversations de l'utilisateur
             conversations = (
@@ -65,7 +62,6 @@ class CRUDMessage:
                 .all()
             )
 
-            print(f"DEBUG: Found {len(conversations)} conversations for user {user_id}")
 
             result = []
             for i, conversation in enumerate(conversations):
@@ -195,7 +191,6 @@ class CRUDMessage:
 
                 result.append(conv_dict)
 
-            print(f"DEBUG: Returning {len(result)} conversations")
             if result and len(result) > 0 and result[0] is not None:
                 first_conv = result[0]
                 if isinstance(first_conv, dict) and "id" in first_conv:

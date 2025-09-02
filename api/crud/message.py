@@ -62,7 +62,6 @@ class CRUDMessage:
                 .all()
             )
 
-
             result = []
             for i, conversation in enumerate(conversations):
                 print(

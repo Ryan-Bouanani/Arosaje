@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 from models.user import User
 from models.plant_care import PlantCare
-from models.plant_care_advice import PlantCareAdvice, AdvicePriority, ValidationStatus
+from models.advice import Advice, AdvicePriority, ValidationStatus
 from services.email.email_service import EmailService
 import asyncio
 
@@ -80,9 +80,9 @@ class NotificationService:
             )
             
             # Marquer comme notifié dans la base
-            advice = db.query(PlantCareAdvice).filter(
-                PlantCareAdvice.plant_care_id == plant_care_id,
-                PlantCareAdvice.is_current_version == True
+            advice = db.query(Advice).filter(
+                Advice.plant_care_id == plant_care_id,
+                Advice.is_current_version == True
             ).first()
             if advice:
                 advice.owner_notified = True
@@ -99,7 +99,7 @@ class NotificationService:
     ):
         """Notifier le propriétaire qu'un conseil a été mis à jour"""
         
-        advice = db.query(PlantCareAdvice).filter(PlantCareAdvice.id == advice_id).first()
+        advice = db.query(Advice).filter(Advice.id == advice_id).first()
         if not advice:
             return
         
@@ -153,7 +153,7 @@ class NotificationService:
     ):
         """Notifier le botaniste auteur qu'un collègue a validé son conseil"""
         
-        advice = db.query(PlantCareAdvice).filter(PlantCareAdvice.id == advice_id).first()
+        advice = db.query(Advice).filter(Advice.id == advice_id).first()
         if not advice:
             return
         

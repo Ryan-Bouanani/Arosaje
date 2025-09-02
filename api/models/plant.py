@@ -12,7 +12,6 @@ class Plant(Base):
 
     # Relations
     owner = relationship("User", back_populates="owned_plants")
-    advices = relationship("Advice", back_populates="plant", cascade="all, delete-orphan")
     photos = relationship("Photo", back_populates="plant", cascade="all, delete-orphan")
 
     # Relations avec les gardes

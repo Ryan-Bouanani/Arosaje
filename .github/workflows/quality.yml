@@ -1,0 +1,106 @@
+name: Quality
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    name: Code Quality Check
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        
+    - name: Install dependencies
+      run: |
+        cd api
+        python -m pip install --upgrade pip
+        pip install ruff black
+        pip install -r requirements.txt
+        
+    - name: Run ruff (linting)
+      run: |
+        cd api
+        ruff check .
+        
+    - name: Run black (formatting check)
+      run: |
+        cd api
+        black --check .
+
+  # Tests d'intégration (commenté pour éviter faux rouges sans API)
+  # integration-tests:
+  #   runs-on: ubuntu-latest
+  #   name: Integration Tests
+  #   
+  #   services:
+  #     postgres:
+  #       image: postgres:15
+  #       env:
+  #         POSTGRES_PASSWORD: epsi
+  #         POSTGRES_USER: arosaje
+  #         POSTGRES_DB: arosaje_db
+  #       options: >-
+  #         --health-cmd pg_isready
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #       ports:
+  #         - 5432:5432
+  #         
+  #     redis:
+  #       image: redis:7-alpine
+  #       options: >-
+  #         --health-cmd "redis-cli ping"
+  #         --health-interval 10s
+  #         --health-timeout 5s
+  #         --health-retries 5
+  #       ports:
+  #         - 6379:6379
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #   
+  #   - name: Set up Python 3.11
+  #     uses: actions/setup-python@v4
+  #     with:
+  #       python-version: 3.11
+  #       
+  #   - name: Install dependencies
+  #     run: |
+  #       cd api
+  #       python -m pip install --upgrade pip
+  #       pip install -r requirements.txt
+  #       pip install requests pytest
+  #       
+  #   - name: Set up environment
+  #     run: |
+  #       mkdir -p env
+  #       echo "DATABASE_URL=postgresql://arosaje:epsi@localhost:5432/arosaje_db" > env/.env.api
+  #       echo "REDIS_PASSWORD=testpassword" >> env/.env.api
+  #       echo "JWT_SECRET_KEY=test-secret-key-for-ci" >> env/.env.api
+  #       
+  #   - name: Run database migrations
+  #     run: |
+  #       cd api
+  #       alembic upgrade head
+  #       
+  #   - name: Start API server
+  #     run: |
+  #       cd api
+  #       uvicorn main:app --host 0.0.0.0 --port 8000 &
+  #       sleep 10  # Attendre que l'API démarre
+  #       
+  #   - name: Run integration tests
+  #     run: |
+  #       cd api
+  #       export API_URL=http://localhost:8000
+  #       pytest tests/integration/test_api_min.py -v

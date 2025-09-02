@@ -358,9 +358,7 @@ class AdviceCRUD:
 
         # Gardes à examiner (sans avis actuel)
         advised_plant_cares = (
-            db.query(Advice.plant_care_id)
-            .filter(Advice.is_current_version)
-            .subquery()
+            db.query(Advice.plant_care_id).filter(Advice.is_current_version).subquery()
         )
 
         to_review_count = (
@@ -375,9 +373,7 @@ class AdviceCRUD:
         )
 
         # Gardes avec avis
-        reviewed_count = (
-            db.query(Advice).filter(Advice.is_current_version).count()
-        )
+        reviewed_count = db.query(Advice).filter(Advice.is_current_version).count()
 
         # Compteurs par priorité
         urgent_count = (

@@ -3,13 +3,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from utils.database import Base, engine, SessionLocal
 from routers import auth, plant, monitoring, photo, plant_care, advice, message, ws, admin, metrics
-from routers import care_report, botanist_report_advice, geocoding, plant_care_advice
+from routers import care_report, botanist_report_advice, geocoding
 import os
 from scripts.init_data import init_data
 from models.user import User
 
 from utils.settings import CORS_ALLOW_ORIGINS, CORS_ALLOW_METHODS, CORS_ALLOW_HEADERS, PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
+from services.rgpd_cleanup_service import RGPDCleanupService
 
 app = FastAPI(
     title=PROJECT_NAME,
@@ -101,10 +102,13 @@ app.include_router(message.router)
 app.include_router(ws.router)
 app.include_router(admin.router)
 app.include_router(metrics.router)
-app.include_router(care_report.router, prefix="/care-reports", tags=["care-reports"])
+app.include_router(care_report.router)
 app.include_router(botanist_report_advice.router, prefix="/botanist-advice", tags=["botanist-advice"])
-app.include_router(plant_care_advice.router)
 app.include_router(geocoding.router)
+
+# Démarrage du service RGPD
+rgpd_service = RGPDCleanupService()
+rgpd_service.start()
 
 @app.get("/")
 def read_root():

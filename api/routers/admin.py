@@ -8,7 +8,8 @@ from schemas.user import User as UserSchema
 from crud.user import user as user_crud
 from services.email.email_service import EmailService
 from models.plant_care import PlantCare
-from models.plant_care_advice import PlantCareAdvice
+from services.rgpd_cleanup_service import RGPDCleanupService
+from models.advice import Advice
 
 router = APIRouter(
     prefix="/admin",
@@ -133,7 +134,7 @@ async def get_admin_stats(
         ).count()
         
         # Compter les conseils donnés
-        total_advices = db.query(PlantCareAdvice).count()
+        total_advices = db.query(Advice).count()
         
         return {
             "total_users": total_users,
@@ -146,6 +147,19 @@ async def get_admin_stats(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de la récupération des statistiques: {str(e)}"
         )
+
+@router.post("/rgpd/cleanup")
+async def manual_rgpd_cleanup(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Nettoyage manuel RGPD pour démonstration/tests"""
+    if current_user.role != UserRole.ADMIN:
+        raise HTTPException(status_code=403, detail="Accès admin requis")
+    
+    cleanup_service = RGPDCleanupService()
+    result = cleanup_service.manual_cleanup()
+    return {"message": "Nettoyage RGPD exécuté", "details": result}
 
 @router.get("/verified-users", response_model=List[UserSchema])
 async def get_verified_users(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../models/plant_care_advice.dart';
+import '../models/advice.dart';
 
 class AdviceDetailsScreen extends StatelessWidget {
   final PlantCareWithAdvice plantCare;
@@ -41,15 +41,31 @@ class AdviceDetailsScreen extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
                       color: Colors.green.shade100,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
-                      Icons.eco,
-                      color: Colors.green.shade700,
-                      size: 32,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: plantCare.plantImageUrl != null 
+                          ? Image.network(
+                              'http://localhost:8000/${plantCare.plantImageUrl!}',
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.eco,
+                                  color: Colors.green.shade700,
+                                  size: 32,
+                                );
+                              },
+                            )
+                          : Icon(
+                              Icons.eco,
+                              color: Colors.green.shade700,
+                              size: 32,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 16),

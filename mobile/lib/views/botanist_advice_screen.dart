@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/services/plant_care_advice_service.dart';
+import 'package:mobile/services/unified_advice_service.dart';
 import 'package:mobile/services/api_service.dart';
-import 'package:mobile/models/plant_care_advice.dart';
+import 'package:mobile/models/advice.dart';
 import 'package:mobile/views/create_advice_screen.dart';
 import 'package:mobile/views/validate_advice_screen.dart';
 
@@ -14,7 +14,7 @@ class BotanistAdviceScreen extends StatefulWidget {
 
 class _BotanistAdviceScreenState extends State<BotanistAdviceScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late final PlantCareAdviceService _plantCareAdviceService;
+  late final UnifiedAdviceService _plantCareAdviceService;
   late final ApiService _apiService;
   
   List<PlantCareWithAdvice> _myAdvices = [];
@@ -42,7 +42,7 @@ class _BotanistAdviceScreenState extends State<BotanistAdviceScreen> with Single
 
   Future<void> _initializeServices() async {
     try {
-      _plantCareAdviceService = PlantCareAdviceService();
+      _plantCareAdviceService = await UnifiedAdviceService.init();
       _apiService = ApiService();
       await _loadData();
     } catch (e) {
@@ -132,7 +132,7 @@ class _BotanistAdviceScreenState extends State<BotanistAdviceScreen> with Single
     );
   }
 
-  void _navigateToValidateAdvice(PlantCareWithAdvice plantCare, PlantCareAdvice advice) {
+  void _navigateToValidateAdvice(PlantCareWithAdvice plantCare, Advice advice) {
     Navigator.push(
       context,
       MaterialPageRoute(

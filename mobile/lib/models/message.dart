@@ -6,6 +6,7 @@ class Message {
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isRead;
+  final String? tempId; // ID temporaire pour l'optimistic UI
 
   Message({
     required this.id,
@@ -15,6 +16,7 @@ class Message {
     required this.createdAt,
     required this.updatedAt,
     required this.isRead,
+    this.tempId,
   });
 
   factory Message.fromJson(Map<String, dynamic> json) {
@@ -41,5 +43,9 @@ class Message {
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
         'is_read': isRead,
+        'temp_id': tempId,
       };
+  
+  // Vérifier si c'est un message temporaire
+  bool get isTemporary => tempId != null;
 } 

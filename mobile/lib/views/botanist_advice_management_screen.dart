@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/plant_care_advice_provider.dart';
-import '../widgets/plant_care_advice_card.dart';
-import '../models/plant_care_advice.dart';
+import '../providers/advice_provider.dart';
+import '../widgets/advice_card.dart';
+import '../models/advice.dart';
 import 'base_page_botaniste.dart';
 
 class BotanistAdviceManagementScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
   
   void _loadInitialData() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = Provider.of<PlantCareAdviceProvider>(context, listen: false);
+      final provider = Provider.of<AdviceProvider>(context, listen: false);
       provider.loadCurrentBotanistId();
       provider.loadStats();
       provider.loadPlantCaresToReview();
@@ -66,7 +66,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
           Container(
             color: Colors.green.shade50,
             padding: const EdgeInsets.all(16.0),
-            child: Consumer<PlantCareAdviceProvider>(
+            child: Consumer<AdviceProvider>(
               builder: (context, provider, child) {
                 final stats = provider.stats;
                 if (stats == null) {
@@ -203,7 +203,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
   }
 
   Widget _buildToReviewTab() {
-    return Consumer<PlantCareAdviceProvider>(
+    return Consumer<AdviceProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingToReview) {
           return const Center(child: CircularProgressIndicator());
@@ -247,7 +247,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
             itemCount: provider.plantCaresToReview.length,
             itemBuilder: (context, index) {
               final plantCare = provider.plantCaresToReview[index];
-              return PlantCareAdviceCard(
+              return AdviceCard(
                 plantCare: plantCare,
                 currentBotanistId: provider.currentBotanistId,
                 onAdviceGiven: () async {
@@ -264,7 +264,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
   }
 
   Widget _buildReviewedTab() {
-    return Consumer<PlantCareAdviceProvider>(
+    return Consumer<AdviceProvider>(
       builder: (context, provider, child) {
         if (provider.isLoadingReviewed) {
           return const Center(child: CircularProgressIndicator());
@@ -349,7 +349,7 @@ class _BotanistAdviceManagementScreenState extends State<BotanistAdviceManagemen
                   itemCount: provider.plantCaresWithAdvice.length,
                   itemBuilder: (context, index) {
                     final plantCare = provider.plantCaresWithAdvice[index];
-                    return PlantCareAdviceCard(
+                    return AdviceCard(
                       plantCare: plantCare,
                       showAdviceDetails: true,
                       showEditButton: true,

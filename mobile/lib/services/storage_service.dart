@@ -6,11 +6,20 @@ class StorageService {
 
   final SharedPreferences _prefs;
 
-  StorageService(this._prefs);
+  StorageService._(this._prefs);
 
+  static StorageService? _instance;
+  
   static Future<StorageService> init() async {
-    final prefs = await SharedPreferences.getInstance();
-    return StorageService(prefs);
+    if (_instance == null) {
+      final prefs = await SharedPreferences.getInstance();
+      _instance = StorageService._(prefs);
+    }
+    return _instance!;
+  }
+  
+  static Future<StorageService> getInstance() async {
+    return _instance ?? await init();
   }
 
   Future<void> saveToken(String token) async {

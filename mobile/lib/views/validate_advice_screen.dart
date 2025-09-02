@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../models/plant_care_advice.dart';
-import '../providers/plant_care_advice_provider.dart';
+import '../models/advice.dart';
+import '../providers/advice_provider.dart';
 
 class ValidateAdviceScreen extends StatefulWidget {
-  final PlantCareAdvice advice;
+  final Advice advice;
   final PlantCareWithAdvice plantCare;
   final VoidCallback? onValidated;
 
@@ -444,7 +444,7 @@ class _ValidateAdviceScreenState extends State<ValidateAdviceScreen> {
       _isSubmitting = true;
     });
 
-    final provider = Provider.of<PlantCareAdviceProvider>(context, listen: false);
+    final provider = Provider.of<AdviceProvider>(context, listen: false);
     final result = await provider.validateAdvice(
       widget.advice.id,
       _selectedStatus!,

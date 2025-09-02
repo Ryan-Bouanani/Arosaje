@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import 'storage_service.dart';
 import 'api_service.dart';
@@ -29,8 +28,7 @@ class AuthService {
   Future<void> _initializeService() async {
     if (_isInitialized) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    _storageService = StorageService(prefs);
+    _storageService = await StorageService.init();
 
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,

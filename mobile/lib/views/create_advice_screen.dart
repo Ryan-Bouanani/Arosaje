@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models/plant_care_advice.dart';
-import '../providers/plant_care_advice_provider.dart';
+import '../models/advice.dart';
+import '../providers/advice_provider.dart';
 
 class CreateAdviceScreen extends StatefulWidget {
   final PlantCareWithAdvice plantCare;
-  final PlantCareAdvice? existingAdvice;
+  final Advice? existingAdvice;
   final bool isEditing;
   final VoidCallback? onAdviceCreated;
 
@@ -66,15 +66,31 @@ class _CreateAdviceScreenState extends State<CreateAdviceScreen> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    Icons.eco,
-                    color: Colors.green.shade700,
-                    size: 32,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: widget.plantCare.plantImageUrl != null 
+                        ? Image.network(
+                            'http://localhost:8000/${widget.plantCare.plantImageUrl!}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Icon(
+                                Icons.eco,
+                                color: Colors.green.shade700,
+                                size: 32,
+                              );
+                            },
+                          )
+                        : Icon(
+                            Icons.eco,
+                            color: Colors.green.shade700,
+                            size: 32,
+                          ),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -421,40 +437,16 @@ class _CreateAdviceScreenState extends State<CreateAdviceScreen> {
       _isSubmitting = true;
     });
 
-    PlantCareAdviceCreate adviceData;
-    try {
-      adviceData = PlantCareAdviceCreate(
-        plantCareId: widget.plantCare.id!,
-        title: _titleController.text.trim(),
-        content: _contentController.text.trim(),
-        priority: _selectedPriority,
-      );
-    } catch (e) {
-      setState(() {
-        _isSubmitting = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error, color: Colors.white),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text('Erreur lors de la création du conseil: $e'),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    final provider = Provider.of<PlantCareAdviceProvider>(context, listen: false);
+    final provider = Provider.of<AdviceProvider>(context, listen: false);
     
     // Pour l'édition et la création, on utilise la même méthode createAdvice 
     // car l'API backend gère automatiquement la création de nouvelles versions
-    final advice = await provider.createAdvice(adviceData);
+    final advice = await provider.createAdvice(
+      plantCareId: widget.plantCare.id!,
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
+      priority: _selectedPriority,
+    );
 
     setState(() {
       _isSubmitting = false;

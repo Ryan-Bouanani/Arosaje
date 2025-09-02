@@ -1,5 +1,6 @@
 aiohttp==3.9.1
 aiosignal==1.4.0
+APScheduler==3.10.4
 aiosmtplib==3.0.2
 alembic==1.14.0
 annotated-types==0.7.0

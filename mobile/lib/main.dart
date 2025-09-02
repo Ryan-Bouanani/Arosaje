@@ -8,7 +8,7 @@ import 'views/auth_wrapper.dart';
 import 'services/api_service.dart';
 import 'services/message_service.dart';
 import 'providers/message_provider.dart';
-import 'providers/plant_care_advice_provider.dart';
+import 'providers/advice_provider.dart';
 
 Future<void> main() async {
   try {
@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
           create: (_) => MessageProvider(messageService),
         ),
         ChangeNotifierProvider(
-          create: (_) => PlantCareAdviceProvider(),
+          create: (_) => AdviceProvider(),
         ),
       ],
       child: MaterialApp(

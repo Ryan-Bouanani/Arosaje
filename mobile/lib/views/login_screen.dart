@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/views/register_screen.dart';
 import 'package:mobile/services/auth_service.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/storage_service.dart';
 import 'home_after_login_screen.dart';
 import 'admin_dashboard.dart';
@@ -45,10 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _initializeStorage() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      setState(() {
-        _storageService = StorageService(prefs);
-      });
+      _storageService = await StorageService.init();
+      setState(() {});
     } catch (e) {
       print('Erreur lors de l\'initialisation du stockage: $e');
     }

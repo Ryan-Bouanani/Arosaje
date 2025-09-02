@@ -3,12 +3,12 @@ import 'package:mobile/widgets/logout_dialog.dart';
 import 'package:mobile/views/login_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile/services/auth_service.dart';
-import 'package:mobile/services/plant_care_advice_service.dart';
+import 'package:mobile/services/unified_advice_service.dart';
 import 'package:mobile/services/profile_service.dart';
 import 'package:mobile/models/user.dart';
 import 'package:mobile/services/storage_service.dart';
 import 'base_page_botaniste.dart';
-import '../models/plant_care_advice.dart';
+import '../models/advice.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile/providers/message_provider.dart';
 
@@ -24,12 +24,17 @@ class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
   bool _isLoading = true;
   String? _error;
   final ProfileService _profileService = ProfileService();
-  final PlantCareAdviceService _plantCareAdviceService = PlantCareAdviceService();
+  late final UnifiedAdviceService _plantCareAdviceService;
   AdviceStats? _stats;
 
   @override
   void initState() {
     super.initState();
+    _initializeServices();
+  }
+
+  Future<void> _initializeServices() async {
+    _plantCareAdviceService = await UnifiedAdviceService.init();
     _loadUserData();
     _loadBotanistStats();
   }

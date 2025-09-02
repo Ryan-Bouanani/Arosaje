@@ -101,6 +101,12 @@ class _ChatScreenState extends State<ChatScreen> {
           .sendMessage(widget.conversationId, _messageController.text.trim());
       _messageController.clear();
       
+      // Fix: Envoyer explicitement is_typing = false après clear()
+      // car clear() ne déclenche pas onChanged automatiquement
+      context
+          .read<MessageProvider>()
+          .sendTypingStatus(widget.conversationId, false);
+      
       // Scroll vers le bas après l'envoi d'un message
       WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
     }

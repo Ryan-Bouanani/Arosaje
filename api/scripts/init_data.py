@@ -50,6 +50,28 @@ def init_data():
         db.add(test_botanist)
         db.flush()  # Pour obtenir l'ID du botanist
 
+        gardien = User(
+            email="gardien@arosaje.fr",
+            password=get_password_hash("epsi691"),
+            nom="Gardien",
+            prenom="Test",
+            role=UserRole.USER,
+            is_verified=True,
+        )
+        db.add(gardien)
+        db.flush()  # Pour obtenir l'ID du gardien
+
+        botanist2 = User(
+            email="botanist2@arosaje.fr",
+            password=get_password_hash("epsi691"),
+            nom="Botanist2",
+            prenom="Test",
+            role=UserRole.BOTANIST,
+            is_verified=True,
+        )
+        db.add(botanist2)
+        db.flush()  # Pour obtenir l'ID du botanist2
+
         # Créer les plantes de test
         plantes = [
             Plant(
@@ -94,51 +116,9 @@ def init_data():
 
         db.flush()  # Pour obtenir les IDs des plantes
 
-        # Créer quelques PlantCare de test
-        from models.plant_care import PlantCare, CareStatus
-        from datetime import datetime, timedelta
-
-        plant_care_1 = PlantCare(
-            plant_id=plantes[0].id,  # Rose
-            owner_id=test_user.id,
-            start_date=datetime.now() + timedelta(days=1),
-            end_date=datetime.now() + timedelta(days=8),
-            care_instructions="Arroser tous les 2 jours, exposition ensoleillée",
-            localisation="15 rue de la Paix, 75001 Paris",
-            status=CareStatus.PENDING,
-            latitude=48.8566,
-            longitude=2.3522,
-        )
-
-        plant_care_2 = PlantCare(
-            plant_id=plantes[1].id,  # Orchidée
-            owner_id=test_user.id,
-            start_date=datetime.now() + timedelta(days=3),
-            end_date=datetime.now() + timedelta(days=10),
-            care_instructions="Arrosage modéré, éviter l'eau stagnante",
-            localisation="10 avenue des Champs, 75008 Paris",
-            status=CareStatus.ACCEPTED,
-            latitude=48.8698,
-            longitude=2.3080,
-        )
-
-        plant_care_3 = PlantCare(
-            plant_id=plantes[2].id,  # Tournesol
-            owner_id=test_user.id,
-            start_date=datetime.now() - timedelta(days=2),
-            end_date=datetime.now() + timedelta(days=5),
-            care_instructions="Beaucoup de soleil et d'eau",
-            localisation="25 boulevard Saint-Michel, 75005 Paris",
-            status=CareStatus.IN_PROGRESS,
-            latitude=48.8534,
-            longitude=2.3488,
-        )
-
-        db.add_all([plant_care_1, plant_care_2, plant_care_3])
-
         db.commit()
         print(
-            "✅ Données de base créées avec succès (utilisateurs, plantes et gardes de test)"
+            "✅ Données de base créées avec succès (utilisateurs et plantes)"
         )
 
     except Exception as e:

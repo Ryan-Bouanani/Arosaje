@@ -68,10 +68,27 @@ class CareReportService {
     if (kIsWeb) {
       // Pour Flutter Web, imageData devrait être un Uint8List
       if (imageData is Uint8List) {
+        // Détecter le format d'image basé sur les magic bytes
+        String detectedExtension = '.jpg'; // Par défaut
+        if (imageData.length >= 8) {
+          // PNG signature: 89 50 4E 47 0D 0A 1A 0A
+          if (imageData[0] == 0x89 && imageData[1] == 0x50 && imageData[2] == 0x4E && imageData[3] == 0x47) {
+            detectedExtension = '.png';
+          }
+          // JPEG signature: FF D8 FF
+          else if (imageData[0] == 0xFF && imageData[1] == 0xD8 && imageData[2] == 0xFF) {
+            detectedExtension = '.jpg';
+          }
+          // GIF signature: 47 49 46 38
+          else if (imageData[0] == 0x47 && imageData[1] == 0x49 && imageData[2] == 0x46 && imageData[3] == 0x38) {
+            detectedExtension = '.gif';
+          }
+        }
+        
         request.files.add(http.MultipartFile.fromBytes(
           'photo',
           imageData,
-          filename: 'photo.jpg',
+          filename: 'photo$detectedExtension',
         ));
       } else {
         throw Exception('Format d\'image non supporté pour le web');
@@ -188,7 +205,7 @@ class CareReportService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.post(
-      Uri.parse('$baseUrl/botanist-advice/botanist-report-advice/'),
+      Uri.parse('$baseUrl/botanist-report-advice/'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -211,7 +228,7 @@ class CareReportService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
-      Uri.parse('$baseUrl/botanist-advice/botanist-report-advice/$adviceId'),
+      Uri.parse('$baseUrl/botanist-report-advice/$adviceId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

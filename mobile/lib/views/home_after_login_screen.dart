@@ -158,6 +158,10 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
     }
   }
 
+  Future<void> _refreshData() async {
+    await _loadPendingCares();
+  }
+
   // Convertir les gardes API au format attendu par la carte
   List<Map<String, dynamic>> _convertCaresToMapFormat(List<Map<String, dynamic>> cares) {
     return cares.map((care) {
@@ -449,10 +453,10 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(context);
                     // Naviguer vers les détails de la garde
-                    Navigator.push(
+                    final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PlantCareDetailsScreen(
@@ -461,6 +465,11 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                         ),
                       ),
                     );
+                    
+                    // Si la garde a été acceptée, rafraîchir la liste
+                    if (result == true) {
+                      await _refreshData();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,

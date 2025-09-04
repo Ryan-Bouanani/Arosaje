@@ -270,6 +270,44 @@ async def get_advice_by_id(
     return advice
 
 
+@router.get("/plant-care/{plant_care_id}", response_model=List[Advice])
+async def get_plant_care_advice(
+    plant_care_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Récupérer les conseils actuels pour une garde (endpoint principal)"""
+
+    # Vérifier que la garde existe
+    from models.plant_care import PlantCare
+
+    plant_care_obj = db.query(PlantCare).filter(PlantCare.id == plant_care_id).first()
+    if not plant_care_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Garde de plante non trouvée"
+        )
+
+    # Vérifier que l'utilisateur a le droit de voir les conseils de cette garde
+    # Les conseils sont accessibles à :
+    # 1. Tous les botanistes (peuvent voir tous les conseils)
+    # 2. Propriétaire et gardien de la garde (peuvent voir les conseils de leur garde)
+    # 3. Autres utilisateurs peuvent voir uniquement les conseils validés (publiques)
+    
+    is_botanist = current_user.role == UserRole.BOTANIST
+    is_owner = current_user.id == plant_care_obj.owner_id
+    is_caretaker = current_user.id == plant_care_obj.caretaker_id
+    
+    # Si l'utilisateur n'est ni botaniste, ni propriétaire, ni gardien,
+    # on retourne seulement les conseils validés
+    if not (is_botanist or is_owner or is_caretaker):
+        # Récupérer seulement les conseils validés pour les autres utilisateurs
+        from models.advice import ValidationStatus
+        return advice.get_current_plant_care_advice(db, plant_care_id, validation_status=ValidationStatus.VALIDATED)
+    
+    # Pour les botanistes, propriétaires et gardiens : tous les conseils
+    return advice.get_current_plant_care_advice(db, plant_care_id)
+
+
 @router.get("/plant-care/{plant_care_id}/history", response_model=List[Advice])
 async def get_plant_care_advice_history(
     plant_care_id: int,

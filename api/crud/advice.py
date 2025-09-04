@@ -478,7 +478,7 @@ class AdviceCRUD:
         )
 
     def get_current_plant_care_advice(
-        self, db: Session, plant_care_id: int
+        self, db: Session, plant_care_id: int, validation_status: Optional[ValidationStatus] = None
     ) -> List[Advice]:
         """Récupérer seulement la dernière version des conseils pour une garde (par botaniste)"""
         # Sous-requête pour trouver la date de création la plus récente par botaniste
@@ -492,7 +492,7 @@ class AdviceCRUD:
         )
 
         # Requête principale pour récupérer les conseils les plus récents
-        return (
+        query = (
             db.query(Advice)
             .options(joinedload(Advice.botanist), joinedload(Advice.validator))
             .join(
@@ -503,9 +503,13 @@ class AdviceCRUD:
                 ),
             )
             .filter(Advice.plant_care_id == plant_care_id)
-            .order_by(desc(Advice.created_at))
-            .all()
         )
+        
+        # Appliquer le filtre de validation si spécifié
+        if validation_status:
+            query = query.filter(Advice.validation_status == validation_status)
+            
+        return query.order_by(desc(Advice.created_at)).all()
 
 
 # Instance globale

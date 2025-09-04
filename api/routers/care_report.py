@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.image_handler import ImageHandler
 from models.user import User, UserRole
 from crud import care_report as crud_care_report
 from models.care_report import CareReport as CareReportModel
@@ -54,21 +55,29 @@ async def upload_care_report_photo(
     if not report:
         raise HTTPException(status_code=404, detail="Rapport non trouvé")
 
-    # Créer le dossier uploads s'il n'existe pas
-    uploads_dir = "uploads/care_reports"
-    os.makedirs(uploads_dir, exist_ok=True)
-
-    # Générer un nom de fichier unique
-    file_extension = photo.filename.split(".")[-1] if "." in photo.filename else ""
-    filename = f"{uuid.uuid4()}.{file_extension}"
-    file_path = os.path.join(uploads_dir, filename)
-
-    # Sauvegarder le fichier
-    with open(file_path, "wb") as buffer:
-        buffer.write(await photo.read())
-
-    # Construire l'URL HTTP accessible
-    photo_url = f"/uploads/care_reports/{filename}"
+    # Utiliser ImageHandler pour une validation et sauvegarde sécurisées
+    try:
+        photo_size = getattr(photo, 'size', 'Unknown')
+        print(f"DEBUG: Upload photo - Filename: {photo.filename}, Content-Type: {photo.content_type}, Size: {photo_size}")
+        
+        # Debug: Lire les premiers bytes pour vérifier la signature
+        await photo.seek(0)  # Reset position
+        first_bytes = await photo.read(16)
+        await photo.seek(0)  # Reset position pour save_image
+        print(f"DEBUG: First 16 bytes: {first_bytes}")
+        print(f"DEBUG: First 16 bytes hex: {first_bytes.hex()}")
+        
+        filename, url = await ImageHandler.save_image(photo, "persisted_care_report")
+        
+        # Construire l'URL pour care reports (format spécifique)
+        photo_url = f"/assets/persisted_img/{filename}"
+        print(f"DEBUG: Photo upload successful - URL: {photo_url}")
+        
+    except Exception as e:
+        print(f"DEBUG: Photo upload failed - Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=400, detail=f"Erreur lors de l'upload: {str(e)}")
 
     # Mettre à jour le rapport avec l'URL de la photo
     report.photo_url = photo_url

@@ -59,10 +59,7 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
     if (pickedFile != null) {
       if (kIsWeb) {
         // Pour le web, lire les bytes de l'image
-        print('🌐 Mode WEB détecté - Lecture des bytes...');
         final bytes = await pickedFile.readAsBytes();
-        print('📸 Image chargée: ${bytes.length} bytes');
-        print('🔄 FORCE RELOAD TEST - ${DateTime.now()}');
         setState(() {
           _webImage = bytes;
           _imageFile = null; // Clear mobile file
@@ -92,7 +89,6 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
     });
 
     try {
-      print('🔄 Début création rapport...');
       // Créer le rapport
       final report = await _careReportService.createCareReport(
         plantCareId: widget.plantCareId!,
@@ -106,19 +102,15 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
 
       // Upload la photo si sélectionnée
       if (kIsWeb && _webImage != null) {
-        print('🖼️ Uploading web image...');
         final photoResult = await _careReportService.uploadCareReportPhoto(
           report['id'],
           _webImage!, // Pass bytes for web
         );
-        print('✅ Photo uploaded: ${photoResult['photo_url']}');
       } else if (!kIsWeb && _imageFile != null) {
-        print('🖼️ Uploading mobile image...');
         final photoResult = await _careReportService.uploadCareReportPhoto(
           report['id'],
           _imageFile!.path, // Pass path for mobile
         );
-        print('✅ Photo uploaded: ${photoResult['photo_url']}');
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

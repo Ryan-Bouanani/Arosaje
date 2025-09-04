@@ -28,7 +28,6 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
   Future<void> _initializeUser() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('userId');
-    print('[DEBUG] Retrieved userId from storage: $userId');
     setState(() {
       _currentUserId = userId;
     });

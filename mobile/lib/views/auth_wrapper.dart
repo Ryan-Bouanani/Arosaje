@@ -30,7 +30,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final apiService = ApiService();
       final token = await apiService.getToken();
       
-      print('[AuthWrapper] Token check: ${token != null ? "Found" : "Not found"}');
       
       if (token == null) {
         setState(() {
@@ -45,14 +44,12 @@ class _AuthWrapperState extends State<AuthWrapper> {
       final userRole = prefs.getString('user_role');
       
       if (userRole != null) {
-        print('[AuthWrapper] User authenticated with role: $userRole');
         setState(() {
           _isLoading = false;
           _isAuthenticated = true;
           _userRole = userRole;
         });
       } else {
-        print('[AuthWrapper] No role found, clearing auth');
         await apiService.clearToken();
         setState(() {
           _isLoading = false;

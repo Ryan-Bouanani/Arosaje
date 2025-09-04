@@ -32,7 +32,6 @@ class ApiService {
       _token = token; // Mettre à jour le token en mémoire
     }
     
-    print('Token retrieved: ${token != null ? "Found (length: ${token.length})" : "Not found"}');
     return token;
   }
 
@@ -80,16 +79,12 @@ class ApiService {
       
       final uri = Uri.parse('$baseUrl$endpoint').replace(queryParameters: convertedParams);
       
-      print('Request headers: $headers');
-      print('Request URL: $uri');
       
       final response = await http.get(
         uri,
         headers: headers,
       ).timeout(const Duration(seconds: 10));
       
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
       
       if (response.statusCode == 200) {
         return jsonDecode(response.body);

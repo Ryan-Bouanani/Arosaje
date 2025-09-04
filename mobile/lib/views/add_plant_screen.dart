@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/services/plant_care_service.dart';
 import 'package:mobile/widgets/address_autocomplete_field.dart';
+import 'package:mobile/views/plant_care_details_screen.dart';
 import 'package:intl/intl.dart';
 
 // Import conditionnel pour File (éviter sur web)
@@ -22,6 +23,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   bool _isFirstStep = true;
   dynamic _imageFile; // File sur mobile, null sur web
   Uint8List? _webImage;
+  String? _originalFileName; // Nom du fichier original avec extension
   late PlantService _plantService;
   late PlantCareService _plantCareService;
   int? _createdPlantId;
@@ -60,6 +62,10 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   Future<void> _pickImage(ImageSource source) async {
     final pickedFile = await ImagePicker().pickImage(source: source);
     if (pickedFile != null) {
+      setState(() {
+        _originalFileName = pickedFile.name; // Stocker le nom original avec extension
+      });
+      
       if (kIsWeb) {
         // Pour le web, lire les bytes de l'image
         final bytes = await pickedFile.readAsBytes();
@@ -119,6 +125,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           espece: _especeController.text,
           imageFile: _imageFile,
           webImage: _webImage,
+          originalFileName: _originalFileName,
         );
         setState(() {
           _createdPlantId = plant.id;
@@ -135,14 +142,33 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
   Future<void> _submitCare() async {
     if (_formKey.currentState!.validate() && _createdPlantId != null && _startDate != null && _endDate != null) {
       try {
-        await _plantCareService.createPlantCare(
+        final care = await _plantCareService.createPlantCare(
           plantId: _createdPlantId!,
           startDate: _startDate!,
           endDate: _endDate!,
           localisation: _localisationController.text,
           careInstructions: _careInstructionsController.text,
         );
-        Navigator.pop(context, true);
+        
+        // Message de succès
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Garde créée avec succès !'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        
+        // Navigation vers les détails de la garde
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PlantCareDetailsScreen(
+              careId: care['id'],
+              isCurrentPlant: true,
+            ),
+          ),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors de la création de la garde: $e')),
@@ -349,8 +375,6 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
             });
             // Les coordonnées seront automatiquement géocodées côté serveur
             // mais on pourrait les stocker ici pour une utilisation future
-            print('Adresse sélectionnée: $address');
-            print('Coordonnées: lat=$lat, lng=$lng');
           },
           initialValue: _localisationController.text,
           labelText: 'Localisation',

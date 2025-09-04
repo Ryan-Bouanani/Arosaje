@@ -41,7 +41,6 @@ class _ChatScreenState extends State<ChatScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       _currentUserId = prefs.getInt('userId');
-      print('[ChatScreen] Retrieved userId from storage: $_currentUserId');
     } catch (e) {
       print('[ChatScreen] Error retrieving userId: $e');
       // En cas d'erreur, on laisse _currentUserId à null
@@ -292,10 +291,6 @@ class _ChatScreenState extends State<ChatScreen> {
                         // Utiliser le cache pour éviter les appels répétés
                         final isCurrentUser = _currentUserId != null && message.senderId == _currentUserId;
                         
-                        // Debug logs pour tracer le problème
-                        if (message.senderId != null) {
-                          print('[ChatScreen] Message ${message.id}: senderId=${message.senderId}, currentUserId=$_currentUserId, isCurrentUser=$isCurrentUser');
-                        }
                             
                             return Container(
                           margin: const EdgeInsets.symmetric(vertical: 3),

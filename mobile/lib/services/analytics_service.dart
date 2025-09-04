@@ -103,7 +103,6 @@ class AnalyticsService {
       // Envoi vers l'API (endpoint de monitoring)
       await _apiService.post('/monitoring/events', data: eventData);
       
-      print('Analytics event logged: $eventType'); // Debug message in English
     } catch (e) {
       print('Failed to log analytics event: $e'); // Debug message in English
     }

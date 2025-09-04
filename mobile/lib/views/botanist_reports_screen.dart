@@ -194,7 +194,7 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
                     borderRadius: BorderRadius.circular(7),
                     child: Image.network(
                       report['photo_url'],
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
                           color: Colors.grey[200],

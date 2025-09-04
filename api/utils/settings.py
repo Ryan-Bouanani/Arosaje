@@ -13,7 +13,9 @@ PROJECT_NAME = "A'rosa-je API"
 VERSION = "1.0.0"
 
 # Sécurité
-SECRET_KEY = os.getenv("SECRET_KEY", "root")  # À changer pour la prod
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY environment variable must be set. Never use a default value in production!")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 

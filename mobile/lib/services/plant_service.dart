@@ -32,8 +32,9 @@ class PlantService {
     String? espece,
     dynamic imageFile, // File sur mobile
     Uint8List? webImage, // Bytes sur web
+    String? originalFileName, // Nom original avec extension
   }) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     var request = http.MultipartRequest(
@@ -52,7 +53,7 @@ class PlantService {
       request.files.add(http.MultipartFile.fromBytes(
         'photo',
         webImage,
-        filename: 'photo.jpg',
+        filename: originalFileName ?? 'photo.jpg',
       ));
     } else if (!kIsWeb && imageFile != null) {
       request.files.add(await http.MultipartFile.fromPath(
@@ -76,7 +77,7 @@ class PlantService {
   }
 
   Future<List<Plant>> getMyPlants() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -102,7 +103,7 @@ class PlantService {
   }
 
   Future<List<Plant>> getPlantsByOwner(int ownerId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -128,7 +129,7 @@ class PlantService {
   }
 
   Future<List<Plant>> getAllPlants() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -153,7 +154,7 @@ class PlantService {
   }
 
   Future<Plant> getPlantDetails(int plantId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -179,7 +180,7 @@ class PlantService {
     required int plantId,
     String? nom,
   }) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final Map<String, dynamic> updateData = {};

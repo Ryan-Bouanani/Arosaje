@@ -168,18 +168,21 @@ async def update_plant_care_status(
     caretaker = user_crud.get(db, id=current_user.id)
     plant = plant_crud.get(db, id=db_care.plant_id)
 
-    # Envoyer l'email de notification
-    email_service = EmailService()
-    await email_service.send_care_accepted_notification(
-        owner_email=owner.email,
-        owner_name=owner.get_full_name(),
-        caretaker_name=caretaker.get_full_name(),
-        plant_name=plant.nom,
-        start_date=db_care.start_date.strftime("%d/%m/%Y"),
-        end_date=db_care.end_date.strftime("%d/%m/%Y"),
-        location=db_care.localisation,
-        conversation_id=str(conversation.id),
-    )
+    # Envoyer l'email de notification (désactivé en local)
+    try:
+        email_service = EmailService()
+        await email_service.send_care_accepted_notification(
+            owner_email=owner.email,
+            owner_name=owner.get_full_name(),
+            caretaker_name=caretaker.get_full_name(),
+            plant_name=plant.nom,
+            start_date=db_care.start_date.strftime("%d/%m/%Y"),
+            end_date=db_care.end_date.strftime("%d/%m/%Y"),
+            location=db_care.localisation,
+            conversation_id=str(conversation.id),
+        )
+    except Exception as e:
+        print(f"Email non envoyé (local): {e}")
 
     return db_care
 
@@ -273,32 +276,41 @@ async def complete_plant_care_by_owner(
             status_code=403, detail="Seul le propriétaire peut terminer cette garde"
         )
 
-    # Vérifier que la garde peut être terminée
-    if db_care.status not in [CareStatus.ACCEPTED, CareStatus.IN_PROGRESS]:
+    # Vérifier que la garde peut être terminée ou annulée
+    if db_care.status not in [CareStatus.PENDING, CareStatus.ACCEPTED, CareStatus.IN_PROGRESS]:
         raise HTTPException(
             status_code=400,
-            detail="Seules les gardes acceptées ou en cours peuvent être terminées",
+            detail="Seules les gardes en attente, acceptées ou en cours peuvent être terminées",
         )
 
-    # Terminer la garde
-    db_care = plant_care.update_status(db, db_obj=db_care, status=CareStatus.COMPLETED)
+    # Déterminer le nouveau statut selon le statut actuel
+    if db_care.status == CareStatus.PENDING:
+        # Annulation d'une demande en attente
+        new_status = CareStatus.CANCELLED
+    else:
+        # Terminaison d'une garde acceptée ou en cours
+        new_status = CareStatus.COMPLETED
+    
+    # Mettre à jour la garde
+    db_care = plant_care.update_status(db, db_obj=db_care, status=new_status)
 
     # Envoyer une notification au gardien si il y en a un
     if db_care.caretaker_id:
         caretaker = user_crud.get(db, id=db_care.caretaker_id)
         plant = plant_crud.get(db, id=db_care.plant_id)
 
-        # Email de notification
-        email_service = EmailService()
-        try:
-            await email_service.send_care_completed_by_owner_notification(
-                caretaker_email=caretaker.email,
-                caretaker_name=caretaker.get_full_name(),
-                owner_name=current_user.get_full_name(),
-                plant_name=plant.nom,
-            )
-        except Exception as e:
-            print(f"Erreur envoi email: {e}")
+        # Email de notification (temporairement désactivé)
+        # email_service = EmailService()
+        # try:
+        #     await email_service.send_care_completed_by_owner_notification(
+        #         caretaker_email=caretaker.email,
+        #         caretaker_name=caretaker.get_full_name(),
+        #         owner_name=current_user.get_full_name(),
+        #         plant_name=plant.nom,
+        #     )
+        # except Exception as e:
+        #     print(f"Erreur envoi email: {e}")
+        print(f"Email de notification désactivé temporairement - Gardien: {caretaker.get_full_name()}")
 
     return db_care
 

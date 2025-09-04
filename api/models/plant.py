@@ -8,6 +8,7 @@ class Plant(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     nom = Column(String, nullable=False)
     espece = Column(String, nullable=True)
+    description = Column(String, nullable=True)
     photo = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 

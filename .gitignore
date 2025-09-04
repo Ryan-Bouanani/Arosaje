@@ -126,6 +126,8 @@ celerybeat.pid
 .venv
 env/
 venv/
+*/venv/
+**/venv/
 ENV/
 env.bak/
 venv.bak/
@@ -166,6 +168,8 @@ cython_debug/
 
 # Variables d'environnement
 env/.env.*
+env/.env.api
+env/.env.mobile
 
 # Dossiers d'assets
 api/assets/img/

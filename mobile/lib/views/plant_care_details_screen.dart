@@ -47,6 +47,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
   int? _currentUserId;
   bool _isEditMode = false;
+  bool _careWasAccepted = false;
   final TextEditingController _instructionsController = TextEditingController();
   final TextEditingController _plantNameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
@@ -150,7 +151,23 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         throw Exception('Cannot accept care without a care ID');
       }
       await _plantCareService.acceptPlantCare(widget.careId!);
-      await _loadCareDetails(); // Recharger pour avoir le nouveau statut
+      
+      // Marquer que la garde a été acceptée
+      _careWasAccepted = true;
+      
+      // Afficher immédiatement le message de succès
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Garde acceptée avec succès !'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+      
+      // Recharger pour avoir le nouveau statut (en arrière-plan)
+      await _loadCareDetails();
       setState(() => _isLoading = false);
     } catch (e) {
       setState(() {
@@ -161,22 +178,32 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   }
 
   Future<void> _completeCare() async {
+    // Déterminer le contexte selon le statut
+    final status = _careDetails!['status']?.toString().toLowerCase();
+    final isPending = status == 'pending';
+    
+    final dialogTitle = isPending ? 'Annuler la demande' : 'Terminer la garde';
+    final dialogContent = isPending 
+        ? 'Êtes-vous sûr de vouloir annuler cette demande de garde ?'
+        : 'Êtes-vous sûr de vouloir terminer cette garde ? Cette action est irréversible.';
+    final buttonText = isPending ? 'Annuler la demande' : 'Terminer';
+    
     // Demander confirmation
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Terminer la garde'),
-          content: const Text('Êtes-vous sûr de vouloir terminer cette garde ? Cette action est irréversible.'),
+          title: Text(dialogTitle),
+          content: Text(dialogContent),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annuler'),
+              child: const Text('Retour'),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(context, true),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Terminer', style: TextStyle(color: Colors.white)),
+              child: Text(buttonText, style: const TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -196,9 +223,13 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       
       setState(() => _isLoading = false);
       
+      final successMessage = isPending 
+          ? 'Demande annulée avec succès !'
+          : 'Garde terminée avec succès !';
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Garde terminée avec succès !'),
+        SnackBar(
+          content: Text(successMessage),
           backgroundColor: Colors.green,
         ),
       );
@@ -467,9 +498,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       return false;
     }
     
-    // Vérifier le statut de la garde (doit être acceptée ou en cours)
+    // Vérifier le statut de la garde (doit être acceptée, en cours ou en attente)
     final status = _careDetails!['status']?.toString().toLowerCase();
-    final isStatusValid = status == 'accepted' || status == 'in_progress';
+    final isStatusValid = status == 'accepted' || status == 'in_progress' || status == 'pending';
     
     if (!isStatusValid) {
       return false;
@@ -929,7 +960,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context).pop(_careWasAccepted),
           color: Colors.black,
         ),
         title: Text(
@@ -1145,6 +1176,30 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                 ],
                               ),
                             ),
+                          if (_careDetails!['status']?.toString().toLowerCase() == 'cancelled')
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.orange[50],
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.orange),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.cancel, color: Colors.orange),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Garde annulée',
+                                    style: TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
 
                         const SizedBox(height: 24),
@@ -1210,43 +1265,65 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                           width: double.infinity,
                           height: 200,
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: _newPlantImage != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.network(
-                                    _newPlantImage!.path,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) {
-                                      return Container(
-                                        color: Colors.blue[50],
-                                        child: const Center(
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              Icon(Icons.photo, color: Colors.blue, size: 40),
-                                              Text('Nouvelle image sélectionnée', 
-                                                style: TextStyle(color: Colors.blue)),
-                                            ],
+                              ? GestureDetector(
+                                  onTap: () {
+                                    ImageZoomDialog.show(
+                                      context,
+                                      _newPlantImage!.path,
+                                      title: 'Image de la plante',
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Image.network(
+                                      _newPlantImage!.path,
+                                      fit: BoxFit.cover,
+                                      filterQuality: FilterQuality.high,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Colors.blue[50],
+                                          child: const Center(
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                Icon(Icons.photo, color: Colors.blue, size: 40),
+                                                Text('Nouvelle image sélectionnée', 
+                                                  style: TextStyle(color: Colors.blue)),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      );
-                                    },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 )
                               : _careDetails?['plant']?['photo'] != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        _careDetails?['plant']?['photo'] ?? '',
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (context, error, stackTrace) {
-                                          return const Center(
-                                            child: Icon(Icons.error_outline, size: 40, color: Colors.grey),
-                                          );
-                                        },
+                                  ? GestureDetector(
+                                      onTap: () {
+                                        ImageZoomDialog.show(
+                                          context,
+                                          _careDetails?['plant']?['photo'] ?? '',
+                                          title: 'Image de la plante',
+                                        );
+                                      },
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: Image.network(
+                                          _careDetails?['plant']?['photo'] ?? '',
+                                          fit: BoxFit.cover,
+                                          filterQuality: FilterQuality.high,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return const Center(
+                                              child: Icon(Icons.error_outline, size: 40, color: Colors.grey),
+                                            );
+                                          },
+                                        ),
                                       ),
                                     )
                                   : const Center(
@@ -1386,10 +1463,16 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   Widget? _buildBottomNavigationBar() {
     if (_careDetails == null) return null;
 
-    // Propriétaire qui peut terminer la garde
+    // Propriétaire qui peut terminer/annuler la garde
     if (_careDetails!['owner_id'] == _currentUserId &&
-        (_careDetails!['status']?.toString().toLowerCase() == 'accepted' || 
+        (_careDetails!['status']?.toString().toLowerCase() == 'pending' ||
+         _careDetails!['status']?.toString().toLowerCase() == 'accepted' || 
          _careDetails!['status']?.toString().toLowerCase() == 'in_progress')) {
+      // Déterminer le texte du bouton selon le statut
+      final status = _careDetails!['status']?.toString().toLowerCase();
+      final isPending = status == 'pending';
+      final buttonText = isPending ? 'Annuler la demande' : 'Terminer la garde';
+      
       return Padding(
         padding: const EdgeInsets.all(16.0),
         child: ElevatedButton(
@@ -1401,9 +1484,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
               borderRadius: BorderRadius.circular(8),
             ),
           ),
-          child: const Text(
-            'Terminer la garde',
-            style: TextStyle(
+          child: Text(
+            buttonText,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.bold,

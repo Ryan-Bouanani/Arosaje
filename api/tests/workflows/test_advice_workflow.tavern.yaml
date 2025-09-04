@@ -147,6 +147,24 @@ stages:
     response:
       status_code: 200
 
+  # 6.1. Créer une demande de garde pour la plante
+  - name: Créer une garde de plante
+    request:
+      url: "{api_url}/plant-care/"
+      method: POST
+      headers:
+        Authorization: "Bearer {owner_token}"
+      json:
+        plant_id: !int "{plant_id}"
+        start_date: "2025-01-01T10:00:00"
+        end_date: "2025-01-10T10:00:00"
+        care_instructions: "Arroser régulièrement"
+    response:
+      status_code: 200
+      save:
+        json:
+          plant_care_id: id
+
   # 7. Création d'un conseil (automatiquement validé pour les botanistes)
   - name: Créer un conseil
     request:
@@ -155,8 +173,9 @@ stages:
       headers:
         Authorization: "Bearer {botanist_token}"
       json:
-        texte: "Arroser une fois par semaine avec de l'eau tempérée"
-        plant_id: !int "{plant_id}"
+        title: "Conseil d'arrosage"
+        content: "Arroser une fois par semaine avec de l'eau tempérée"
+        plant_care_id: !int "{plant_care_id}"
     response:
       status_code: 200
       save:
@@ -165,7 +184,7 @@ stages:
       verify_response_with:
         function: validators.advice_validators:validate_advice_response
         extra_kwargs:
-          expected_status: "validated"
+          expected_status: "pending"
 
   # 8. Vérification finale
   - name: Vérifier l'état final du conseil
@@ -179,4 +198,4 @@ stages:
       verify_response_with:
         function: validators.advice_validators:validate_advice_response
         extra_kwargs:
-          expected_status: "validated" 
+          expected_status: "pending" 

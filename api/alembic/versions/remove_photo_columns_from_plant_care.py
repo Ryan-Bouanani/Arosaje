@@ -20,8 +20,22 @@ depends_on = None
 def upgrade():
     """Remove photo URL columns from plant_cares table"""
     # Remove the photo URL columns as they're now handled by care reports
-    op.drop_column("plant_cares", "start_photo_url")
-    op.drop_column("plant_cares", "end_photo_url")
+    # Only drop columns if table and columns exist
+    from sqlalchemy import inspect
+    from alembic import context
+    
+    connection = context.get_bind()
+    inspector = inspect(connection)
+    
+    # Check if plant_cares table exists
+    if "plant_cares" in inspector.get_table_names():
+        columns = [col['name'] for col in inspector.get_columns("plant_cares")]
+        
+        # Only drop columns if they exist
+        if "start_photo_url" in columns:
+            op.drop_column("plant_cares", "start_photo_url")
+        if "end_photo_url" in columns:
+            op.drop_column("plant_cares", "end_photo_url")
 
 
 def downgrade():

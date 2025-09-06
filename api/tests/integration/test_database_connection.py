@@ -10,7 +10,6 @@ from utils.database import get_db
 class TestDatabaseIntegration:
     """Tests d'intégration avec la base de données"""
 
-    @pytest.mark.integration
     def test_database_connection(self):
         """Test de connexion à la base de données"""
         # Utilise une DB de test ou la DB existante selon la configuration
@@ -25,7 +24,6 @@ class TestDatabaseIntegration:
         finally:
             db.close()
 
-    @pytest.mark.integration
     def test_database_tables_exist(self):
         """Test que les tables principales existent"""
         db_gen = get_db()
@@ -59,8 +57,6 @@ class TestDatabaseIntegration:
         finally:
             db.close()
 
-    @pytest.mark.integration
-    @pytest.mark.slow
     def test_database_crud_operations(self):
         """Test des opérations CRUD basiques sur la DB"""
         from models.user import User, UserRole
@@ -110,7 +106,6 @@ class TestDatabaseIntegration:
         finally:
             db.close()
 
-    @pytest.mark.integration
     def test_database_constraints(self):
         """Test des contraintes de base de données"""
         from models.user import User, UserRole

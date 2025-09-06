@@ -162,12 +162,10 @@ stages:
   # 7. Acceptation de la garde
   - name: Accepter la garde
     request:
-      url: "{api_url}/plant-care/{care_id}/status"
+      url: "{api_url}/plant-care/{care_id}/accept"
       method: PUT
       headers:
         Authorization: "Bearer {caretaker_token}"
-      params:
-        status: "accepted"
     response:
       status_code: 200
       verify_response_with:
@@ -175,39 +173,33 @@ stages:
         extra_kwargs:
           expected_status: "accepted"
 
-  # 8. Upload photo de début
-  - name: Upload photo de début de garde
+  # 8. Démarrage de la garde
+  - name: Démarrer la garde
     request:
-      url: "{api_url}/plant-care/{care_id}/photos/start"
-      method: POST
+      url: "{api_url}/plant-care/{care_id}/start"
+      method: PUT
       headers:
         Authorization: "Bearer {caretaker_token}"
-      files:
-        photo: "{test_image_path}"
     response:
       status_code: 200
       verify_response_with:
         function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "in_progress"
-          check_start_photo: true
 
-  # 9. Upload photo de fin
-  - name: Upload photo de fin de garde
+  # 9. Finalisation de la garde
+  - name: Finaliser la garde
     request:
-      url: "{api_url}/plant-care/{care_id}/photos/end"
-      method: POST
+      url: "{api_url}/plant-care/{care_id}/complete"
+      method: PUT
       headers:
-        Authorization: "Bearer {caretaker_token}"
-      files:
-        photo: "{test_image_path}"
+        Authorization: "Bearer {owner_token}"
     response:
       status_code: 200
       verify_response_with:
         function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "completed"
-          check_end_photo: true
 
   # 10. Vérification finale
   - name: Vérifier l'état final de la garde

@@ -121,19 +121,18 @@ class TestPlantCareModels:
         assert is_care_active(future_care) is False
         assert is_care_active(past_care) is False
 
-    def test_plant_care_with_photos(self):
-        """Test d'une garde avec photos"""
+    def test_plant_care_with_instructions(self):
+        """Test d'une garde avec instructions"""
         plant_care = PlantCare(
             plant_id=1,
             owner_id=1,
             start_date=datetime.now(),
             end_date=datetime.now() + timedelta(days=7),
-            care_instructions="Plante à l'intérieur",
-            start_photo_url="/photos/start.jpg",
+            care_instructions="Plante à l'intérieur - arrosage quotidien",
             status=CareStatus.PENDING,
         )
 
-        assert plant_care.start_photo_url == "/photos/start.jpg"
+        assert plant_care.care_instructions == "Plante à l'intérieur - arrosage quotidien"
 
     def test_plant_care_default_values(self):
         """Test des valeurs par défaut"""

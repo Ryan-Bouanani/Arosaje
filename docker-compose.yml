@@ -124,6 +124,25 @@ services:
       retries: 3
       start_period: 5s
 
+  # Interface web pour PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: arosa-je-pgadmin
+    ports:
+      - "8080:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@arosaje.fr
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
+      - PGADMIN_CONFIG_LOGIN_BANNER="A'rosa-je Database Administration"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - arosa-je-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
   # === SERVICES DE MONITORING (Activés avec l'API) ===
   
   # Base de données InfluxDB pour les métriques business
@@ -314,6 +333,7 @@ networks:
 volumes:
   redis_data:
   postgres_data:
+  pgadmin_data:
   grafana_data:
   prometheus_data:
   loki_data:

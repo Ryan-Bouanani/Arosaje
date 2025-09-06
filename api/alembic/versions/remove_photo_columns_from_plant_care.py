@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = "remove_photo_columns"
-down_revision = "d4794802ded3"
+down_revision = "init_schema"
 branch_labels = None
 depends_on = None
 
@@ -23,14 +23,14 @@ def upgrade():
     # Only drop columns if table and columns exist
     from sqlalchemy import inspect
     from alembic import context
-    
+
     connection = context.get_bind()
     inspector = inspect(connection)
-    
+
     # Check if plant_cares table exists
     if "plant_cares" in inspector.get_table_names():
-        columns = [col['name'] for col in inspector.get_columns("plant_cares")]
-        
+        columns = [col["name"] for col in inspector.get_columns("plant_cares")]
+
         # Only drop columns if they exist
         if "start_photo_url" in columns:
             op.drop_column("plant_cares", "start_photo_url")

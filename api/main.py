@@ -17,7 +17,16 @@ from routers import (
 from routers import care_report, botanist_report_advice, geocoding
 import os
 from scripts.init_data import init_data
+# Import all models to ensure they're registered with Base.metadata
 from models.user import User
+from models.plant import Plant
+from models.plant_care import PlantCare
+from models.message import Message, Conversation, ConversationParticipant
+from models.advice import Advice
+from models.photo import Photo
+from models.care_report import CareReport
+from models.botanist_report_advice import BotanistReportAdvice
+from models.user_status import UserStatus, UserPresence, UserTypingStatus
 
 from utils.settings import PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware

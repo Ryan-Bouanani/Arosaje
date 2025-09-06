@@ -292,18 +292,21 @@ async def get_plant_care_advice(
     # 1. Tous les botanistes (peuvent voir tous les conseils)
     # 2. Propriétaire et gardien de la garde (peuvent voir les conseils de leur garde)
     # 3. Autres utilisateurs peuvent voir uniquement les conseils validés (publiques)
-    
+
     is_botanist = current_user.role == UserRole.BOTANIST
     is_owner = current_user.id == plant_care_obj.owner_id
     is_caretaker = current_user.id == plant_care_obj.caretaker_id
-    
+
     # Si l'utilisateur n'est ni botaniste, ni propriétaire, ni gardien,
     # on retourne seulement les conseils validés
     if not (is_botanist or is_owner or is_caretaker):
         # Récupérer seulement les conseils validés pour les autres utilisateurs
         from models.advice import ValidationStatus
-        return advice.get_current_plant_care_advice(db, plant_care_id, validation_status=ValidationStatus.VALIDATED)
-    
+
+        return advice.get_current_plant_care_advice(
+            db, plant_care_id, validation_status=ValidationStatus.VALIDATED
+        )
+
     # Pour les botanistes, propriétaires et gardiens : tous les conseils
     return advice.get_current_plant_care_advice(db, plant_care_id)
 

@@ -112,5 +112,4 @@ class CRUDPlantCare:
         return db_obj
 
 
-
 plant_care = CRUDPlantCare()

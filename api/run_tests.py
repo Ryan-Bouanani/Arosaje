@@ -92,9 +92,9 @@ def main():
     # Vérifier si coverage est installé
     coverage_available = False
     try:
-        import coverage
+        import importlib.util
 
-        coverage_available = True
+        coverage_available = importlib.util.find_spec("coverage") is not None
     except ImportError:
         print("⚠️  Package 'coverage' non installé")
         print("   Installez-le avec: pip install coverage")

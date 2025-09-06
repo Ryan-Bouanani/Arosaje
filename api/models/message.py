@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Enum, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    DateTime,
+    Boolean,
+    ForeignKey,
+    Enum,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from utils.database import Base
@@ -37,7 +46,9 @@ class Conversation(Base):
 class ConversationParticipant(Base):
     __tablename__ = "conversation_participants"
     __table_args__ = (
-        UniqueConstraint('conversation_id', 'user_id', name='unique_conversation_participant'),
+        UniqueConstraint(
+            "conversation_id", "user_id", name="unique_conversation_participant"
+        ),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

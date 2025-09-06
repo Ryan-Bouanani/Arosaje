@@ -111,23 +111,6 @@ class CRUDPlantCare:
         db.refresh(db_obj)
         return db_obj
 
-    def add_photo(
-        self,
-        db: Session,
-        *,
-        db_obj: PlantCare,
-        photo_url: str,
-        is_end_photo: bool = False
-    ) -> PlantCare:
-        """Ajouter une photo à une garde"""
-        if is_end_photo:
-            db_obj.end_photo_url = photo_url
-        else:
-            db_obj.start_photo_url = photo_url
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
 
 
 plant_care = CRUDPlantCare()

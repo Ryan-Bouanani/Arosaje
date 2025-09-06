@@ -129,11 +129,66 @@ def get_plant_care(
     return db_care
 
 
-@router.put("/{care_id}/status", response_model=PlantCareInDB)
-async def update_plant_care_status(
-    care_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+@router.put("/{care_id}/cancel", response_model=PlantCare)
+async def cancel_plant_care(
+    care_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    """Accepter une garde de plante"""
+    """Annuler une garde (propriétaire ou gardien)"""
+    db_care = plant_care.get(db, id=care_id)
+    if not db_care:
+        raise HTTPException(status_code=404, detail="Garde non trouvée")
+
+    # Vérifier les permissions
+    is_owner = db_care.owner_id == current_user.id
+    is_caretaker = db_care.caretaker_id == current_user.id
+    
+    if not (is_owner or is_caretaker):
+        raise HTTPException(
+            status_code=403, detail="Seul le propriétaire ou le gardien peut annuler cette garde"
+        )
+
+    # Vérifier que la garde peut être annulée
+    if db_care.status in [CareStatus.COMPLETED, CareStatus.CANCELLED]:
+        raise HTTPException(
+            status_code=400, detail="Cette garde ne peut plus être annulée"
+        )
+
+    # Mettre à jour le statut
+    return plant_care.update_status(db, db_obj=db_care, status=CareStatus.CANCELLED)
+
+
+@router.put("/{care_id}/start", response_model=PlantCare)
+async def start_plant_care(
+    care_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Démarrer une garde manuellement (gardien)"""
+    db_care = plant_care.get(db, id=care_id)
+    if not db_care:
+        raise HTTPException(status_code=404, detail="Garde non trouvée")
+
+    if db_care.status != CareStatus.ACCEPTED:
+        raise HTTPException(status_code=400, detail="La garde doit être acceptée pour être démarrée")
+
+    if db_care.caretaker_id != current_user.id:
+        raise HTTPException(
+            status_code=403, detail="Seul le gardien peut démarrer cette garde"
+        )
+
+    # Mettre à jour le statut
+    return plant_care.update_status(db, db_obj=db_care, status=CareStatus.IN_PROGRESS)
+
+
+@router.put("/{care_id}/accept", response_model=PlantCare)
+async def accept_plant_care(
+    care_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Accepter une garde de plante (gardien)"""
     db_care = plant_care.get(db=db, id=care_id)
     if db_care is None:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
@@ -155,7 +210,7 @@ async def update_plant_care_status(
         initiator_id=current_user.id,
     )
 
-    # Mettre à jour la garde directement
+    # Mettre à jour la garde
     db_care.status = CareStatus.ACCEPTED
     db_care.caretaker_id = current_user.id
     db_care.conversation_id = conversation.id
@@ -163,100 +218,10 @@ async def update_plant_care_status(
     db.commit()
     db.refresh(db_care)
 
-    # Récupérer les informations nécessaires pour l'email
-    owner = user_crud.get(db, id=db_care.owner_id)
-    caretaker = user_crud.get(db, id=current_user.id)
-    plant = plant_crud.get(db, id=db_care.plant_id)
-
-    # Envoyer l'email de notification (désactivé en local)
-    try:
-        email_service = EmailService()
-        await email_service.send_care_accepted_notification(
-            owner_email=owner.email,
-            owner_name=owner.get_full_name(),
-            caretaker_name=caretaker.get_full_name(),
-            plant_name=plant.nom,
-            start_date=db_care.start_date.strftime("%d/%m/%Y"),
-            end_date=db_care.end_date.strftime("%d/%m/%Y"),
-            location=db_care.localisation,
-            conversation_id=str(conversation.id),
-        )
-    except Exception as e:
-        print(f"Email non envoyé (local): {e}")
-
+    # Notifications email désactivées temporairement
+    print(f"Garde {care_id} acceptée par {current_user.get_full_name()}")
+    
     return db_care
-
-
-@router.post("/{care_id}/photos/start", response_model=PlantCare)
-async def upload_start_photo(
-    care_id: int,
-    photo: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Uploader la photo de début de garde"""
-    db_care = plant_care.get(db, id=care_id)
-    if not db_care:
-        raise HTTPException(status_code=404, detail="Garde non trouvée")
-
-    if db_care.status != CareStatus.ACCEPTED:
-        raise HTTPException(status_code=400, detail="La garde doit être acceptée")
-
-    if db_care.caretaker_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="Seul le gardien peut uploader la photo de début"
-        )
-
-    # Vérifier si l'image est valide
-    if not ImageHandler.is_valid_image(photo):
-        raise HTTPException(
-            status_code=400,
-            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF",
-        )
-
-    # Sauvegarder l'image
-    _, photo_url = await ImageHandler.save_image(photo, f"plant_care_start_{care_id}")
-    db_care = plant_care.add_photo(db, db_obj=db_care, photo_url=photo_url)
-
-    # Mettre à jour le statut
-    return plant_care.update_status(db, db_obj=db_care, status=CareStatus.IN_PROGRESS)
-
-
-@router.post("/{care_id}/photos/end", response_model=PlantCare)
-async def upload_end_photo(
-    care_id: int,
-    photo: UploadFile = File(...),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Uploader la photo de fin de garde"""
-    db_care = plant_care.get(db, id=care_id)
-    if not db_care:
-        raise HTTPException(status_code=404, detail="Garde non trouvée")
-
-    if db_care.status != CareStatus.IN_PROGRESS:
-        raise HTTPException(status_code=400, detail="La garde doit être en cours")
-
-    if db_care.caretaker_id != current_user.id:
-        raise HTTPException(
-            status_code=403, detail="Seul le gardien peut uploader la photo de fin"
-        )
-
-    # Vérifier si l'image est valide
-    if not ImageHandler.is_valid_image(photo):
-        raise HTTPException(
-            status_code=400,
-            detail="Format d'image non supporté. Utilisez JPG, JPEG, PNG ou GIF",
-        )
-
-    # Sauvegarder l'image
-    _, photo_url = await ImageHandler.save_image(photo, f"plant_care_end_{care_id}")
-    db_care = plant_care.add_photo(
-        db, db_obj=db_care, photo_url=photo_url, is_end_photo=True
-    )
-
-    # Mettre à jour le statut
-    return plant_care.update_status(db, db_obj=db_care, status=CareStatus.COMPLETED)
 
 
 @router.put("/{care_id}/complete", response_model=PlantCare)

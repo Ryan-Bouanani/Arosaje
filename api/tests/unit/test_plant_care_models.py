@@ -132,7 +132,9 @@ class TestPlantCareModels:
             status=CareStatus.PENDING,
         )
 
-        assert plant_care.care_instructions == "Plante à l'intérieur - arrosage quotidien"
+        assert (
+            plant_care.care_instructions == "Plante à l'intérieur - arrosage quotidien"
+        )
 
     def test_plant_care_default_values(self):
         """Test des valeurs par défaut"""

@@ -117,9 +117,7 @@ def init_data():
         db.flush()  # Pour obtenir les IDs des plantes
 
         db.commit()
-        print(
-            "✅ Données de base créées avec succès (utilisateurs et plantes)"
-        )
+        print("✅ Données de base créées avec succès (utilisateurs et plantes)")
 
     except Exception as e:
         print(f"❌ Erreur lors de l'initialisation des données : {str(e)}")

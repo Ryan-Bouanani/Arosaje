@@ -1,12 +1,11 @@
 from typing import List, Optional
 import logging
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, File, UploadFile
+import datetime as dt
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 from utils.database import get_db
 from utils.security import get_current_user
-from utils.image_handler import ImageHandler
 from crud.plant_care import plant_care
 from crud.plant import plant as plant_crud
 from crud.user import user as user_crud
@@ -16,7 +15,6 @@ from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB
 from schemas.user import User
 from crud.message import message
 from models.message import ConversationType
-from services.email.email_service import EmailService
 from services.geocoding_service import geocoding_service
 
 router = APIRouter(prefix="/plant-care", tags=["plant-care"])
@@ -143,10 +141,11 @@ async def cancel_plant_care(
     # Vérifier les permissions
     is_owner = db_care.owner_id == current_user.id
     is_caretaker = db_care.caretaker_id == current_user.id
-    
+
     if not (is_owner or is_caretaker):
         raise HTTPException(
-            status_code=403, detail="Seul le propriétaire ou le gardien peut annuler cette garde"
+            status_code=403,
+            detail="Seul le propriétaire ou le gardien peut annuler cette garde",
         )
 
     # Vérifier que la garde peut être annulée
@@ -171,7 +170,9 @@ async def start_plant_care(
         raise HTTPException(status_code=404, detail="Garde non trouvée")
 
     if db_care.status != CareStatus.ACCEPTED:
-        raise HTTPException(status_code=400, detail="La garde doit être acceptée pour être démarrée")
+        raise HTTPException(
+            status_code=400, detail="La garde doit être acceptée pour être démarrée"
+        )
 
     if db_care.caretaker_id != current_user.id:
         raise HTTPException(
@@ -220,7 +221,7 @@ async def accept_plant_care(
 
     # Notifications email désactivées temporairement
     print(f"Garde {care_id} acceptée par {current_user.get_full_name()}")
-    
+
     return db_care
 
 
@@ -242,7 +243,11 @@ async def complete_plant_care_by_owner(
         )
 
     # Vérifier que la garde peut être terminée ou annulée
-    if db_care.status not in [CareStatus.PENDING, CareStatus.ACCEPTED, CareStatus.IN_PROGRESS]:
+    if db_care.status not in [
+        CareStatus.PENDING,
+        CareStatus.ACCEPTED,
+        CareStatus.IN_PROGRESS,
+    ]:
         raise HTTPException(
             status_code=400,
             detail="Seules les gardes en attente, acceptées ou en cours peuvent être terminées",
@@ -255,14 +260,13 @@ async def complete_plant_care_by_owner(
     else:
         # Terminaison d'une garde acceptée ou en cours
         new_status = CareStatus.COMPLETED
-    
+
     # Mettre à jour la garde
     db_care = plant_care.update_status(db, db_obj=db_care, status=new_status)
 
     # Envoyer une notification au gardien si il y en a un
     if db_care.caretaker_id:
         caretaker = user_crud.get(db, id=db_care.caretaker_id)
-        plant = plant_crud.get(db, id=db_care.plant_id)
 
         # Email de notification (temporairement désactivé)
         # email_service = EmailService()
@@ -275,7 +279,9 @@ async def complete_plant_care_by_owner(
         #     )
         # except Exception as e:
         #     print(f"Erreur envoi email: {e}")
-        print(f"Email de notification désactivé temporairement - Gardien: {caretaker.get_full_name()}")
+        print(
+            f"Email de notification désactivé temporairement - Gardien: {caretaker.get_full_name()}"
+        )
 
     return db_care
 
@@ -310,16 +316,16 @@ def get_plant_care_by_plant(
                 "plant_id": plant_id,
                 "owner_id": current_user.id,
                 "caretaker_id": None,
-                "start_date": datetime.now(),
-                "end_date": datetime.now(),
+                "start_date": dt.datetime.now(),
+                "end_date": dt.datetime.now(),
                 "status": "pending",
                 "care_instructions": f'Cette {fake_plant_data["nom"]} est disponible pour la garde',
                 "localisation": "Plante de démonstration - Paris",
                 "start_photo_url": None,
                 "end_photo_url": None,
                 "conversation_id": None,
-                "created_at": datetime.now(),
-                "updated_at": datetime.now(),
+                "created_at": dt.datetime.now(),
+                "updated_at": dt.datetime.now(),
                 "plant": {
                     "id": plant_id,
                     "nom": fake_plant_data["nom"],

@@ -8,8 +8,6 @@ from models.user import User, UserRole
 from crud import care_report as crud_care_report
 from models.care_report import CareReport as CareReportModel
 from schemas.care_report import CareReport, CareReportCreate, CareReportWithDetails
-import os
-import uuid
 
 router = APIRouter(prefix="/care-reports", tags=["care-reports"])
 
@@ -57,27 +55,32 @@ async def upload_care_report_photo(
 
     # Utiliser ImageHandler pour une validation et sauvegarde sécurisées
     try:
-        photo_size = getattr(photo, 'size', 'Unknown')
-        print(f"DEBUG: Upload photo - Filename: {photo.filename}, Content-Type: {photo.content_type}, Size: {photo_size}")
-        
+        photo_size = getattr(photo, "size", "Unknown")
+        print(
+            f"DEBUG: Upload photo - Filename: {photo.filename}, Content-Type: {photo.content_type}, Size: {photo_size}"
+        )
+
         # Debug: Lire les premiers bytes pour vérifier la signature
         await photo.seek(0)  # Reset position
         first_bytes = await photo.read(16)
         await photo.seek(0)  # Reset position pour save_image
         print(f"DEBUG: First 16 bytes: {first_bytes}")
         print(f"DEBUG: First 16 bytes hex: {first_bytes.hex()}")
-        
+
         filename, url = await ImageHandler.save_image(photo, "persisted_care_report")
-        
+
         # Construire l'URL pour care reports (format spécifique)
         photo_url = f"/assets/persisted_img/{filename}"
         print(f"DEBUG: Photo upload successful - URL: {photo_url}")
-        
+
     except Exception as e:
         print(f"DEBUG: Photo upload failed - Error: {str(e)}")
         import traceback
+
         traceback.print_exc()
-        raise HTTPException(status_code=400, detail=f"Erreur lors de l'upload: {str(e)}")
+        raise HTTPException(
+            status_code=400, detail=f"Erreur lors de l'upload: {str(e)}"
+        )
 
     # Mettre à jour le rapport avec l'URL de la photo
     report.photo_url = photo_url

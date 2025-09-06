@@ -36,8 +36,6 @@ class PlantCare(Base):
     status = Column(Enum(CareStatus), default=CareStatus.PENDING)
 
     care_instructions = Column(String, nullable=True)
-    start_photo_url = Column(String, nullable=True)
-    end_photo_url = Column(String, nullable=True)
     localisation = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)

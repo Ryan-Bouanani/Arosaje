@@ -162,14 +162,11 @@ class PlantCareService {
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
-      Uri.parse('$baseUrl/plant-care/$careId/status'),
+      Uri.parse('$baseUrl/plant-care/$careId/accept'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
-      body: json.encode({
-        'status': 'accepted'
-      }),
     );
 
     if (response.statusCode == 200) {
@@ -179,45 +176,63 @@ class PlantCareService {
     }
   }
 
-  Future<Map<String, dynamic>> uploadBeforePhoto(int careId, String imagePath) async {
+  Future<Map<String, dynamic>> startPlantCare(int careId) async {
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
-    final uri = Uri.parse('$baseUrl/plant-care/$careId/before-photo');
-    final request = http.MultipartRequest('POST', uri);
-    
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('photo', imagePath));
-    
-    final response = await request.send();
-    final responseData = await response.stream.bytesToString();
-    
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(responseData);
+    final response = await http.put(
+      Uri.parse('$baseUrl/plant-care/$careId/start'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
     } else {
-      throw Exception('Échec de l\'upload de la photo avant garde');
+      throw Exception('Échec du démarrage de la garde');
     }
   }
 
-  Future<Map<String, dynamic>> uploadAfterPhoto(int careId, String imagePath) async {
+  Future<Map<String, dynamic>> completePlantCare(int careId) async {
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
-    final uri = Uri.parse('$baseUrl/plant-care/$careId/after-photo');
-    final request = http.MultipartRequest('POST', uri);
-    
-    request.headers['Authorization'] = 'Bearer $token';
-    request.files.add(await http.MultipartFile.fromPath('photo', imagePath));
-    
-    final response = await request.send();
-    final responseData = await response.stream.bytesToString();
-    
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      return json.decode(responseData);
+    final response = await http.put(
+      Uri.parse('$baseUrl/plant-care/$careId/complete'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
     } else {
-      throw Exception('Échec de l\'upload de la photo après garde');
+      throw Exception('Échec de la finalisation de la garde');
     }
   }
+
+  Future<Map<String, dynamic>> cancelPlantCare(int careId) async {
+    final token = await _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/plant-care/$careId/cancel'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Échec de l\'annulation de la garde');
+    }
+  }
+
 
   Future<Map<String, dynamic>> getPlantCareDetailsByPlantId(int plantId) async {
     final token = await _storageService.getToken();

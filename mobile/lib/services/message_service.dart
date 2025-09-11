@@ -32,6 +32,23 @@ class MessageService {
     }
   }
 
+  // Créer une conversation pour une garde de plante (propriétaire ↔ gardien)
+  Future<Map<String, dynamic>> createPlantCareConversation(int ownerId, int caretakerId, {int? relatedId}) async {
+    try {
+      final response = await _apiService.post(
+        '/messages/conversations',
+        {
+          'participant_ids': [ownerId, caretakerId],
+          'type': 'plant_care',
+          'related_id': relatedId,
+        },
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Erreur lors de la création de la conversation: $e');
+    }
+  }
+
   // Envoyer un message via l'API REST
   Future<void> sendMessageViaAPI(int conversationId, String content) async {
     try {

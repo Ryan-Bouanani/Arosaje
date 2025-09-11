@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+// Importation conditionnelle pour éviter les problèmes de compatibilité
+import 'dart:html' as html show window;
 import 'chat_screen.dart';
 import 'package:mobile/providers/message_provider.dart';
 import 'package:mobile/models/conversation.dart';
@@ -15,6 +18,16 @@ class ChatMenuScreen extends StatefulWidget {
 
 class _ChatMenuScreenState extends State<ChatMenuScreen> {
   int? _currentUserId;
+
+  // Helper pour logger dans la console du navigateur
+  void _consoleLog(String message) {
+    if (kDebugMode) {
+      if (kIsWeb) {
+        html.window.console.log(message);
+      }
+      print(message);
+    }
+  }
 
   @override
   void initState() {
@@ -50,44 +63,51 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
 
   IconData _getConversationIcon(Conversation conversation, int? currentUserId) {
     if (conversation.type == ConversationType.botanicalAdvice) {
-      // Conversation avec un botaniste
       return Icons.local_florist;
     }
     
-    if (conversation.type == ConversationType.plantCare && conversation.plantCareInfo != null) {
-      // Conversation liée à une garde
-      final plantCare = conversation.plantCareInfo!;
-      if (currentUserId == plantCare.ownerId) {
-        // Je suis le propriétaire, l'autre est le gardien
-        return Icons.eco;
-      } else if (currentUserId == plantCare.caretakerid) {
-        // Je suis le gardien, l'autre est le propriétaire
-        return Icons.home;
+    if (conversation.type == ConversationType.plantCare) {
+      if (conversation.plantCareInfo != null && conversation.participants.isNotEmpty) {
+        final plantCare = conversation.plantCareInfo;
+        
+        final otherParticipants = conversation.participants.where((p) => p.userId != currentUserId);
+        if (otherParticipants.isNotEmpty) {
+          final otherParticipant = otherParticipants.first;
+          
+          if (plantCare != null && otherParticipant.userId == plantCare.ownerId) {
+            return Icons.home;
+          } else if (plantCare != null && otherParticipant.userId == plantCare.caretakerid) {
+            return Icons.eco;
+          }
+        }
       }
     }
     
-    // Par défaut, icône générique
     return Icons.message;
   }
 
   Color _getConversationColor(Conversation conversation, int? currentUserId) {
     if (conversation.type == ConversationType.botanicalAdvice) {
-      // Conversation avec un botaniste
       return Colors.green;
     }
     
-    if (conversation.type == ConversationType.plantCare && conversation.plantCareInfo != null) {
-      final plantCare = conversation.plantCareInfo!;
-      if (currentUserId == plantCare.ownerId) {
-        // Je suis le propriétaire, l'autre est le gardien
-        return Colors.green;
-      } else if (currentUserId == plantCare.caretakerid) {
-        // Je suis le gardien, l'autre est le propriétaire
-        return Colors.blue;
+    if (conversation.type == ConversationType.plantCare && 
+        conversation.plantCareInfo != null && 
+        conversation.participants.isNotEmpty) {
+      final plantCare = conversation.plantCareInfo;
+      
+      final otherParticipants = conversation.participants.where((p) => p.userId != currentUserId);
+      if (otherParticipants.isNotEmpty) {
+        final otherParticipant = otherParticipants.first;
+        
+        if (plantCare != null && otherParticipant.userId == plantCare.ownerId) {
+          return Colors.blue;
+        } else if (plantCare != null && otherParticipant.userId == plantCare.caretakerid) {
+          return Colors.green;
+        }
       }
     }
     
-    // Par défaut
     return Colors.grey;
   }
 
@@ -104,6 +124,7 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
       ),
       body: Consumer<MessageProvider>(
         builder: (context, provider, child) {
+          
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -131,7 +152,7 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      provider.error!,
+                      provider.error ?? 'Erreur inconnue',
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.grey),
                     ),

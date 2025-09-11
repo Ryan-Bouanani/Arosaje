@@ -28,7 +28,7 @@ class PlantCareService {
     required String localisation,
     String? careInstructions,
   }) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.post(
@@ -54,7 +54,7 @@ class PlantCareService {
   }
 
   Future<List<Map<String, dynamic>>> getMyPlantCares() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -82,7 +82,7 @@ class PlantCareService {
   }
 
   Future<List<Map<String, dynamic>>> getMyCaretakingPlants() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -110,7 +110,7 @@ class PlantCareService {
   }
 
   Future<List<Map<String, dynamic>>> getPendingPlantCares() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -135,7 +135,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> getPlantCareDetails(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -158,7 +158,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> acceptPlantCare(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
@@ -177,7 +177,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> startPlantCare(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
@@ -196,7 +196,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> completePlantCare(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
@@ -215,7 +215,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> cancelPlantCare(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
@@ -235,7 +235,7 @@ class PlantCareService {
 
 
   Future<Map<String, dynamic>> getPlantCareDetailsByPlantId(int plantId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -258,7 +258,7 @@ class PlantCareService {
   }
 
   Future<Map<String, dynamic>> completePlantCareByOwner(int careId) async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.put(
@@ -283,7 +283,7 @@ class PlantCareService {
 
   // Méthodes pour l'historique des gardes terminées
   Future<List<Map<String, dynamic>>> getCompletedOwnedPlants() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(
@@ -311,7 +311,7 @@ class PlantCareService {
   }
 
   Future<List<Map<String, dynamic>>> getCompletedCaretakingPlants() async {
-    final token = await _storageService.getToken();
+    final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final response = await http.get(

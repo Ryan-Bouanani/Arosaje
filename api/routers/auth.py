@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from utils.database import get_db
-from utils.security import create_access_token, get_current_user
+from utils.security import create_access_token, create_tokens, get_current_user, verify_refresh_token, revoke_user_tokens
 from utils.password import verify_password, get_password_hash
 from crud.user import user as user_crud
-from schemas.token import Token
+from schemas.token import Token, RefreshTokenRequest
 from schemas.user import UserCreate, User, UserRoleUpdate, UserUpdate
 from models.user import UserRole
 from services.email.email_service import EmailService
@@ -72,8 +72,14 @@ async def login(
         properties={"user_role": user.role.value if user.role else "unknown"},
     )
 
-    access_token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Créer les tokens (access + refresh)
+    access_token, refresh_token = create_tokens(user.id, db, request)
+    
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer"
+    }
 
 
 @router.post("/register", response_model=User)
@@ -233,3 +239,81 @@ async def change_password(
     user_crud.update(db, db_obj=current_user, obj_in=user_update)
 
     return {"message": "Mot de passe mis à jour avec succès"}
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh_access_token(
+    refresh_request: RefreshTokenRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Any:
+    """Renouvelle l'access token en utilisant le refresh token"""
+    
+    # Vérifier le refresh token
+    refresh_token_obj = verify_refresh_token(refresh_request.refresh_token, db)
+    if not refresh_token_obj:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token invalide ou expiré",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Récupérer l'utilisateur
+    user = user_crud.get(db, id=refresh_token_obj.user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Utilisateur non trouvé",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Vérifier que l'utilisateur est toujours actif
+    if user.role != UserRole.ADMIN and not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte suspendu ou non vérifié",
+        )
+    
+    # Détecter la plateforme
+    platform = detect_platform(request)
+    
+    # Tracker l'utilisation du refresh
+    await analytics_service.track_feature_usage(
+        feature="token_refresh", platform=platform, user_id=str(user.id)
+    )
+    
+    # Générer un nouveau access token
+    new_access_token = create_access_token(data={"sub": str(user.id)})
+    
+    # ROTATION: Générer un nouveau refresh token et révoquer l'ancien (optionnel pour plus de sécurité)
+    # Pour l'instant, nous gardons le même refresh token
+    # new_access_token, new_refresh_token = create_tokens(user.id, db, request)
+    # refresh_token_obj.revoke()
+    
+    return {
+        "access_token": new_access_token,
+        "refresh_token": refresh_request.refresh_token,  # On garde le même pour simplifier
+        "token_type": "bearer"
+    }
+
+
+@router.post("/logout")
+async def logout(request: Request, current_user: User = Depends(get_current_user)):
+    """Déconnexion de l'utilisateur"""
+    # Détecter la plateforme
+    platform = detect_platform(request)
+
+    # Décrémenter la métrique des utilisateurs actifs
+    monitoring_service.decrement_active_users(platform=platform)
+
+    # Tracker l'utilisation de la fonctionnalité de déconnexion
+    await analytics_service.track_feature_usage(
+        feature="logout", platform=platform, user_id=str(current_user.id)
+    )
+
+    # Envoyer un événement d'usage vers InfluxDB
+    await monitoring_service.send_usage_event_to_influxdb(
+        event_type="user_logout", user_id=str(current_user.id), platform=platform
+    )
+
+    return {"message": "Déconnexion réussie"}

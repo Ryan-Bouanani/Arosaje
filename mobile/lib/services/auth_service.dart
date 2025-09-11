@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
@@ -12,6 +13,8 @@ class AuthService {
   late final Dio _dio;
   late final StorageService _storageService;
   bool _isInitialized = false;
+  Timer? _refreshTimer;
+  bool _isRefreshing = false;
 
   // Constructeur privé
   AuthService._();
@@ -44,6 +47,38 @@ class AuthService {
         }
         return handler.next(options);
       },
+      onError: (error, handler) async {
+        // Si on reçoit une erreur 401, tenter un refresh token
+        if (error.response?.statusCode == 401) {
+          print('🔄 Token expiré détecté, tentative de renouvellement...');
+          
+          final refreshed = await refreshToken();
+          
+          if (refreshed) {
+            // Retry la requête originale avec le nouveau token
+            final newToken = _storageService.getToken();
+            if (newToken != null) {
+              error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
+              
+              try {
+                print('🔄 Retry de la requête avec le nouveau token');
+                final response = await _dio.fetch(error.requestOptions);
+                return handler.resolve(response);
+              } catch (retryError) {
+                print('❌ Échec du retry: $retryError');
+                return handler.next(error);
+              }
+            }
+          } else {
+            // Refresh échoué, déconnecter l'utilisateur
+            print('❌ Refresh token échoué, déconnexion nécessaire');
+            await _storageService.clearTokens();
+            _cancelRefreshTimer();
+          }
+        }
+        
+        return handler.next(error);
+      },
     ));
 
     _isInitialized = true;
@@ -62,7 +97,15 @@ class AuthService {
 
       final data = json.decode(response.body);
       if (response.statusCode == 200) {
-        await _storageService.saveToken(data['access_token']);
+        // Sauvegarder les deux tokens
+        await _storageService.saveTokens(
+          accessToken: data['access_token'],
+          refreshToken: data['refresh_token'] ?? '',
+        );
+        
+        // Programmer le renouvellement automatique
+        _scheduleTokenRefresh();
+        
         return data;
       } else {
         throw Exception(data['detail'] ?? 'Échec de la connexion');
@@ -327,6 +370,9 @@ class AuthService {
 
   Future<void> logout() async {
     try {
+      // Annuler le timer de refresh
+      _cancelRefreshTimer();
+      
       final apiService = ApiService();
       await apiService.logout();
       await _storageService.clearAll();
@@ -335,6 +381,93 @@ class AuthService {
       // Même en cas d'erreur avec l'API, on nettoie les données locales
       await _storageService.clearAll();
       throw Exception('Erreur lors de la déconnexion : $e');
+    }
+  }
+
+  // ========== NOUVELLES MÉTHODES POUR REFRESH TOKEN ==========
+
+  /// Programme le renouvellement automatique du token
+  void _scheduleTokenRefresh() {
+    _cancelRefreshTimer();
+    
+    // Programmer un refresh 5 minutes avant expiration (25 minutes)
+    const refreshInterval = Duration(minutes: 25);
+    
+    _refreshTimer = Timer(refreshInterval, () async {
+      await _refreshTokenSilently();
+    });
+  }
+
+  /// Annule le timer de refresh
+  void _cancelRefreshTimer() {
+    _refreshTimer?.cancel();
+    _refreshTimer = null;
+  }
+
+  /// Renouvelle le token en arrière-plan
+  Future<bool> _refreshTokenSilently() async {
+    if (_isRefreshing) return false;
+    
+    try {
+      _isRefreshing = true;
+      final refreshToken = _storageService.getRefreshToken();
+      
+      if (refreshToken == null || refreshToken.isEmpty) {
+        return false;
+      }
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'refresh_token': refreshToken}),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        
+        // Sauvegarder le nouveau access token
+        await _storageService.saveToken(data['access_token']);
+        
+        // Re-programmer le prochain refresh
+        _scheduleTokenRefresh();
+        
+        print('✅ Token renouvelé automatiquement');
+        return true;
+      } else {
+        print('❌ Échec du renouvellement automatique du token');
+        return false;
+      }
+    } catch (e) {
+      print('❌ Erreur lors du renouvellement du token: $e');
+      return false;
+    } finally {
+      _isRefreshing = false;
+    }
+  }
+
+  /// Renouvelle le token manuellement (utilisé par l'intercepteur)
+  Future<bool> refreshToken() async {
+    if (_isRefreshing) {
+      // Attendre que le refresh en cours se termine
+      while (_isRefreshing) {
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+      return _storageService.getToken() != null;
+    }
+    
+    return await _refreshTokenSilently();
+  }
+
+  /// Vérifie si l'utilisateur a des tokens valides
+  bool hasValidTokens() {
+    return _storageService.hasTokens();
+  }
+
+  /// Initialise le système de refresh au démarrage de l'app
+  Future<void> initializeRefreshSystem() async {
+    if (hasValidTokens()) {
+      // Si on a des tokens, programmer le refresh
+      _scheduleTokenRefresh();
     }
   }
 } 

@@ -34,4 +34,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # Exécuter le script d'initialisation puis démarrer l'API
-CMD ["sh", "-c", "while ! pg_isready -h postgres -U arosaje -d arosaje_db; do sleep 1; done && alembic upgrade head && python scripts/init_data.py && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --limit-concurrency 50"]
+CMD ["sh", "-c", "while ! pg_isready -h postgres -U arosaje -d arosaje_db; do sleep 1; done && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 --limit-concurrency 50"]

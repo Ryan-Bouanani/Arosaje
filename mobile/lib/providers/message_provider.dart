@@ -37,7 +37,6 @@ class MessageProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       _currentUserId = prefs.getInt('userId');
-      print('[MessageProvider] Loaded current user ID: $_currentUserId');
     } catch (e) {
       print('[MessageProvider] Error loading user ID: $e');
     }
@@ -59,27 +58,27 @@ class MessageProvider extends ChangeNotifier {
   void _tryReplaceTemporaryMessage(int conversationId, String tempId, String originalContent) {
     if (_messages[conversationId] == null) return;
     
-    final messages = _messages[conversationId]!;
+    final messages = _messages[conversationId];
     final normalizedContent = _normalizeContent(originalContent);
     
     // Chercher le message temporaire
-    final tempIndex = messages.indexWhere((m) => m.tempId == tempId);
+    final tempIndex = messages?.indexWhere((m) => m.tempId == tempId) ?? -1;
     if (tempIndex == -1) return;
     
     // Chercher un message réel récent avec le même contenu
     final now = DateTime.now();
-    final recentRealMessage = messages.firstWhere(
+    final recentRealMessage = messages?.firstWhere(
       (m) => 
         !m.isTemporary && 
         _normalizeContent(m.content) == normalizedContent &&
         m.senderId == _currentUserId &&
         now.difference(m.createdAt).inMinutes < 5, // Créé dans les 5 dernières minutes
       orElse: () => Message(id: -1, content: '', conversationId: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(), isRead: false),
-    );
+    ) ?? Message(id: -1, content: '', conversationId: 0, createdAt: DateTime.now(), updatedAt: DateTime.now(), isRead: false);
     
     if (recentRealMessage.id != -1) {
       // Remplacer le message temporaire
-      messages.removeAt(tempIndex);
+      messages?.removeAt(tempIndex);
       _tempMessageMapping.remove(tempId);
       notifyListeners();
       print('[MessageProvider] Replaced temporary message $tempId with real message ${recentRealMessage.id}');
@@ -142,9 +141,9 @@ class MessageProvider extends ChangeNotifier {
       // Sauvegarder les messages temporaires existants
       List<Message> tempMessages = [];
       if (_messages.containsKey(conversationId)) {
-        tempMessages = _messages[conversationId]!
-            .where((m) => m.isTemporary)
-            .toList();
+        tempMessages = _messages[conversationId]
+            ?.where((m) => m.isTemporary)
+            .toList() ?? [];
       }
 
       // Charger les messages depuis l'API
@@ -226,9 +225,9 @@ class MessageProvider extends ChangeNotifier {
           print('[MessageProvider] Received new message: ${message.id}, content: "${message.content}", sender: ${message.senderId}');
           
           // Vérifier que le message n'existe pas déjà (par ID réel)
-          final existingIndex = _messages[conversationId]!.indexWhere((m) => 
+          final existingIndex = _messages[conversationId]?.indexWhere((m) => 
             !m.isTemporary && m.id == message.id
-          );
+          ) ?? -1;
           
           if (existingIndex != -1) {
             print('[MessageProvider] Message ${message.id} already exists, ignoring');
@@ -240,13 +239,13 @@ class MessageProvider extends ChangeNotifier {
             final normalizedContent = _normalizeContent(message.content);
             
             // Chercher le message temporaire correspondant
-            final tempIndex = _messages[conversationId]!.indexWhere((m) => 
+            final tempIndex = _messages[conversationId]?.indexWhere((m) => 
               m.isTemporary && 
               _normalizeContent(m.content) == normalizedContent &&
               m.senderId == message.senderId
-            );
+            ) ?? -1;
             
-            if (tempIndex != -1) {
+            if (tempIndex != -1 && _messages[conversationId] != null) {
               // Remplacer le message temporaire par le message réel
               final tempId = _messages[conversationId]![tempIndex].tempId;
               _messages[conversationId]![tempIndex] = message;
@@ -255,7 +254,7 @@ class MessageProvider extends ChangeNotifier {
               print('[MessageProvider] Replaced temporary message $tempId with real message ${message.id}');
               
               // Trier les messages par date
-              _messages[conversationId]!.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+              _messages[conversationId]?.sort((a, b) => a.createdAt.compareTo(b.createdAt));
               notifyListeners();
               return; // Ne pas ajouter en double
             }
@@ -263,12 +262,12 @@ class MessageProvider extends ChangeNotifier {
           
           // Vérification finale de déduplication par contenu récent
           final normalizedContent = _normalizeContent(message.content);
-          final recentDuplicate = _messages[conversationId]!.any((m) =>
+          final recentDuplicate = _messages[conversationId]?.any((m) =>
             !m.isTemporary && 
             m.senderId == message.senderId &&
             _normalizeContent(m.content) == normalizedContent &&
             DateTime.now().difference(m.createdAt).inMinutes < 2 // Dans les 2 dernières minutes
-          );
+          ) ?? false;
           
           if (recentDuplicate) {
             print('[MessageProvider] Recent duplicate message detected, ignoring');
@@ -276,8 +275,10 @@ class MessageProvider extends ChangeNotifier {
           }
           
           // Ajouter le nouveau message
-          _messages[conversationId]!.add(message);
-          _messages[conversationId]!.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          if (_messages[conversationId] != null) {
+            _messages[conversationId]!.add(message);
+            _messages[conversationId]!.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+          }
           notifyListeners();
           
           print('[MessageProvider] Added new message ${message.id}');
@@ -298,18 +299,21 @@ class MessageProvider extends ChangeNotifier {
         if (convId == conversationId && _messages[conversationId] != null) {
           // Marquer tous les messages comme lus
           bool updated = false;
-          for (int i = 0; i < _messages[conversationId]!.length; i++) {
-            if (!_messages[conversationId]![i].isRead) {
-              _messages[conversationId]![i] = Message(
-                id: _messages[conversationId]![i].id,
-                content: _messages[conversationId]![i].content,
-                senderId: _messages[conversationId]![i].senderId,
-                conversationId: _messages[conversationId]![i].conversationId,
-                createdAt: _messages[conversationId]![i].createdAt,
-                updatedAt: _messages[conversationId]![i].updatedAt,
-                isRead: true,
-              );
-              updated = true;
+          final messages = _messages[conversationId];
+          if (messages != null) {
+            for (int i = 0; i < messages.length; i++) {
+              if (!messages[i].isRead) {
+                messages[i] = Message(
+                  id: messages[i].id,
+                  content: messages[i].content,
+                  senderId: messages[i].senderId,
+                  conversationId: messages[i].conversationId,
+                  createdAt: messages[i].createdAt,
+                  updatedAt: messages[i].updatedAt,
+                  isRead: true,
+                );
+                updated = true;
+              }
             }
           }
           
@@ -393,7 +397,7 @@ class MessageProvider extends ChangeNotifier {
         _messages[conversationId] = [];
       }
       _messages[conversationId]!.add(tempMessage);
-      _messages[conversationId]!.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      _messages[conversationId]?.sort((a, b) => a.createdAt.compareTo(b.createdAt));
       
       // Stocker le mapping pour référence
       _tempMessageMapping[tempId] = conversationId;
@@ -426,10 +430,8 @@ class MessageProvider extends ChangeNotifier {
       _error = e.toString();
       
       // En cas d'erreur, retirer le message temporaire si présent
-      if (_messages[conversationId] != null) {
-        _messages[conversationId]!.removeWhere((m) => m.isTemporary);
-        notifyListeners();
-      }
+      _messages[conversationId]?.removeWhere((m) => m.isTemporary);
+      notifyListeners();
     }
   }
 

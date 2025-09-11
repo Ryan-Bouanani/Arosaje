@@ -20,6 +20,7 @@ if not SECRET_KEY:
     )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # Configuration Redis
 REDIS_HOST = os.getenv("REDIS_HOST", "api-redis")

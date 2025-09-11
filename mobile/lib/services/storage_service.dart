@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
   static const String tokenKey = 'jwt_token';
+  static const String refreshTokenKey = 'refresh_token';
   static const String userRoleKey = 'user_role';
 
   final SharedPreferences _prefs;
@@ -60,5 +61,49 @@ class StorageService {
 
   Future<void> clear() async {
     await _prefs.clear();
+  }
+
+  // Méthodes pour le refresh token
+  Future<void> saveRefreshToken(String refreshToken) async {
+    await _prefs.setString(refreshTokenKey, refreshToken);
+  }
+
+  String? getRefreshToken() {
+    return _prefs.getString(refreshTokenKey);
+  }
+
+  Future<void> clearRefreshToken() async {
+    await _prefs.remove(refreshTokenKey);
+  }
+
+  // Méthode pour sauvegarder les deux tokens simultanément
+  Future<void> saveTokens({
+    required String accessToken, 
+    required String refreshToken
+  }) async {
+    await Future.wait([
+      saveToken(accessToken),
+      saveRefreshToken(refreshToken),
+    ]);
+  }
+
+  // Méthode pour vérifier si les tokens existent
+  bool hasTokens() {
+    return getToken() != null && getRefreshToken() != null;
+  }
+
+  // Méthode pour récupérer les deux tokens
+  Map<String, String?> getTokens() {
+    return {
+      'access_token': getToken(),
+      'refresh_token': getRefreshToken(),
+    };
+  }
+
+  Future<void> clearTokens() async {
+    await Future.wait([
+      _prefs.remove(tokenKey),
+      _prefs.remove(refreshTokenKey),
+    ]);
   }
 } 

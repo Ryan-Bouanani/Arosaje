@@ -8,6 +8,7 @@ from .advice import Advice, AdvicePriority, ValidationStatus
 from .photo import Photo
 from .care_report import CareReport, HealthLevel
 from .botanist_report_advice import BotanistReportAdvice
+from .refresh_token import RefreshToken
 
 __all__ = [
     "User",
@@ -29,4 +30,5 @@ __all__ = [
     "CareReport",
     "HealthLevel",
     "BotanistReportAdvice",
+    "RefreshToken",
 ]

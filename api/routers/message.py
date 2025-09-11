@@ -19,7 +19,7 @@ TIME_WINDOW = 60  # secondes
 email_service = EmailService()
 
 
-@router.post("/conversations", response_model=Conversation)
+@router.post("/conversations")
 async def create_conversation(
     conversation: ConversationCreate,
     db: Session = Depends(get_db),
@@ -282,7 +282,7 @@ async def send_message(
     return new_message
 
 
-@router.post("/conversations/botanist", response_model=Conversation)
+@router.post("/conversations/botanist")
 async def create_botanist_conversation(
     plant_id: int,
     db: Session = Depends(get_db),
@@ -323,7 +323,7 @@ async def create_botanist_conversation(
     message.create_message(
         db=db,
         message=MessageCreate(
-            conversation_id=conversation.id,
+            conversation_id=conversation["id"],
             content=f"Bonjour, j'aimerais avoir des conseils pour l'entretien de ma plante '{plant.nom}'{f' ({plant.espece})' if plant.espece else ''}. Pouvez-vous m'aider ?",
         ),
         sender_id=current_user.id,

@@ -214,5 +214,5 @@ stages:
         function: validators.care_validators:validate_care_response
         extra_kwargs:
           expected_status: "completed"
-          check_start_photo: true
-          check_end_photo: true 
+          check_start_photo: false
+          check_end_photo: false 

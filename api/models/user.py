@@ -49,6 +49,11 @@ class User(Base):
         "UserTypingStatus", back_populates="user", uselist=True
     )
     presence = relationship("UserPresence", back_populates="user", uselist=False)
+    
+    # Relations pour les refresh tokens
+    refresh_tokens = relationship(
+        "RefreshToken", back_populates="user", cascade="all, delete-orphan"
+    )
 
     def get_full_name(self) -> str:
         """Retourne le nom complet de l'utilisateur"""

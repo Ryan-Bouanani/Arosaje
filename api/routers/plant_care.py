@@ -214,7 +214,7 @@ async def accept_plant_care(
     # Mettre à jour la garde
     db_care.status = CareStatus.ACCEPTED
     db_care.caretaker_id = current_user.id
-    db_care.conversation_id = conversation.id
+    db_care.conversation_id = conversation["id"]
     db.add(db_care)
     db.commit()
     db.refresh(db_care)

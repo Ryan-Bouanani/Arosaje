@@ -10,6 +10,9 @@ from services.email.email_service import EmailService
 from models.plant_care import PlantCare
 from services.rgpd_cleanup_service import RGPDCleanupService
 from models.advice import Advice
+from models.message import Message, Conversation, ConversationParticipant
+from models.care_report import CareReport
+from models.plant import Plant
 
 router = APIRouter(prefix="/admin", tags=["administration"])
 
@@ -144,6 +147,47 @@ async def get_admin_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erreur lors de la récupération des statistiques: {str(e)}",
+        )
+
+
+@router.delete("/reset-data")
+async def reset_data(
+    db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
+):
+    """Reset toutes les données sauf les comptes utilisateurs"""
+    try:
+        # Supprimer les données dans l'ordre des dépendances
+        deleted_messages = db.query(Message).delete()
+        deleted_participants = db.query(ConversationParticipant).delete()
+        deleted_conversations = db.query(Conversation).delete()
+        
+        deleted_advice = db.query(Advice).delete()
+        deleted_reports = db.query(CareReport).delete()
+        deleted_cares = db.query(PlantCare).delete()
+        deleted_plants = db.query(Plant).delete()
+        
+        # Commit les changements
+        db.commit()
+        
+        return {
+            "message": "Reset terminé avec succès",
+            "deleted": {
+                "messages": deleted_messages,
+                "participants": deleted_participants,
+                "conversations": deleted_conversations,
+                "advice": deleted_advice,
+                "reports": deleted_reports,
+                "cares": deleted_cares,
+                "plants": deleted_plants
+            },
+            "note": "Comptes utilisateurs conservés"
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erreur lors du reset: {str(e)}",
         )
 
 

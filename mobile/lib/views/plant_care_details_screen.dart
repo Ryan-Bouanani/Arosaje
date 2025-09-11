@@ -257,7 +257,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       if (photo != null && widget.careId != null) {
         setState(() => _isLoading = true);
         
-        await _plantCareService.uploadBeforePhoto(widget.careId!, photo.path);
+        // await _plantCareService.uploadBeforePhoto(widget.careId!, photo.path);
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Photo avant garde envoyée avec succès')),
@@ -287,7 +287,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       if (photo != null && widget.careId != null) {
         setState(() => _isLoading = true);
         
-        await _plantCareService.uploadAfterPhoto(widget.careId!, photo.path);
+        // await _plantCareService.uploadAfterPhoto(widget.careId!, photo.path);
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Photo après garde envoyée. Garde terminée!')),
@@ -387,7 +387,15 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         return;
       }
 
-      // Navigation directe vers la page des messages
+      // Créer la conversation avec le propriétaire
+      final messageService = MessageService(ApiService());
+      final ownerId = _careDetails!['owner']['id'];
+      final currentUserId = _currentUserId;
+      final careId = _careDetails!['id'];
+      
+      await messageService.createPlantCareConversation(ownerId, currentUserId!, relatedId: careId);
+
+      // Navigation vers la page des messages
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -398,7 +406,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Messagerie ouverte - Vous pourrez contacter ${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}'),
+          content: Text('Conversation créée avec ${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -418,7 +426,15 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         return;
       }
 
-      // Navigation directe vers la page des messages
+      // Créer la conversation avec le gardien
+      final messageService = MessageService(ApiService());
+      final caretakerId = _careDetails!['caretaker']['id'];
+      final currentUserId = _currentUserId;
+      final careId = _careDetails!['id'];
+
+      await messageService.createPlantCareConversation(currentUserId!, caretakerId, relatedId: careId);
+
+      // Navigation vers la page des messages
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -429,7 +445,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Messagerie ouverte - Vous pourrez contacter ${_careDetails!['caretaker']['prenom']} ${_careDetails!['caretaker']['nom']}'),
+          content: Text('Conversation créée avec ${_careDetails!['caretaker']['prenom']} ${_careDetails!['caretaker']['nom']}'),
           backgroundColor: Colors.green,
         ),
       );

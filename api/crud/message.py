@@ -23,7 +23,7 @@ class CRUDMessage:
         conversation_type: ConversationType,
         related_id: Optional[int] = None,
         initiator_id: Optional[int] = None,
-    ) -> Conversation:
+    ) -> Dict[str, Any]:
         """Crée une nouvelle conversation avec les participants spécifiés."""
         db_conversation = Conversation(type=conversation_type, related_id=related_id)
         db.add(db_conversation)
@@ -37,7 +37,74 @@ class CRUDMessage:
 
         db.commit()
         db.refresh(db_conversation)
-        return db_conversation
+        
+        # Construire une réponse complète avec les mêmes informations que get_user_conversations
+        conv_dict = {
+            "id": db_conversation.id,
+            "type": db_conversation.type.value if db_conversation.type else "plant_care",
+            "related_id": db_conversation.related_id,
+            "created_at": db_conversation.created_at.isoformat(),
+            "updated_at": db_conversation.updated_at.isoformat(),
+            "unread_count": 0,
+            "last_message": None,
+            "participants": [],
+            "plant_info": None,
+            "plant_care_info": None,
+        }
+
+        # Récupérer les participants avec leurs détails
+        participants = (
+            db.query(User)
+            .join(ConversationParticipant)
+            .filter(ConversationParticipant.conversation_id == db_conversation.id)
+            .all()
+        )
+
+        # Ajouter les informations des participants
+        for participant in participants:
+            conv_dict["participants"].append({
+                "id": participant.id,
+                "user_id": participant.id,  # Pour compatibilité
+                "nom": participant.nom,
+                "prenom": participant.prenom,
+                "email": participant.email,
+            })
+
+        # Si c'est une conversation de type plant_care, récupérer les infos de la plante
+        if (
+            db_conversation.type
+            and db_conversation.type.value == "plant_care"
+            and db_conversation.related_id
+        ):
+            # Récupérer la garde de plante
+            plant_care = (
+                db.query(PlantCare)
+                .filter(PlantCare.id == db_conversation.related_id)
+                .first()
+            )
+            if plant_care:
+                # Récupérer la plante
+                plant = (
+                    db.query(Plant)
+                    .filter(Plant.id == plant_care.plant_id)
+                    .first()
+                )
+                if plant:
+                    conv_dict["plant_info"] = {
+                        "id": plant.id,
+                        "nom": plant.nom,
+                        "espece": plant.espece,
+                    }
+
+                conv_dict["plant_care_info"] = {
+                    "id": plant_care.id,
+                    "start_date": plant_care.start_date.isoformat(),
+                    "end_date": plant_care.end_date.isoformat(),
+                    "owner_id": plant_care.owner_id,
+                    "caretaker_id": plant_care.caretaker_id,
+                }
+
+        return conv_dict
 
     def get_conversation(
         self, db: Session, conversation_id: int

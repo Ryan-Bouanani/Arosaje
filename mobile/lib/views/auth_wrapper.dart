@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../services/auth_service.dart';
 import 'home_screen.dart';
 import 'home_after_login_screen.dart';
 import 'botanist_advice_main_screen.dart';
@@ -26,6 +27,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Future<void> _checkAuthStatus() async {
     try {
+      // Initialiser le système de refresh token
+      final authService = await AuthService.getInstance();
+      await authService.initializeRefreshSystem();
+      
       // Vérifier si un token existe
       final apiService = ApiService();
       final token = await apiService.getToken();

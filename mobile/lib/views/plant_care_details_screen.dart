@@ -12,6 +12,7 @@ import 'package:mobile/services/unified_advice_service.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/models/advice.dart';
 import 'package:mobile/widgets/image_zoom_dialog.dart';
+import 'package:mobile/config/app_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
@@ -406,7 +407,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Conversation créée avec ${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}'),
+          content: Text('Conversation avec ${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -445,7 +446,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Conversation créée avec ${_careDetails!['caretaker']['prenom']} ${_careDetails!['caretaker']['nom']}'),
+          content: Text('Conversation avec ${_careDetails!['caretaker']['prenom']} ${_careDetails!['caretaker']['nom']}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -808,7 +809,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 onTap: () {
                   ImageZoomDialog.show(
                     context,
-                    'http://localhost:8000$photoUrl',
+                    '${AppConfig.apiUrl}$photoUrl',
                     title: 'Photo de la séance d\'entretien',
                   );
                 },
@@ -817,7 +818,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: Image.network(
-                        'http://localhost:8000$photoUrl', // URL complète
+                        '${AppConfig.apiUrl}$photoUrl', // URL complète
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,

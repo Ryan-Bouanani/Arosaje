@@ -24,7 +24,14 @@ class CRUDMessage:
         related_id: Optional[int] = None,
         initiator_id: Optional[int] = None,
     ) -> Dict[str, Any]:
-        """Crée une nouvelle conversation avec les participants spécifiés."""
+        """Crée une nouvelle conversation avec les participants spécifiés, ou retourne une conversation existante."""
+        
+        # Vérifier s'il existe déjà une conversation avec les mêmes paramètres
+        if conversation_type == ConversationType.plant_care and related_id:
+            existing_conversation = self._find_existing_plant_care_conversation(db, participant_ids, related_id)
+            if existing_conversation:
+                return existing_conversation
+        
         db_conversation = Conversation(type=conversation_type, related_id=related_id)
         db.add(db_conversation)
         db.flush()
@@ -38,13 +45,50 @@ class CRUDMessage:
         db.commit()
         db.refresh(db_conversation)
         
-        # Construire une réponse complète avec les mêmes informations que get_user_conversations
+        # Utiliser la méthode commune pour construire la réponse
+        return self._build_conversation_response(db, db_conversation)
+
+    def _find_existing_plant_care_conversation(
+        self, db: Session, participant_ids: List[int], related_id: int
+    ) -> Optional[Dict[str, Any]]:
+        """Cherche une conversation existante pour une garde de plante entre les mêmes participants."""
+        
+        # Rechercher les conversations de type plant_care avec le même related_id
+        conversations = (
+            db.query(Conversation)
+            .filter(
+                Conversation.type == ConversationType.plant_care,
+                Conversation.related_id == related_id
+            )
+            .all()
+        )
+        
+        # Vérifier si l'une des conversations a exactement les mêmes participants
+        for conv in conversations:
+            conv_participant_ids = [
+                p.user_id for p in db.query(ConversationParticipant)
+                .filter(ConversationParticipant.conversation_id == conv.id)
+                .all()
+            ]
+            
+            # Comparer les listes de participants (ordre non important)
+            if set(conv_participant_ids) == set(participant_ids):
+                # Construire la réponse complète pour cette conversation existante
+                return self._build_conversation_response(db, conv)
+        
+        return None
+
+    def _build_conversation_response(
+        self, db: Session, conversation: Conversation
+    ) -> Dict[str, Any]:
+        """Construit la réponse complète pour une conversation."""
+        
         conv_dict = {
-            "id": db_conversation.id,
-            "type": db_conversation.type.value if db_conversation.type else "plant_care",
-            "related_id": db_conversation.related_id,
-            "created_at": db_conversation.created_at.isoformat(),
-            "updated_at": db_conversation.updated_at.isoformat(),
+            "id": conversation.id,
+            "type": conversation.type.value if conversation.type else "plant_care",
+            "related_id": conversation.related_id,
+            "created_at": conversation.created_at.isoformat(),
+            "updated_at": conversation.updated_at.isoformat(),
             "unread_count": 0,
             "last_message": None,
             "participants": [],
@@ -56,7 +100,7 @@ class CRUDMessage:
         participants = (
             db.query(User)
             .join(ConversationParticipant)
-            .filter(ConversationParticipant.conversation_id == db_conversation.id)
+            .filter(ConversationParticipant.conversation_id == conversation.id)
             .all()
         )
 
@@ -72,14 +116,14 @@ class CRUDMessage:
 
         # Si c'est une conversation de type plant_care, récupérer les infos de la plante
         if (
-            db_conversation.type
-            and db_conversation.type.value == "plant_care"
-            and db_conversation.related_id
+            conversation.type
+            and conversation.type.value == "plant_care"
+            and conversation.related_id
         ):
             # Récupérer la garde de plante
             plant_care = (
                 db.query(PlantCare)
-                .filter(PlantCare.id == db_conversation.related_id)
+                .filter(PlantCare.id == conversation.related_id)
                 .first()
             )
             if plant_care:

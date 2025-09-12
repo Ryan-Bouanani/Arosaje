@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/app_config.dart';
 
 enum ConnectionState {
   disconnected,
@@ -71,7 +72,7 @@ class WebSocketManager {
       _setState(ConnectionState.connecting);
       // Attempting connection
       
-      final String apiUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
+      final String apiUrl = AppConfig.apiUrl;
       final wsUrl = Uri.parse('${apiUrl.replaceFirst("http", "ws")}/ws/$_conversationId?token=$_token');
       
       // WebSocket URL: $wsUrl

@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile/models/conversation.dart';
 import 'package:mobile/models/message.dart';
 import 'package:mobile/services/api_service.dart';
+import '../config/app_config.dart';
 
 class MessageService {
   final ApiService _apiService;
@@ -148,7 +149,7 @@ class MessageService {
       }
       
       // Passer le token comme paramètre de query dans l'URL
-      final String apiUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
+      final String apiUrl = AppConfig.apiUrl;
       final wsUrl = Uri.parse('${apiUrl.replaceFirst("http", "ws")}/ws/$conversationId?token=$token');
       
       _channel = WebSocketChannel.connect(wsUrl);

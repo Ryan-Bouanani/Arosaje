@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/app_config.dart';
 
 class AddressAutocompleteField extends StatefulWidget {
   final Function(String address, double? lat, double? lng) onAddressSelected;
@@ -37,7 +38,7 @@ class _AddressAutocompleteFieldState extends State<AddressAutocompleteField> {
   bool _isSelecting = false;
   
   // URL de l'API backend
-  final String _baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
+  final String _baseUrl = AppConfig.apiUrl;
 
   @override
   void initState() {

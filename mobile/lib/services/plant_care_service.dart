@@ -2,9 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:mobile/services/storage_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import '../config/app_config.dart';
 
 class PlantCareService {
-  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
+  final String baseUrl = AppConfig.apiUrl;
   late final StorageService _storageService;
 
   static Future<PlantCareService> init() async {

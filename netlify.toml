@@ -1,7 +1,7 @@
 [build]
-  base = "mobile"
-  publish = "build/web"
-  command = "bash ../bin/install-flutter.sh && flutter build web --release"
+  base = "."
+  publish = "mobile/build/web"
+  command = "echo 'Build Flutter locally and deploy pre-built files'"
 
 [build.environment]
   FLUTTER_WEB = "true"

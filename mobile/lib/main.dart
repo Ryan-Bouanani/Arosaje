@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -9,15 +10,26 @@ import 'services/api_service.dart';
 import 'services/message_service.dart';
 import 'providers/message_provider.dart';
 import 'providers/advice_provider.dart';
+import 'config/app_config.dart';
 
 Future<void> main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
-    await SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
-    await dotenv.load(fileName: "assets/.env.mobile");
+    
+    // Charger .env seulement pour les plateformes mobiles
+    if (!kIsWeb) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      
+      try {
+        await dotenv.load(fileName: "assets/.env.mobile");
+      } catch (e) {
+        print('Avertissement: Impossible de charger .env.mobile, utilisation des valeurs par défaut: $e');
+      }
+    }
+    
     runApp(const MyApp());
   } catch (e) {
     print('Erreur lors de l\'initialisation: $e');

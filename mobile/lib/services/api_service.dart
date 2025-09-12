@@ -4,10 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:async';
+import '../config/app_config.dart';
 
 class ApiService {
-  // Configuration dynamique depuis .env
-  final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
+  // Configuration depuis AppConfig (supporte web et mobile)
+  final String baseUrl = AppConfig.apiUrl;
 
   String? _token;
 
@@ -151,7 +152,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
     try {
-      final String apiUrl = dotenv.env['FLUTTER_API_URL'] ?? '/api';
+      final String apiUrl = AppConfig.apiUrl;
       final response = await http.post(
         Uri.parse('$apiUrl/auth/login'),
         headers: <String, String>{

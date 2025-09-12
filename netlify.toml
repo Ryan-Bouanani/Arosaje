@@ -1,0 +1,7 @@
+[build]
+  base = "mobile"
+  publish = "mobile/build/web"
+  command = "flutter build web --release"
+
+[build.environment]
+  FLUTTER_WEB = "true"

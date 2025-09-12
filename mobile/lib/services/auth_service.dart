@@ -4,11 +4,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
 import '../models/user.dart';
+import '../config/app_config.dart';
 import 'storage_service.dart';
 import 'api_service.dart';
 
 class AuthService {
-  static final String baseUrl = dotenv.env['FLUTTER_API_URL'] ?? 'http://localhost:8000';
+  static final String baseUrl = AppConfig.apiUrl;
   static AuthService? _instance;
   late final Dio _dio;
   late final StorageService _storageService;

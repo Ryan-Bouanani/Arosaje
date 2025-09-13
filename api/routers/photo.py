@@ -22,19 +22,30 @@ async def upload_photo(
 ):
     """Uploader une photo pour une plante"""
     try:
-        # Vérifier le type de fichier
-        if not ImageHandler.is_valid_image(file):
-            raise HTTPException(
-                status_code=400,
-                detail="Format de fichier non supporté. Utilisez JPG, JPEG, PNG ou GIF",
-            )
-
-        filename, url = await ImageHandler.save_image(file, type)
+        # Validation de base
+        if not file.content_type or not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+        
+        # Lire le contenu de l'image
+        await file.seek(0)
+        image_data = await file.read()
+        
+        # Vérifier la taille (max 5MB pour éviter des problèmes de DB)
+        if len(image_data) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="L'image ne peut pas dépasser 5MB")
+        
+        # Encoder en Base64
+        import base64
+        base64_image = base64.b64encode(image_data).decode('utf-8')
+        
+        # Créer le data URL avec le type MIME
+        data_url = f"data:{file.content_type};base64,{base64_image}"
 
         # Créer l'entrée en base
         photo_data = {
-            "filename": filename,
-            "url": url,
+            "filename": file.filename or f"photo_{plant_id}_{type}.jpg",
+            "url": "",  # Plus utilisé, on garde pour compatibilité
+            "photo_base64": data_url,
             "plant_id": plant_id,
             "description": description,
             "type": type,
@@ -49,17 +60,17 @@ async def upload_photo(
             id=photo.id,
             filename=photo.filename,
             url=photo.url,
+            photo_base64=photo.photo_base64,
             plant_id=photo.plant_id,
             description=photo.description,
             type=photo.type,
             created_at=photo.created_at,
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
-        # En cas d'erreur, supprimer le fichier si créé
-        if "filename" in locals():
-            ImageHandler.delete_image(filename)
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=f"Erreur lors de l'upload: {str(e)}")
 
 
 @router.get("/plant/{plant_id}", response_model=Dict[str, List[PhotoResponse]])

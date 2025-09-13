@@ -3,6 +3,7 @@ class Plant {
   final String nom;
   final String? espece;
   final String? photo;
+  final String? photoBase64;
   final int? ownerId;
 
   Plant({
@@ -10,6 +11,7 @@ class Plant {
     required this.nom,
     this.espece,
     this.photo,
+    this.photoBase64,
     this.ownerId,
   });
 
@@ -19,6 +21,7 @@ class Plant {
       nom: json['nom'],
       espece: json['espece'],
       photo: json['photo'],
+      photoBase64: json['photo_base64'],
       ownerId: json['owner_id'],
     );
   }
@@ -29,6 +32,7 @@ class Plant {
       'nom': nom,
       'espece': espece,
       'photo': photo,
+      'photo_base64': photoBase64,
       'owner_id': ownerId,
     };
   }

@@ -4,6 +4,7 @@ import 'plant_detail_botaniste.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/models/plant.dart';
 import 'package:mobile/services/plant_care_service.dart';
+import '../widgets/adaptive_image.dart';
 
 class HomeAfterLoginAdmin extends StatefulWidget {
   const HomeAfterLoginAdmin({super.key});
@@ -108,17 +109,16 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                         topLeft: Radius.circular(12),
                         topRight: Radius.circular(12),
                       ),
-                      child: Image.network(
-                        plant.photo!,
+                      child: AdaptiveImage(
+                        imageUrl: plant.photo!,
+                        imageBase64: plant.photoBase64,
                         fit: BoxFit.cover,
                         width: double.infinity,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(
-                            Icons.local_florist,
-                            size: 40,
-                            color: Colors.green[700],
-                          );
-                        },
+                        errorWidget: Icon(
+                          Icons.local_florist,
+                          size: 40,
+                          color: Colors.green[700],
+                        ),
                       ),
                     )
                   : Center(

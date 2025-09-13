@@ -8,6 +8,7 @@ import 'package:mobile/models/plant.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/services/plant_care_service.dart';
 import 'package:geolocator/geolocator.dart';
+import '../widgets/adaptive_image.dart';
 
 class HomeAfterLogin extends StatefulWidget {
   const HomeAfterLogin({super.key});
@@ -331,16 +332,15 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                         plant['photo'] != null
                             ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.network(
-                                plant['photo'],
+                              child: AdaptiveImage(
+                                imageUrl: plant['photo'],
+                                imageBase64: plant['photo_base64'],
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return Icon(
-                                    Icons.local_florist,
-                                    size: 30,
-                                    color: Colors.green[700],
-                                  );
-                                },
+                                errorWidget: Icon(
+                                  Icons.local_florist,
+                                  size: 30,
+                                  color: Colors.green[700],
+                                ),
                               ),
                             )
                             : Icon(
@@ -542,18 +542,16 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                             topLeft: Radius.circular(12),
                             topRight: Radius.circular(12),
                           ),
-                          child: Image.network(
-                            plant['photo'],
+                          child: AdaptiveImage(
+                            imageUrl: plant['photo'],
+                            imageBase64: plant['photo_base64'],
                             fit: BoxFit.cover,
                             width: double.infinity,
-                            errorBuilder: (context, error, stackTrace) {
-                              print('Erreur de chargement de l\'image: $error');
-                              return Icon(
-                                Icons.local_florist,
-                                size: 40,
-                                color: Colors.green[700],
-                              );
-                            },
+                            errorWidget: Icon(
+                              Icons.local_florist,
+                              size: 40,
+                              color: Colors.green[700],
+                            ),
                           ),
                         )
                         : Center(
@@ -645,16 +643,15 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       plant['photo'] != null
                           ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              plant['photo'],
+                            child: AdaptiveImage(
+                              imageUrl: plant['photo'],
+                              imageBase64: plant['photo_base64'],
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.local_florist,
-                                  size: 25,
-                                  color: Colors.green[700],
-                                );
-                              },
+                              errorWidget: Icon(
+                                Icons.local_florist,
+                                size: 25,
+                                color: Colors.green[700],
+                              ),
                             ),
                           )
                           : Icon(
@@ -781,16 +778,15 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                             child: plant != null && plant['photo'] != null
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(
-                                      plant['photo'],
+                                    child: AdaptiveImage(
+                                      imageUrl: plant['photo'],
+                                      imageBase64: plant['photo_base64'],
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Icon(
-                                          Icons.local_florist,
-                                          size: 25,
-                                          color: Colors.green[700],
-                                        );
-                                      },
+                                      errorWidget: Icon(
+                                        Icons.local_florist,
+                                        size: 25,
+                                        color: Colors.green[700],
+                                      ),
                                     ),
                                   )
                                 : Icon(

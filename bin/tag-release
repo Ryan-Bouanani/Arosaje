@@ -1,0 +1,43 @@
+#!/bin/bash
+# Script de tagging des versions pour stratégie de rollback
+# Usage: ./bin/tag-release [version]
+
+set -e
+
+# Générer version automatique si non fournie
+if [ $# -eq 0 ]; then
+    VERSION="stable-$(date +%Y%m%d-%H%M%S)"
+else
+    VERSION="stable-$1"
+fi
+
+echo "🏷️  Tagging release version: $VERSION"
+
+# Vérifier que les images existent
+if ! docker image inspect arosa-je-api:latest >/dev/null 2>&1; then
+    echo "❌ Image arosa-je-api:latest introuvable. Construisez d'abord l'image."
+    exit 1
+fi
+
+if ! docker image inspect arosa-je-mobile:latest >/dev/null 2>&1; then
+    echo "❌ Image arosa-je-mobile:latest introuvable. Construisez d'abord l'image."
+    exit 1
+fi
+
+# Tagger les images
+echo "📦 Tagging API image..."
+docker tag arosa-je-api:latest arosa-je-api:$VERSION
+
+echo "📱 Tagging Mobile image..."
+docker tag arosa-je-mobile:latest arosa-je-mobile:$VERSION
+
+# Sauvegarder les tags dans un fichier
+echo "$VERSION" >> bin/.release-history
+echo "$(date): $VERSION" >> bin/.release-log
+
+echo "✅ Version $VERSION taguée avec succès!"
+echo "📋 Images disponibles:"
+echo "   - arosa-je-api:$VERSION"
+echo "   - arosa-je-mobile:$VERSION"
+echo ""
+echo "💡 Pour faire un rollback: ./bin/rollback $VERSION"

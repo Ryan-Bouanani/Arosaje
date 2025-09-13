@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:mobile/views/plant_care_details_screen.dart';
 import 'package:mobile/services/plant_care_service.dart';
 import 'package:mobile/services/storage_service.dart';
+import '../widgets/adaptive_image.dart';
 
 class PlantHistoryScreen extends StatefulWidget {
   const PlantHistoryScreen({super.key});
@@ -192,14 +193,13 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
               child: plant['photo'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(50),
-                      child: Image.network(
-                        plant['photo'],
+                      child: AdaptiveImage(
+                        imageUrl: plant['photo'],
+                        imageBase64: plant['photo_base64'],
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(Icons.local_florist, color: Colors.green[700]);
-                        },
+                        errorWidget: Icon(Icons.local_florist, color: Colors.green[700]),
                       ),
                     )
                   : Icon(Icons.local_florist, color: Colors.green[700]),
@@ -279,14 +279,13 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
               child: plant['photo'] != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(50),
-                      child: Image.network(
-                        plant['photo'],
+                      child: AdaptiveImage(
+                        imageUrl: plant['photo'],
+                        imageBase64: plant['photo_base64'],
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Icon(Icons.local_florist, color: Colors.green[700]);
-                        },
+                        errorWidget: Icon(Icons.local_florist, color: Colors.green[700]),
                       ),
                     )
                   : Icon(Icons.local_florist, color: Colors.green[700]),

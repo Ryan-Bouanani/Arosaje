@@ -1,0 +1,72 @@
+#!/bin/bash
+# Script de rollback vers une version stable
+# Usage: ./bin/rollback <version>
+
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "❌ Usage: ./bin/rollback <version>"
+    echo "📋 Versions disponibles:"
+    if [ -f "bin/.release-history" ]; then
+        cat bin/.release-history | tail -10
+    else
+        echo "   Aucune version taguée trouvée."
+    fi
+    exit 1
+fi
+
+VERSION="$1"
+
+# Vérifier si la version existe
+if ! docker image inspect arosa-je-api:$VERSION >/dev/null 2>&1; then
+    echo "❌ Image arosa-je-api:$VERSION introuvable"
+    echo "📋 Versions disponibles:"
+    docker images arosa-je-api --format "table {{.Tag}}\t{{.CreatedAt}}" | grep stable || echo "Aucune version stable trouvée"
+    exit 1
+fi
+
+if ! docker image inspect arosa-je-mobile:$VERSION >/dev/null 2>&1; then
+    echo "❌ Image arosa-je-mobile:$VERSION introuvable"
+    exit 1
+fi
+
+echo "🔄 Début du rollback vers la version: $VERSION"
+
+# Arrêter les services concernés
+echo "⏹️  Arrêt des services API et Mobile..."
+docker-compose stop api mobile
+
+# Sauvegarder les tags actuels (au cas où)
+BACKUP_TAG="backup-$(date +%Y%m%d-%H%M%S)"
+echo "💾 Sauvegarde des images actuelles vers: $BACKUP_TAG"
+docker tag arosa-je-api:latest arosa-je-api:$BACKUP_TAG 2>/dev/null || true
+docker tag arosa-je-mobile:latest arosa-je-mobile:$BACKUP_TAG 2>/dev/null || true
+
+# Effectuer le rollback
+echo "🏷️  Rollback des images..."
+docker tag arosa-je-api:$VERSION arosa-je-api:latest
+docker tag arosa-je-mobile:$VERSION arosa-je-mobile:latest
+
+# Redémarrer les services
+echo "🚀 Redémarrage des services..."
+docker-compose up -d api mobile
+
+# Attendre que les services soient prêts
+echo "⏳ Vérification de la santé des services..."
+sleep 10
+
+# Vérifier que l'API répond
+if curl -f http://localhost:8000/health >/dev/null 2>&1; then
+    echo "✅ API opérationnelle"
+else
+    echo "⚠️  L'API ne répond pas encore, vérifiez les logs avec: docker logs arosa-je-api"
+fi
+
+# Logger le rollback
+echo "$(date): Rollback vers $VERSION depuis $BACKUP_TAG" >> bin/.rollback-log
+
+echo "✅ Rollback vers $VERSION terminé!"
+echo "📋 Version de sauvegarde disponible: $BACKUP_TAG"
+echo "📝 Vérifiez les logs avec:"
+echo "   docker logs arosa-je-api -f"
+echo "   docker logs arosa-je-mobile -f"

@@ -13,7 +13,6 @@ services:
     env_file:
       - ./env/.env.api
     environment:
-      - DATABASE_URL=postgresql://arosaje:epsi@postgres:5432/arosaje_db
       - PYTHONUNBUFFERED=1
       - GIT_DISCOVERY_ACROSS_FILESYSTEM=1
     networks:
@@ -21,29 +20,28 @@ services:
     depends_on:
       api-redis:
         condition: service_healthy
-      postgres:
-        condition: service_healthy
     restart: "no"
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: arosa-je-postgres
-    environment:
-      - POSTGRES_USER=arosaje
-      - POSTGRES_PASSWORD=epsi
-      - POSTGRES_DB=arosaje_db
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - arosa-je-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U arosaje -d arosaje_db"]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
+# PostgreSQL local désactivé - utilisation de Neon PostgreSQL
+  # postgres:
+  #   image: postgres:17-alpine
+  #   container_name: arosa-je-postgres
+  #   environment:
+  #     - POSTGRES_USER=arosaje
+  #     - POSTGRES_PASSWORD=epsi
+  #     - POSTGRES_DB=arosaje_db
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - arosa-je-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U arosaje -d arosaje_db"]
+  #     interval: 5s
+  #     timeout: 3s
+  #     retries: 3
+  #     start_period: 5s
 
   web:
     container_name: arosa-je-web
@@ -125,23 +123,24 @@ services:
       start_period: 5s
 
   # Interface web pour PostgreSQL
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: arosa-je-pgadmin
-    ports:
-      - "8080:80"
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=admin@arosaje.fr
-      - PGADMIN_DEFAULT_PASSWORD=admin
-      - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
-      - PGADMIN_CONFIG_LOGIN_BANNER="A'rosa-je Database Administration"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    networks:
-      - arosa-je-network
-    depends_on:
-      - postgres
-    restart: unless-stopped
+# pgadmin désactivé - utilisation de Neon Console
+  # pgadmin:
+  #   image: dpage/pgadmin4:latest
+  #   container_name: arosa-je-pgadmin
+  #   ports:
+  #     - "8080:80"
+  #   environment:
+  #     - PGADMIN_DEFAULT_EMAIL=admin@arosaje.fr
+  #     - PGADMIN_DEFAULT_PASSWORD=admin
+  #     - PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION=True
+  #     - PGADMIN_CONFIG_LOGIN_BANNER="A'rosa-je Database Administration"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   networks:
+  #     - arosa-je-network
+  #   depends_on:
+  #     - postgres
+  #   restart: unless-stopped
 
   # === SERVICES DE MONITORING (Activés avec l'API) ===
   
@@ -278,7 +277,7 @@ services:
 
   # PostgreSQL séparée pour les logs structurés
   monitoring-postgres:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     container_name: arosa-je-monitoring-postgres
     environment:
       - POSTGRES_USER=monitoring

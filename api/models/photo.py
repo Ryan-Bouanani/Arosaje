@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from utils.database import Base
@@ -10,6 +10,7 @@ class Photo(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     filename = Column(String, nullable=False)
     url = Column(String, nullable=False)
+    photo_base64 = Column(Text, nullable=True)  # Image encodée en Base64
     description = Column(String, nullable=True)
     type = Column(String, nullable=False)  # 'plant', 'garde_start', 'garde_end'
     created_at = Column(DateTime, default=datetime.utcnow)

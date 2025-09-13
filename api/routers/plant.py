@@ -38,10 +38,29 @@ async def create_plant(
         # Créer l'objet PlantCreate avec les données du formulaire
         plant_data = {"nom": nom, "espece": espece, "owner_id": current_user.id}
 
-        # Si une photo est fournie, la sauvegarder
+        # Si une photo est fournie, l'encoder en Base64
         if photo:
-            filename, photo_url = await ImageHandler.save_image(photo, "persisted")
-            plant_data["photo"] = photo_url
+            # Validation de base
+            if not photo.content_type or not photo.content_type.startswith("image/"):
+                raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+            
+            # Lire le contenu de l'image
+            await photo.seek(0)
+            image_data = await photo.read()
+            
+            # Vérifier la taille (max 5MB pour éviter des problèmes de DB)
+            if len(image_data) > 5 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="L'image ne peut pas dépasser 5MB")
+            
+            # Encoder en Base64
+            import base64
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+            
+            # Créer le data URL avec le type MIME
+            data_url = f"data:{photo.content_type};base64,{base64_image}"
+            plant_data["photo_base64"] = data_url
+            # Garder photo à None pour éviter les 404
+            plant_data["photo"] = None
 
         # Créer la plante
         plant_in = PlantCreate(**plant_data)

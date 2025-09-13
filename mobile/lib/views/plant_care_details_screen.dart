@@ -12,6 +12,7 @@ import 'package:mobile/services/unified_advice_service.dart';
 import 'package:mobile/services/plant_service.dart';
 import 'package:mobile/models/advice.dart';
 import 'package:mobile/widgets/image_zoom_dialog.dart';
+import 'package:mobile/widgets/adaptive_image.dart';
 import 'package:mobile/config/app_config.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -810,6 +811,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                   ImageZoomDialog.show(
                     context,
                     '${AppConfig.apiUrl}$photoUrl',
+                    imageBase64: report['photo_base64'],
                     title: 'Photo de la séance d\'entretien',
                   );
                 },
@@ -817,33 +819,12 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        '${AppConfig.apiUrl}$photoUrl', // URL complète
+                      child: AdaptiveImage(
+                        imageUrl: '${AppConfig.apiUrl}$photoUrl',
+                        imageBase64: report['photo_base64'],
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 150,
-                            color: Colors.grey[200],
-                            child: const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(Icons.broken_image, color: Colors.grey),
-                                  Text('Image non disponible', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Container(
-                            height: 150,
-                            child: const Center(child: CircularProgressIndicator()),
-                          );
-                        },
                       ),
                     ),
                     // Indicateur de zoom
@@ -1331,15 +1312,10 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         clipBehavior: Clip.antiAlias,
-                                        child: Image.network(
-                                          _careDetails?['plant']?['photo'] ?? '',
+                                        child: AdaptiveImage(
+                                          imageUrl: _careDetails?['plant']?['photo'] ?? '',
+                                          imageBase64: _careDetails?['plant']?['photo_base64'],
                                           fit: BoxFit.cover,
-                                          filterQuality: FilterQuality.high,
-                                          errorBuilder: (context, error, stackTrace) {
-                                            return const Center(
-                                              child: Icon(Icons.error_outline, size: 40, color: Colors.grey),
-                                            );
-                                          },
                                         ),
                                       ),
                                     )

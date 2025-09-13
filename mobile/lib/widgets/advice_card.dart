@@ -4,7 +4,9 @@ import '../models/advice.dart';
 import '../views/create_advice_screen.dart';
 import '../views/advice_details_screen.dart';
 import '../views/validate_advice_screen.dart';
+import '../config/app_config.dart';
 import 'image_zoom_dialog.dart';
+import 'adaptive_image.dart';
 
 class AdviceCard extends StatelessWidget {
   final PlantCareWithAdvice plantCare;
@@ -88,7 +90,8 @@ class AdviceCard extends StatelessWidget {
                     onTap: plantCare.plantImageUrl != null 
                       ? () => ImageZoomDialog.show(
                           context, 
-                          'http://localhost:8000/${plantCare.plantImageUrl!}',
+                          '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
+                          imageBase64: null,
                           title: plantCare.plantName,
                         )
                       : null,
@@ -102,18 +105,17 @@ class AdviceCard extends StatelessWidget {
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: plantCare.plantImageUrl != null 
-                          ? Image.network(
-                              'http://localhost:8000/${plantCare.plantImageUrl!}',
+                          ? AdaptiveImage(
+                              imageUrl: '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
+                              imageBase64: null,
                               width: 40,
                               height: 40,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.eco,
-                                  color: Colors.green.shade600,
-                                  size: 24,
-                                );
-                              },
+                              errorWidget: Icon(
+                                Icons.eco,
+                                color: Colors.green.shade600,
+                                size: 24,
+                              ),
                             )
                           : Icon(
                               Icons.eco,

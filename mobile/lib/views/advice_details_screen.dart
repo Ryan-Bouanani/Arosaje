@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/advice.dart';
+import '../config/app_config.dart';
+import '../widgets/adaptive_image.dart';
 
 class AdviceDetailsScreen extends StatelessWidget {
   final PlantCareWithAdvice plantCare;
@@ -50,16 +52,15 @@ class AdviceDetailsScreen extends StatelessWidget {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: plantCare.plantImageUrl != null 
-                          ? Image.network(
-                              'http://localhost:8000/${plantCare.plantImageUrl!}',
+                          ? AdaptiveImage(
+                              imageUrl: '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
+                              imageBase64: null,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return Icon(
-                                  Icons.eco,
-                                  color: Colors.green.shade700,
-                                  size: 32,
-                                );
-                              },
+                              errorWidget: Icon(
+                                Icons.eco,
+                                color: Colors.green.shade700,
+                                size: 32,
+                              ),
                             )
                           : Icon(
                               Icons.eco,

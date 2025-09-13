@@ -196,3 +196,6 @@ secrets/
 api/assets/persisted_img/
 api/uploads/
 nul
+
+# Local Netlify folder
+.netlify

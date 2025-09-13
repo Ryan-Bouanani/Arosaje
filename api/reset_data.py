@@ -11,7 +11,7 @@ sys.path.append('/app')
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from models.message import Message, Conversation, ConversationParticipant
-from models.plant_care_advice import PlantCareAdvice
+from models.advice import Advice
 from models.care_report import CareReport
 from models.plant_care import PlantCare
 from models.plant import Plant
@@ -37,7 +37,7 @@ def reset_data():
         print(f'   - {deleted_conversations} conversations supprimées')
         
         print('🗑️ Suppression des conseils botaniques...')
-        deleted_advice = db.query(PlantCareAdvice).delete()
+        deleted_advice = db.query(Advice).delete()
         print(f'   - {deleted_advice} conseils supprimés')
         
         print('🗑️ Suppression des rapports de garde...')

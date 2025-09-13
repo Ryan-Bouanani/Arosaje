@@ -47,8 +47,8 @@ class AdaptiveImage extends StatelessWidget {
       }
     }
     
-    // Fallback vers l'URL (ancien système)
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
+    // Fallback vers l'URL (ancien système) - mais seulement si ce n'est pas une URL assets/ éphémère
+    if (imageUrl != null && imageUrl!.isNotEmpty && !imageUrl!.contains('assets/persisted_img/')) {
       return Image.network(
         imageUrl!,
         fit: fit,

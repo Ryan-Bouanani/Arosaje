@@ -59,9 +59,18 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
 
       // Charger mes plantes confiées (je suis propriétaire)
       final myOwnedPlantCares = await _plantCareService.getMyPlantCares();
-      
+
       // Charger les plantes que je garde (je suis gardien)
       final myCaretakingPlants = await _plantCareService.getMyCaretakingPlants();
+
+      // Logs pour déboguer
+      print('PlantCurrentListScreen: myOwnedPlantCares count: ${myOwnedPlantCares.length}');
+      for (var care in myOwnedPlantCares) {
+        final plant = care['plant'];
+        if (plant != null) {
+          print('PlantCurrentListScreen: Plante ${plant['nom']}, photo: ${plant['photo']}, photo_base64: ${plant['photo_base64'] != null ? "présent (${plant['photo_base64'].toString().length} chars)" : "absent"}');
+        }
+      }
 
       if (mounted) {
         setState(() {
@@ -188,7 +197,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                 backgroundColor: Colors.grey[200],
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50),
-                  child: plant['photo'] != null
+                  child: (plant['photo'] != null || plant['photo_base64'] != null)
                     ? AdaptiveImage(
                         imageUrl: plant['photo'],
                         imageBase64: plant['photo_base64'],
@@ -267,7 +276,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                     backgroundColor: Colors.grey[200],
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(50),
-                      child: plant['photo'] != null
+                      child: (plant['photo'] != null || plant['photo_base64'] != null)
                         ? AdaptiveImage(
                             imageUrl: plant['photo'],
                             imageBase64: plant['photo_base64'],

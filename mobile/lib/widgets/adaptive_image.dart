@@ -25,24 +25,32 @@ class AdaptiveImage extends StatelessWidget {
     // Priorité au Base64 (nouveau système)
     if (imageBase64 != null && imageBase64!.isNotEmpty) {
       try {
+        print('AdaptiveImage: Tentative de décodage Base64, longueur: ${imageBase64!.length}');
+        print('AdaptiveImage: Début de la chaîne: ${imageBase64!.substring(0, 50)}...');
+
         // Extraire les données Base64 du data URL
         String base64Data = imageBase64!;
         if (base64Data.startsWith('data:')) {
           base64Data = base64Data.split(',')[1];
+          print('AdaptiveImage: Data URL détectée, base64 extrait');
         }
-        
+
         final Uint8List imageBytes = base64Decode(base64Data);
+        print('AdaptiveImage: Décodage réussi, ${imageBytes.length} bytes');
+
         return Image.memory(
           imageBytes,
           fit: fit,
           width: width,
           height: height,
           errorBuilder: (context, error, stackTrace) {
+            print('AdaptiveImage: Erreur Image.memory: $error');
             return _buildErrorWidget();
           },
         );
       } catch (e) {
         print('Erreur décodage Base64: $e');
+        print('Données imageBase64: ${imageBase64?.substring(0, 100)}...');
         return _buildErrorWidget();
       }
     }

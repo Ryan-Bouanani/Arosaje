@@ -71,6 +71,9 @@ async def create_plant(
         result = plant.create(db=db, obj_in=plant_in)
         return result
     except Exception as e:
+        import traceback
+        print(f"ERROR in create_plant: {str(e)}")
+        print(f"TRACEBACK: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500, detail=f"Erreur lors de la création de la plante: {str(e)}"
         )

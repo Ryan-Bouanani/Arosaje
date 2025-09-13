@@ -172,6 +172,7 @@ class CareReportService {
         if (report['photo_url'] != null) {
           report['photo_url'] = _buildPhotoUrl(report['photo_url']);
         }
+        // Le champ photo_base64 est déjà prêt à être utilisé
         return report;
       }).toList();
     } else if (response.statusCode == 403) {
@@ -265,6 +266,7 @@ class CareReportService {
         if (report['photo_url'] != null) {
           report['photo_url'] = _buildPhotoUrl(report['photo_url']);
         }
+        // Le champ photo_base64 est déjà prêt à être utilisé
         return report;
       }).toList();
     } else if (response.statusCode == 403) {

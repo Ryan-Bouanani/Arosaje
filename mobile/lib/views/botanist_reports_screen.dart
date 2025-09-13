@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/services/care_report_service.dart';
 import 'package:mobile/widgets/image_zoom_dialog.dart';
+import 'package:mobile/widgets/adaptive_image.dart';
 import 'base_page_botaniste.dart';
 
 class BotanistReportsScreen extends StatefulWidget {
@@ -179,9 +180,13 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
             const SizedBox(height: 12),
             
             // Photo
-            if (report['photo_url'] != null)
+            if (report['photo_url'] != null || report['photo_base64'] != null)
               GestureDetector(
-                onTap: () => ImageZoomDialog.show(context, report['photo_url']),
+                onTap: () => ImageZoomDialog.show(
+                  context, 
+                  report['photo_url'], 
+                  imageBase64: report['photo_base64']
+                ),
                 child: Container(
                   width: 80,
                   height: 80,
@@ -192,24 +197,12 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(7),
-                    child: Image.network(
-                      report['photo_url'],
+                    child: AdaptiveImage(
+                      imageUrl: report['photo_url'],
+                      imageBase64: report['photo_base64'],
                       fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Icon(Icons.broken_image, color: Colors.grey),
-                        );
-                      },
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) return child;
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
+                      width: 80,
+                      height: 80,
                     ),
                   ),
                 ),

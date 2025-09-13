@@ -4,16 +4,39 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
+from dotenv import load_dotenv
 
 import sys
 import os
 
+# Charger les variables d'environnement
+load_dotenv()
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from utils.database import Base, DATABASE_URL
+
+# Import après le chargement des variables d'environnement
+from utils.database import Base
+
+# Import all models to ensure they're registered with Base.metadata
+from models.user import User
+from models.plant import Plant
+from models.plant_care import PlantCare
+from models.message import Message, Conversation, ConversationParticipant
+from models.advice import Advice
+from models.photo import Photo
+from models.care_report import CareReport
+from models.botanist_report_advice import BotanistReportAdvice
+from models.user_status import UserStatus, UserPresence, UserTypingStatus
+from models.refresh_token import RefreshToken
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
+
+# Récupérer l'URL depuis les variables d'environnement
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required for Alembic")
 
 # Remplacer l'URL de la base de données par celle de l'environnement
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
@@ -66,10 +89,18 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    # Configuration spéciale pour Neon PostgreSQL avec SSL
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = DATABASE_URL
+    
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args={
+            "sslmode": "require",
+            "application_name": "arosaje-alembic"
+        }
     )
 
     with connectable.connect() as connection:

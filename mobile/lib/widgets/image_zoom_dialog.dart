@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'adaptive_image.dart';
 
 class ImageZoomDialog extends StatelessWidget {
-  final String imageUrl;
+  final String? imageUrl;
+  final String? imageBase64;
   final String? title;
 
   const ImageZoomDialog({
     super.key,
-    required this.imageUrl,
+    this.imageUrl,
+    this.imageBase64,
     this.title,
   });
 
-  static void show(BuildContext context, String imageUrl, {String? title}) {
+  static void show(BuildContext context, String? imageUrl, {String? imageBase64, String? title}) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => ImageZoomDialog(
         imageUrl: imageUrl,
+        imageBase64: imageBase64,
         title: title,
       ),
     );
@@ -35,37 +39,26 @@ class ImageZoomDialog extends StatelessWidget {
               boundaryMargin: const EdgeInsets.all(20),
               minScale: 0.5,
               maxScale: 4.0,
-              child: Image.network(
-                imageUrl,
+              child: AdaptiveImage(
+                imageUrl: imageUrl,
+                imageBase64: imageBase64,
                 fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 200,
-                    height: 200,
-                    color: Colors.grey[300],
-                    child: const Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.broken_image, size: 50, color: Colors.grey),
-                        SizedBox(height: 8),
-                        Text(
-                          'Image non disponible',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    width: 200,
-                    height: 200,
-                    child: const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  );
-                },
+                errorWidget: Container(
+                  width: 200,
+                  height: 200,
+                  color: Colors.grey[300],
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                      SizedBox(height: 8),
+                      Text(
+                        'Image non disponible',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from utils.database import Base
 
@@ -9,7 +9,8 @@ class Plant(Base):
     nom = Column(String, nullable=False)
     espece = Column(String, nullable=True)
     description = Column(String, nullable=True)
-    photo = Column(String, nullable=True)
+    photo = Column(String, nullable=True)  # Legacy: URL vers fichier
+    photo_base64 = Column(Text, nullable=True)  # Nouveau: Image encodée en Base64
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relations

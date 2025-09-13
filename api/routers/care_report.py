@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
+import base64
 from utils.database import get_db
 from utils.security import get_current_user
 from utils.image_handler import ImageHandler
@@ -53,40 +54,43 @@ async def upload_care_report_photo(
     if not report:
         raise HTTPException(status_code=404, detail="Rapport non trouvé")
 
-    # Utiliser ImageHandler pour une validation et sauvegarde sécurisées
+    # Valider et encoder l'image en Base64
     try:
-        photo_size = getattr(photo, "size", "Unknown")
-        print(
-            f"DEBUG: Upload photo - Filename: {photo.filename}, Content-Type: {photo.content_type}, Size: {photo_size}"
-        )
+        # Validation de base
+        if not photo.content_type or not photo.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+        
+        # Lire le contenu de l'image
+        await photo.seek(0)
+        image_data = await photo.read()
+        
+        # Vérifier la taille (max 5MB pour éviter des problèmes de DB)
+        if len(image_data) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="L'image ne peut pas dépasser 5MB")
+        
+        # Encoder en Base64
+        base64_image = base64.b64encode(image_data).decode('utf-8')
+        
+        # Créer le data URL avec le type MIME
+        data_url = f"data:{photo.content_type};base64,{base64_image}"
+        
+        print(f"DEBUG: Photo encoded successfully - Content-Type: {photo.content_type}, Size: {len(image_data)} bytes")
 
-        # Debug: Lire les premiers bytes pour vérifier la signature
-        await photo.seek(0)  # Reset position
-        first_bytes = await photo.read(16)
-        await photo.seek(0)  # Reset position pour save_image
-        print(f"DEBUG: First 16 bytes: {first_bytes}")
-        print(f"DEBUG: First 16 bytes hex: {first_bytes.hex()}")
-
-        filename, url = await ImageHandler.save_image(photo, "persisted_care_report")
-
-        # Construire l'URL pour care reports (format spécifique)
-        photo_url = f"/assets/persisted_img/{filename}"
-        print(f"DEBUG: Photo upload successful - URL: {photo_url}")
-
+    except HTTPException:
+        raise
     except Exception as e:
-        print(f"DEBUG: Photo upload failed - Error: {str(e)}")
-        import traceback
-
-        traceback.print_exc()
+        print(f"DEBUG: Photo encoding failed - Error: {str(e)}")
         raise HTTPException(
             status_code=400, detail=f"Erreur lors de l'upload: {str(e)}"
         )
 
-    # Mettre à jour le rapport avec l'URL de la photo
-    report.photo_url = photo_url
+    # Mettre à jour le rapport avec l'image Base64
+    report.photo_base64 = data_url
+    # Conserver l'ancien champ pour compatibilité (optionnel)
+    report.photo_url = None
     db.commit()
 
-    return {"message": "Photo uploadée avec succès", "photo_url": photo_url}
+    return {"message": "Photo uploadée avec succès", "photo_base64": True}
 
 
 @router.get("/plant-care/{plant_care_id}", response_model=List[CareReport])

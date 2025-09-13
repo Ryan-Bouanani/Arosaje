@@ -21,6 +21,7 @@ class CareReportInDB(CareReportBase):
     caretaker_id: int
     session_date: datetime
     photo_url: Optional[str] = None
+    photo_base64: Optional[str] = None  # Image encodée en Base64
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

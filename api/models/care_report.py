@@ -24,7 +24,8 @@ class CareReport(Base):
 
     # Informations de la séance
     session_date = Column(DateTime, default=datetime.utcnow, nullable=False)
-    photo_url = Column(String, nullable=True)
+    photo_url = Column(String, nullable=True)  # Legacy: URL vers fichier
+    photo_base64 = Column(Text, nullable=True)  # Nouveau: Image encodée en Base64
 
     # Évaluations de santé
     health_level = Column(Enum(HealthLevel), nullable=False)

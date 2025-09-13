@@ -7,6 +7,7 @@ class PlantBase(BaseSchema):
     espece: Optional[str] = None
     description: Optional[str] = None
     photo: Optional[str] = None
+    photo_base64: Optional[str] = None  # Image encodée en Base64
     owner_id: int
 
 

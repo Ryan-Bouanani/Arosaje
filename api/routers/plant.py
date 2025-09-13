@@ -46,20 +46,22 @@ async def create_plant(
 
         # Si une photo est fournie, l'encoder en Base64
         if photo and photo.filename:  # Vérifier aussi que le fichier a un nom
-            # Debug: afficher les informations du fichier
-            print(f"DEBUG photo info: filename={photo.filename}, content_type={photo.content_type}, size={photo.size if hasattr(photo, 'size') else 'unknown'}")
+            # Validation basée sur l'extension du fichier (Flutter envoie souvent application/octet-stream)
+            filename_lower = photo.filename.lower()
+            if not filename_lower.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                raise HTTPException(status_code=400, detail="Le fichier doit être une image (jpg, jpeg, png, gif, webp)")
             
-            # Validation de base plus permissive
-            if photo.content_type and not photo.content_type.startswith("image/"):
-                raise HTTPException(status_code=400, detail="Le fichier doit être une image")
-            
-            # Si pas de content_type, essayer de détecter par extension
-            if not photo.content_type:
-                filename_lower = photo.filename.lower()
-                if filename_lower.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
-                    print(f"DEBUG: Accepting file based on extension: {photo.filename}")
-                else:
-                    raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+            # Déterminer le type MIME basé sur l'extension
+            if filename_lower.endswith(('.jpg', '.jpeg')):
+                mime_type = "image/jpeg"
+            elif filename_lower.endswith('.png'):
+                mime_type = "image/png"
+            elif filename_lower.endswith('.gif'):
+                mime_type = "image/gif"
+            elif filename_lower.endswith('.webp'):
+                mime_type = "image/webp"
+            else:
+                mime_type = "image/jpeg"  # Fallback
             
             # Lire le contenu de l'image
             await photo.seek(0)
@@ -73,8 +75,8 @@ async def create_plant(
             import base64
             base64_image = base64.b64encode(image_data).decode('utf-8')
             
-            # Créer le data URL avec le type MIME
-            data_url = f"data:{photo.content_type};base64,{base64_image}"
+            # Créer le data URL avec le type MIME correct
+            data_url = f"data:{mime_type};base64,{base64_image}"
             plant_data["photo_base64"] = data_url
 
         # Créer la plante

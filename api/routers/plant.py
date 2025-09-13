@@ -46,9 +46,20 @@ async def create_plant(
 
         # Si une photo est fournie, l'encoder en Base64
         if photo and photo.filename:  # Vérifier aussi que le fichier a un nom
-            # Validation de base
-            if not photo.content_type or not photo.content_type.startswith("image/"):
+            # Debug: afficher les informations du fichier
+            print(f"DEBUG photo info: filename={photo.filename}, content_type={photo.content_type}, size={photo.size if hasattr(photo, 'size') else 'unknown'}")
+            
+            # Validation de base plus permissive
+            if photo.content_type and not photo.content_type.startswith("image/"):
                 raise HTTPException(status_code=400, detail="Le fichier doit être une image")
+            
+            # Si pas de content_type, essayer de détecter par extension
+            if not photo.content_type:
+                filename_lower = photo.filename.lower()
+                if filename_lower.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
+                    print(f"DEBUG: Accepting file based on extension: {photo.filename}")
+                else:
+                    raise HTTPException(status_code=400, detail="Le fichier doit être une image")
             
             # Lire le contenu de l'image
             await photo.seek(0)

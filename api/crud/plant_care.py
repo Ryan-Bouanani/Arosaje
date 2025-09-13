@@ -24,7 +24,11 @@ class CRUDPlantCare:
         """Récupérer une garde par son ID avec les relations owner et plant"""
         return (
             db.query(PlantCare)
-            .options(joinedload(PlantCare.owner), joinedload(PlantCare.plant))
+            .options(
+                joinedload(PlantCare.owner),
+                joinedload(PlantCare.plant),
+                joinedload(PlantCare.caretaker)
+            )
             .filter(PlantCare.id == id)
             .first()
         )
@@ -40,7 +44,11 @@ class CRUDPlantCare:
         status: Optional[CareStatus] = None
     ) -> List[PlantCare]:
         """Récupérer plusieurs gardes avec filtres optionnels"""
-        query = db.query(PlantCare)
+        query = db.query(PlantCare).options(
+            joinedload(PlantCare.owner),
+            joinedload(PlantCare.plant),
+            joinedload(PlantCare.caretaker)
+        )
 
         if owner_id is not None:
             query = query.filter(PlantCare.owner_id == owner_id)
@@ -64,6 +72,11 @@ class CRUDPlantCare:
         """Récupérer les gardes disponibles pour l'utilisateur (en attente et créées par d'autres utilisateurs)"""
         return (
             db.query(PlantCare)
+            .options(
+                joinedload(PlantCare.owner),
+                joinedload(PlantCare.plant),
+                joinedload(PlantCare.caretaker)
+            )
             .filter(PlantCare.status == CareStatus.PENDING)
             .filter(PlantCare.owner_id != current_user_id)
             .offset(skip)

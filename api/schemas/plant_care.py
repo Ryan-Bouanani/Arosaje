@@ -24,6 +24,7 @@ class PlantBase(BaseModel):
     nom: str
     espece: Optional[str] = None
     photo: Optional[str] = None
+    photo_base64: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

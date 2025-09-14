@@ -10,7 +10,8 @@ class AdaptiveImage extends StatelessWidget {
   final double? width;
   final double? height;
   final Widget? errorWidget;
-  final int? plantId; // Nouvel attribut pour les plantes
+  final int? plantId; // Pour utiliser le proxy des images de plantes
+  final int? reportId; // Pour utiliser le proxy des images de rapports
 
   const AdaptiveImage({
     super.key,
@@ -21,6 +22,7 @@ class AdaptiveImage extends StatelessWidget {
     this.height,
     this.errorWidget,
     this.plantId,
+    this.reportId,
   });
 
   @override
@@ -37,12 +39,37 @@ class AdaptiveImage extends StatelessWidget {
         width: width,
         height: height,
         errorBuilder: (context, error, stackTrace) {
-          print('❌ AdaptiveImage (Web): Erreur proxy image: $error');
+          print('❌ AdaptiveImage (Web): Erreur proxy image plante: $error');
           return _fallbackToBase64();
         },
         loadingBuilder: (context, child, loadingProgress) {
           if (loadingProgress == null) {
-            print('✅ AdaptiveImage (Web): Image chargée via proxy');
+            print('✅ AdaptiveImage (Web): Image plante chargée via proxy');
+            return child;
+          }
+          return const CircularProgressIndicator();
+        },
+      );
+    }
+
+    // Sur Flutter Web, utiliser l'endpoint API pour servir les images de rapports
+    if (kIsWeb && reportId != null && imageBase64 != null && imageBase64!.isNotEmpty) {
+      print('🌐 AdaptiveImage: Utilisation du proxy d\'image pour rapport $reportId');
+      const String baseUrl = "https://arosaje-backend-t2x7.onrender.com"; // API Render
+      final String proxyUrl = "$baseUrl/care-reports/$reportId/image";
+
+      return Image.network(
+        proxyUrl,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ AdaptiveImage (Web): Erreur proxy image rapport: $error');
+          return _fallbackToBase64();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            print('✅ AdaptiveImage (Web): Image rapport chargée via proxy');
             return child;
           }
           return const CircularProgressIndicator();

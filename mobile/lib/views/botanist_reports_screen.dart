@@ -200,6 +200,7 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
                     child: AdaptiveImage(
                       imageUrl: report['photo_url'],
                       imageBase64: report['photo_base64'],
+                      reportId: report['id'], // ID du rapport pour le proxy
                       fit: BoxFit.contain,
                       width: 80,
                       height: 80,

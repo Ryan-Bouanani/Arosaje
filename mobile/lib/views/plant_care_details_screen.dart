@@ -822,6 +822,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                       child: AdaptiveImage(
                         imageUrl: '${AppConfig.apiUrl}$photoUrl',
                         imageBase64: report['photo_base64'],
+                        reportId: report['id'], // Utilise l'ID du rapport pour le proxy
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -1315,6 +1316,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                         child: AdaptiveImage(
                                           imageUrl: _careDetails?['plant']?['photo'] ?? '',
                                           imageBase64: _careDetails?['plant']?['photo_base64'],
+                                          plantId: _careDetails?['plant']?['id'],
                                           fit: BoxFit.cover,
                                         ),
                                       ),

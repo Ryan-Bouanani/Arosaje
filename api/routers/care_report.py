@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Response
 from sqlalchemy.orm import Session
 from typing import List
 import base64
@@ -179,3 +179,48 @@ def get_reports_for_my_plants(
     **Tri** : Rapports triés par date de soin (plus récent en premier)
     """
     return crud_care_report.get_care_reports_by_owner(db, current_user.id)
+
+
+@router.get("/{report_id}/image")
+def get_care_report_image(
+    report_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Servir l'image d'un rapport de garde en format binaire pour contourner
+    les problèmes de décodage base64 dans Flutter Web"""
+
+    # Récupérer le rapport
+    report = db.query(CareReportModel).filter(CareReportModel.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Rapport non trouvé")
+
+    if not report.photo_base64:
+        raise HTTPException(status_code=404, detail="Aucune image trouvée pour ce rapport")
+
+    try:
+        # Extraire le type MIME et les données base64
+        if report.photo_base64.startswith('data:'):
+            # Format: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQ...
+            header, base64_data = report.photo_base64.split(',', 1)
+            mime_type = header.split(':')[1].split(';')[0]
+        else:
+            # Si c'est juste du base64 sans préfixe
+            base64_data = report.photo_base64
+            mime_type = "image/jpeg"  # Défaut
+
+        # Décoder les données base64
+        image_bytes = base64.b64decode(base64_data)
+
+        # Retourner l'image en tant que réponse binaire
+        return Response(
+            content=image_bytes,
+            media_type=mime_type,
+            headers={
+                "Cache-Control": "max-age=3600",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement de l'image: {str(e)}")

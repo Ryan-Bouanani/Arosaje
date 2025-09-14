@@ -329,7 +329,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child:
-                        plant['photo'] != null
+                        (plant['photo'] != null || plant['photo_base64'] != null)
                             ? ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: AdaptiveImage(
@@ -537,7 +537,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                   ),
                 ),
                 child:
-                    plant != null && plant['photo'] != null
+                    plant != null && (plant['photo'] != null || plant['photo_base64'] != null)
                         ? ClipRRect(
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(12),
@@ -642,7 +642,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child:
-                      plant['photo'] != null
+                      (plant['photo'] != null || plant['photo_base64'] != null)
                           ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child: AdaptiveImage(
@@ -778,7 +778,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: plant != null && plant['photo'] != null
+                            child: plant != null && (plant['photo'] != null || plant['photo_base64'] != null)
                                 ? ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
                                     child: AdaptiveImage(

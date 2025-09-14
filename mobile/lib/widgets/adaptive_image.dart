@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AdaptiveImage extends StatelessWidget {
@@ -9,6 +10,7 @@ class AdaptiveImage extends StatelessWidget {
   final double? width;
   final double? height;
   final Widget? errorWidget;
+  final int? plantId; // Nouvel attribut pour les plantes
 
   const AdaptiveImage({
     super.key,
@@ -18,41 +20,39 @@ class AdaptiveImage extends StatelessWidget {
     this.width,
     this.height,
     this.errorWidget,
+    this.plantId,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Priorité au Base64 (nouveau système)
+    // Sur Flutter Web, utiliser l'endpoint API pour servir les images de plantes
+    if (kIsWeb && plantId != null && imageBase64 != null && imageBase64!.isNotEmpty) {
+      print('🌐 AdaptiveImage: Utilisation du proxy d\'image pour plante $plantId');
+      const String baseUrl = "https://arosaje-backend-t2x7.onrender.com"; // API Render
+      final String proxyUrl = "$baseUrl/plants/$plantId/image";
+
+      return Image.network(
+        proxyUrl,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ AdaptiveImage (Web): Erreur proxy image: $error');
+          return _fallbackToBase64();
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) {
+            print('✅ AdaptiveImage (Web): Image chargée via proxy');
+            return child;
+          }
+          return const CircularProgressIndicator();
+        },
+      );
+    }
+
+    // Priorité au Base64 (système standard pour mobile ou fallback)
     if (imageBase64 != null && imageBase64!.isNotEmpty) {
-      try {
-        print('AdaptiveImage: Tentative de décodage Base64, longueur: ${imageBase64!.length}');
-        print('AdaptiveImage: Début de la chaîne: ${imageBase64!.substring(0, 50)}...');
-
-        // Extraire les données Base64 du data URL
-        String base64Data = imageBase64!;
-        if (base64Data.startsWith('data:')) {
-          base64Data = base64Data.split(',')[1];
-          print('AdaptiveImage: Data URL détectée, base64 extrait');
-        }
-
-        final Uint8List imageBytes = base64Decode(base64Data);
-        print('AdaptiveImage: Décodage réussi, ${imageBytes.length} bytes');
-
-        return Image.memory(
-          imageBytes,
-          fit: fit,
-          width: width,
-          height: height,
-          errorBuilder: (context, error, stackTrace) {
-            print('AdaptiveImage: Erreur Image.memory: $error');
-            return _buildErrorWidget();
-          },
-        );
-      } catch (e) {
-        print('Erreur décodage Base64: $e');
-        print('Données imageBase64: ${imageBase64?.substring(0, 100)}...');
-        return _buildErrorWidget();
-      }
+      return _fallbackToBase64();
     }
     
     // Fallback vers l'URL (ancien système) - mais seulement si ce n'est pas une URL assets/ éphémère
@@ -69,6 +69,41 @@ class AdaptiveImage extends StatelessWidget {
     }
     
     return _buildErrorWidget();
+  }
+
+  Widget _fallbackToBase64() {
+    try {
+      print('AdaptiveImage: Tentative de décodage Base64, longueur: ${imageBase64!.length}');
+      print('AdaptiveImage: Début de la chaîne: ${imageBase64!.substring(0, 50)}...');
+
+      // Extraire les données Base64 du data URL
+      String base64Data = imageBase64!;
+      if (base64Data.startsWith('data:')) {
+        base64Data = base64Data.split(',')[1];
+        print('AdaptiveImage: Data URL détectée, base64 extrait');
+      }
+
+      final Uint8List imageBytes = base64Decode(base64Data);
+      print('AdaptiveImage: Décodage réussi, ${imageBytes.length} bytes');
+
+      return Image.memory(
+        imageBytes,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (context, error, stackTrace) {
+          print('❌ AdaptiveImage: Erreur Image.memory: $error');
+          print('❌ AdaptiveImage: StackTrace: $stackTrace');
+          print('❌ AdaptiveImage: Bytes length: ${imageBytes.length}');
+          print('❌ AdaptiveImage: First 20 bytes: ${imageBytes.take(20).toList()}');
+          return _buildErrorWidget();
+        },
+      );
+    } catch (e) {
+      print('Erreur décodage Base64: $e');
+      print('Données imageBase64: ${imageBase64?.substring(0, 100)}...');
+      return _buildErrorWidget();
+    }
   }
 
   Widget _buildErrorWidget() {

@@ -5,15 +5,19 @@ class ImageZoomDialog extends StatelessWidget {
   final String? imageUrl;
   final String? imageBase64;
   final String? title;
+  final int? plantId;
+  final int? reportId;
 
   const ImageZoomDialog({
     super.key,
     this.imageUrl,
     this.imageBase64,
     this.title,
+    this.plantId,
+    this.reportId,
   });
 
-  static void show(BuildContext context, String? imageUrl, {String? imageBase64, String? title}) {
+  static void show(BuildContext context, String? imageUrl, {String? imageBase64, String? title, int? plantId, int? reportId}) {
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -21,6 +25,8 @@ class ImageZoomDialog extends StatelessWidget {
         imageUrl: imageUrl,
         imageBase64: imageBase64,
         title: title,
+        plantId: plantId,
+        reportId: reportId,
       ),
     );
   }
@@ -42,6 +48,8 @@ class ImageZoomDialog extends StatelessWidget {
               child: AdaptiveImage(
                 imageUrl: imageUrl,
                 imageBase64: imageBase64,
+                plantId: plantId,
+                reportId: reportId,
                 fit: BoxFit.contain,
                 errorWidget: Container(
                   width: 200,

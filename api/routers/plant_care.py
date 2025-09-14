@@ -190,39 +190,67 @@ async def accept_plant_care(
     current_user: User = Depends(get_current_user),
 ):
     """Accepter une garde de plante (gardien)"""
-    db_care = plant_care.get(db=db, id=care_id)
-    if db_care is None:
-        raise HTTPException(status_code=404, detail="Garde non trouvée")
+    print(f"🔄 Tentative d'acceptation de garde {care_id} par utilisateur {current_user.id}")
 
-    if db_care.status != CareStatus.PENDING:
-        raise HTTPException(status_code=400, detail="Cette garde n'est plus disponible")
+    try:
+        db_care = plant_care.get(db=db, id=care_id)
+        if db_care is None:
+            print(f"❌ Garde {care_id} non trouvée")
+            raise HTTPException(status_code=404, detail="Garde non trouvée")
 
-    if db_care.owner_id == current_user.id:
-        raise HTTPException(
-            status_code=400, detail="Vous ne pouvez pas accepter votre propre garde"
+        print(f"📋 Garde trouvée - Status: {db_care.status}, Owner: {db_care.owner_id}")
+
+        if db_care.status != CareStatus.PENDING:
+            print(f"❌ Garde {care_id} n'est plus PENDING (status: {db_care.status})")
+            raise HTTPException(status_code=400, detail="Cette garde n'est plus disponible")
+
+        if db_care.owner_id == current_user.id:
+            print(f"❌ Utilisateur {current_user.id} essaie d'accepter sa propre garde")
+            raise HTTPException(
+                status_code=400, detail="Vous ne pouvez pas accepter votre propre garde"
+            )
+
+        print(f"💬 Création de conversation entre {db_care.owner_id} et {current_user.id}")
+
+        # Créer une conversation
+        conversation = message.create_conversation(
+            db=db,
+            participant_ids=[db_care.owner_id, current_user.id],
+            conversation_type=ConversationType.PLANT_CARE,
+            related_id=care_id,
+            initiator_id=current_user.id,
         )
 
-    # Créer une conversation
-    conversation = message.create_conversation(
-        db=db,
-        participant_ids=[db_care.owner_id, current_user.id],
-        conversation_type=ConversationType.PLANT_CARE,
-        related_id=care_id,
-        initiator_id=current_user.id,
-    )
+        print(f"✅ Conversation créée: {conversation}")
 
-    # Mettre à jour la garde
-    db_care.status = CareStatus.ACCEPTED
-    db_care.caretaker_id = current_user.id
-    db_care.conversation_id = conversation["id"]
-    db.add(db_care)
-    db.commit()
-    db.refresh(db_care)
+        # Mettre à jour la garde
+        db_care.status = CareStatus.ACCEPTED
+        db_care.caretaker_id = current_user.id
 
-    # Notifications email désactivées temporairement
-    print(f"Garde {care_id} acceptée par {current_user.get_full_name()}")
+        # Gestion sécurisée de l'ID de conversation
+        if isinstance(conversation, dict) and "id" in conversation:
+            db_care.conversation_id = conversation["id"]
+        elif hasattr(conversation, 'id'):
+            db_care.conversation_id = conversation.id
+        else:
+            print(f"⚠️ Format de conversation inattendu: {type(conversation)}")
+            db_care.conversation_id = None
 
-    return db_care
+        db.add(db_care)
+        db.commit()
+        db.refresh(db_care)
+
+        print(f"✅ Garde {care_id} acceptée par {current_user.get_full_name()}")
+
+        return db_care
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"💥 Erreur lors de l'acceptation de garde {care_id}: {str(e)}")
+        import traceback
+        print(f"Stack trace: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 
 @router.put("/{care_id}/complete", response_model=PlantCare)

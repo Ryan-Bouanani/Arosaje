@@ -812,6 +812,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                     context,
                     '${AppConfig.apiUrl}$photoUrl',
                     imageBase64: report['photo_base64'],
+                    reportId: report['id'],
                     title: 'Photo de la séance d\'entretien',
                   );
                 },
@@ -1301,23 +1302,30 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                     ),
                                   ),
                                 )
-                              : _careDetails?['plant']?['photo'] != null
+                              : (_careDetails?['plant']?['photo'] != null || _careDetails?['plant']?['photo_base64'] != null)
                                   ? GestureDetector(
                                       onTap: () {
                                         ImageZoomDialog.show(
                                           context,
                                           _careDetails?['plant']?['photo'] ?? '',
+                                          imageBase64: _careDetails?['plant']?['photo_base64'],
+                                          plantId: _careDetails?['plant']?['id'],
                                           title: 'Image de la plante',
                                         );
                                       },
                                       child: ClipRRect(
                                         borderRadius: BorderRadius.circular(8),
                                         clipBehavior: Clip.antiAlias,
-                                        child: AdaptiveImage(
-                                          imageUrl: _careDetails?['plant']?['photo'] ?? '',
-                                          imageBase64: _careDetails?['plant']?['photo_base64'],
-                                          plantId: _careDetails?['plant']?['id'],
-                                          fit: BoxFit.cover,
+                                        child: Builder(
+                                          builder: (context) {
+                                            print('🔍 PLANT DETAIL: plantId=${_careDetails?['plant']?['id']}, hasBase64=${_careDetails?['plant']?['photo_base64']?.isNotEmpty}');
+                                            return AdaptiveImage(
+                                              imageUrl: _careDetails?['plant']?['photo'] ?? '',
+                                              imageBase64: _careDetails?['plant']?['photo_base64'],
+                                              plantId: _careDetails?['plant']?['id'],
+                                              fit: BoxFit.cover,
+                                            );
+                                          }
                                         ),
                                       ),
                                     )

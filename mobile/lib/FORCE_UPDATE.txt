@@ -1,0 +1,2 @@
+FORCE UPDATE - 2025-09-14 16:35 - LOGS DEBUG CRITIQUES
+This file forces Flutter to rebuild completely and ensure all debug logs are preserved

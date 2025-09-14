@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -27,11 +28,16 @@ class AdaptiveImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Sur Flutter Web, utiliser l'endpoint API pour servir les images de plantes
-    if (kIsWeb && plantId != null && imageBase64 != null && imageBase64!.isNotEmpty) {
-      print('🌐 AdaptiveImage: Utilisation du proxy d\'image pour plante $plantId');
+    // DEBUG: SIMPLE LOG
+    if (kIsWeb) {
+      print('🔍 AdaptiveImage: plantId=$plantId, reportId=$reportId, hasBase64=${imageBase64?.isNotEmpty}');
+    }
+
+    // Sur Flutter Web, TOUJOURS utiliser l'endpoint API pour servir les images si plantId disponible
+    if (kIsWeb && plantId != null) {
+      print('🚀 PROXY FORCE PLANTE: plantId=$plantId, timestamp=${DateTime.now().millisecondsSinceEpoch}');
       const String baseUrl = "https://arosaje-backend-t2x7.onrender.com"; // API Render
-      final String proxyUrl = "$baseUrl/plants/$plantId/image";
+      final String proxyUrl = "$baseUrl/plants/$plantId/image?v=${DateTime.now().millisecondsSinceEpoch}";
 
       return Image.network(
         proxyUrl,
@@ -52,9 +58,9 @@ class AdaptiveImage extends StatelessWidget {
       );
     }
 
-    // Sur Flutter Web, utiliser l'endpoint API pour servir les images de rapports
-    if (kIsWeb && reportId != null && imageBase64 != null && imageBase64!.isNotEmpty) {
-      print('🌐 AdaptiveImage: Utilisation du proxy d\'image pour rapport $reportId');
+    // Sur Flutter Web, TOUJOURS utiliser l'endpoint API pour servir les images de rapports si reportId disponible
+    if (kIsWeb && reportId != null) {
+      print('🌐 AdaptiveImage: FORCAGE du proxy d\'image pour rapport $reportId (base64=${imageBase64 != null ? "present" : "null"})');
       const String baseUrl = "https://arosaje-backend-t2x7.onrender.com"; // API Render
       final String proxyUrl = "$baseUrl/care-reports/$reportId/image";
 

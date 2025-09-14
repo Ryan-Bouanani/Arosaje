@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/views/plant_care_details_screen.dart';
@@ -28,7 +29,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   @override
   void initState() {
     super.initState();
-    print('PlantCurrentListScreen: initState appelé');
+    debugPrint('🌱 PlantCurrentListScreen: initState appelé');
     _tabController = TabController(length: 2, vsync: this);
     _initializeServices();
   }
@@ -215,6 +216,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                     ? AdaptiveImage(
                         imageUrl: plant['photo'],
                         imageBase64: plant['photo_base64'],
+                        plantId: plant['id'], // Ajout de l'ID pour le proxy
                         width: 40,
                         height: 40,
                         fit: BoxFit.cover,
@@ -294,6 +296,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                         ? AdaptiveImage(
                             imageUrl: plant['photo'],
                             imageBase64: plant['photo_base64'],
+                            plantId: plant['id'], // Ajout de l'ID pour le proxy
                             width: 40,
                             height: 40,
                             fit: BoxFit.cover,

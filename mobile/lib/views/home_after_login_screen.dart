@@ -335,6 +335,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                               child: AdaptiveImage(
                                 imageUrl: plant['photo'],
                                 imageBase64: plant['photo_base64'],
+                                plantId: plant['id'],
                                 fit: BoxFit.cover,
                                 errorWidget: Icon(
                                   Icons.local_florist,
@@ -545,6 +546,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                           child: AdaptiveImage(
                             imageUrl: plant['photo'],
                             imageBase64: plant['photo_base64'],
+                            plantId: plant['id'],
                             fit: BoxFit.cover,
                             width: double.infinity,
                             errorWidget: Icon(
@@ -646,6 +648,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                             child: AdaptiveImage(
                               imageUrl: plant['photo'],
                               imageBase64: plant['photo_base64'],
+                              plantId: plant['id'],
                               fit: BoxFit.cover,
                               errorWidget: Icon(
                                 Icons.local_florist,
@@ -781,6 +784,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                                     child: AdaptiveImage(
                                       imageUrl: plant['photo'],
                                       imageBase64: plant['photo_base64'],
+                                      plantId: plant['id'],
                                       fit: BoxFit.cover,
                                       errorWidget: Icon(
                                         Icons.local_florist,

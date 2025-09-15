@@ -58,7 +58,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    print('🚨 DETAIL PAGE OUVERTE - Version avec refresh automatique');
     _initializeService();
   }
 
@@ -128,7 +127,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     if (_careDetails?['id'] == null) return;
 
     try {
-      print('🔄 _loadCareReports: Début du chargement...');
       setState(() {
         _isLoadingReports = true;
       });
@@ -136,14 +134,10 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final reports = await _careReportService.getCareReportsByPlantCare(_careDetails!['id']);
 
       // DEBUG: Vérifier si les rapports sont récupérés
-      print('🔄 _loadCareReports: ${reports.length} rapports récupérés');
-
       setState(() {
         _careReports = reports;
         _isLoadingReports = false;
       });
-
-      print('🔄 _loadCareReports: setState terminé, UI mise à jour');
     } catch (e) {
       print('Erreur lors du chargement des rapports: $e');
       setState(() {
@@ -1400,22 +1394,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                         
                         // Care Reports Section - Visible pour tous les utilisateurs
                         if (_careDetails != null && _careDetails!['id'] != null) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text(
-                                '🚨 NOUVEAU CODE 🚨 Rapports de séances d\'entretien',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.refresh, size: 20),
-                                onPressed: () async {
-                                  print('🔄 BOUTON REFRESH MANUEL CLIQUÉ');
-                                  await _loadCareReports();
-                                },
-                                tooltip: 'Actualiser les rapports',
-                              ),
-                            ],
+                          const Text(
+                            'Rapports de séances d\'entretien',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           _isLoadingReports
@@ -1559,13 +1540,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 );
 
                 // Si le rapport a été créé avec succès, recharger les rapports
-                print('🔄 Retour du formulaire: result = $result');
                 if (result == true) {
-                  print('🔄 Rechargement des rapports...');
                   await _loadCareReports();
-                  print('🔄 Rapports rechargés !');
-                } else {
-                  print('🔄 Pas de rechargement (result != true)');
                 }
               } : null,
               style: ElevatedButton.styleFrom(

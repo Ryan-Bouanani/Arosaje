@@ -1,2 +1,0 @@
-Force Netlify rebuild - timestamp: 2025-09-15 12:00:00
-This file forces Netlify to detect changes and rebuild the app.

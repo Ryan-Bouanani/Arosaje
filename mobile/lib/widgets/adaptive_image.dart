@@ -60,7 +60,6 @@ class AdaptiveImage extends StatelessWidget {
 
     // Sur Flutter Web, utiliser Base64 pour les rapports (car l'endpoint nécessite une authentification)
     if (kIsWeb && reportId != null) {
-      print('🚨🚨🚨 NOUVELLE VERSION DÉPLOYÉE - FORCAGE Base64 pour rapport $reportId 🚨🚨🚨');
       return _fallbackToBase64();
     }
 

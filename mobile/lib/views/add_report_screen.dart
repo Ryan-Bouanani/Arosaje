@@ -37,7 +37,6 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
   @override
   void initState() {
     super.initState();
-    print('🚨 RAPPORT FORM OUVERT - Version avec logs de debug');
     _initializeService();
   }
 
@@ -121,7 +120,6 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
         ),
       );
 
-      print('🚨 RAPPORT CRÉÉ AVEC SUCCÈS - Retour avec true');
       Navigator.pop(context, true); // Retourner avec succès
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -37,6 +37,13 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
       // Force refresh des conversations depuis l'API
       context.read<MessageProvider>().clearCache();
       context.read<MessageProvider>().loadConversations();
+
+      // Second refresh après un délai pour s'assurer que les données complètes sont chargées
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          context.read<MessageProvider>().loadConversations();
+        }
+      });
     });
   }
 

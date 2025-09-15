@@ -411,6 +411,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
 
       await messageService.createPlantCareConversation(ownerId, currentUserId!, relatedId: careId);
 
+      // Petit délai pour laisser le temps à l'API de finaliser la conversation
+      await Future.delayed(const Duration(milliseconds: 500));
+
       // Navigation vers la page des messages
       Navigator.push(
         context,
@@ -462,6 +465,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final careId = _careDetails!['id'];
 
       await messageService.createPlantCareConversation(currentUserId!, caretakerId, relatedId: careId);
+
+      // Petit délai pour laisser le temps à l'API de finaliser la conversation
+      await Future.delayed(const Duration(milliseconds: 500));
 
       // Navigation vers la page des messages
       Navigator.push(

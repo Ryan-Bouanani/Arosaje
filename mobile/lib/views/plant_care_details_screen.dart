@@ -58,6 +58,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    print('🚨 DETAIL PAGE OUVERTE - Version avec refresh automatique');
     _initializeService();
   }
 

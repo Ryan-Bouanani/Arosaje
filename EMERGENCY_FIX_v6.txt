@@ -1,0 +1,20 @@
+EMERGENCY FIX v6 - 2025-09-15 21:50
+==========================================
+
+CRITICAL: Site not loading properly
+- Flutter app shows only "A'rosa-je" title
+- Service worker timeout errors
+- Added service worker cache clearing script
+- Force cache invalidation on page load
+
+ISSUES:
+- Service worker prepareServiceWorker timeout
+- Missing products.json 404 error
+- Flutter bootstrap not loading correctly
+
+FIX APPLIED:
+- Force unregister all service workers
+- Clear all caches on page load
+- New cache buster v6
+
+TIMESTAMP: 2025-09-15 21:50:00

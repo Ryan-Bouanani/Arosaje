@@ -1404,7 +1404,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                'Rapports de séances d\'entretien',
+                                '🚨 NOUVEAU CODE 🚨 Rapports de séances d\'entretien',
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                               IconButton(

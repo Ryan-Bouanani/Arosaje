@@ -127,6 +127,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     if (_careDetails?['id'] == null) return;
 
     try {
+      print('🔄 _loadCareReports: Début du chargement...');
       setState(() {
         _isLoadingReports = true;
       });
@@ -134,16 +135,14 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final reports = await _careReportService.getCareReportsByPlantCare(_careDetails!['id']);
 
       // DEBUG: Vérifier si les rapports sont récupérés
-      print('🔍 RAPPORTS RÉCUPÉRÉS: ${reports.length} rapports trouvés');
-      for (var i = 0; i < reports.length; i++) {
-        final report = reports[i];
-        print('🔍 RAPPORT $i: id=${report['id']}, hasPhoto=${report['photo_base64'] != null}');
-      }
+      print('🔄 _loadCareReports: ${reports.length} rapports récupérés');
 
       setState(() {
         _careReports = reports;
         _isLoadingReports = false;
       });
+
+      print('🔄 _loadCareReports: setState terminé, UI mise à jour');
     } catch (e) {
       print('Erreur lors du chargement des rapports: $e');
       setState(() {
@@ -1546,8 +1545,13 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 );
 
                 // Si le rapport a été créé avec succès, recharger les rapports
+                print('🔄 Retour du formulaire: result = $result');
                 if (result == true) {
+                  print('🔄 Rechargement des rapports...');
                   await _loadCareReports();
+                  print('🔄 Rapports rechargés !');
+                } else {
+                  print('🔄 Pas de rechargement (result != true)');
                 }
               } : null,
               style: ElevatedButton.styleFrom(

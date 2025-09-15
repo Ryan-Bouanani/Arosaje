@@ -56,8 +56,11 @@ async def upload_care_report_photo(
 
     # Valider et encoder l'image en Base64
     try:
-        # Validation de base
-        if not photo.content_type or not photo.content_type.startswith("image/"):
+        # Validation de base - Flutter Web peut envoyer content_type=null
+        print(f"DEBUG: Received file - name: {photo.filename}, content_type: {photo.content_type}")
+
+        # Accepter les images même si content_type est manquant (Flutter Web issue)
+        if photo.content_type and not photo.content_type.startswith("image/") and photo.content_type != "application/octet-stream":
             raise HTTPException(status_code=400, detail="Le fichier doit être une image")
         
         # Lire le contenu de l'image
@@ -71,8 +74,11 @@ async def upload_care_report_photo(
         # Encoder en Base64
         base64_image = base64.b64encode(image_data).decode('utf-8')
         
-        # Créer le data URL avec le type MIME
-        data_url = f"data:{photo.content_type};base64,{base64_image}"
+        # Créer le data URL avec le type MIME (défaut si manquant)
+        mime_type = photo.content_type or "image/jpeg"
+        if mime_type == "application/octet-stream":
+            mime_type = "image/jpeg"  # Flutter Web fallback
+        data_url = f"data:{mime_type};base64,{base64_image}"
         
         print(f"DEBUG: Photo encoded successfully - Content-Type: {photo.content_type}, Size: {len(image_data)} bytes")
 

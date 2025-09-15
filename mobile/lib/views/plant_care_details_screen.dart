@@ -132,7 +132,14 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       });
       
       final reports = await _careReportService.getCareReportsByPlantCare(_careDetails!['id']);
-      
+
+      // DEBUG: Vérifier si les rapports sont récupérés
+      print('🔍 RAPPORTS RÉCUPÉRÉS: ${reports.length} rapports trouvés');
+      for (var i = 0; i < reports.length; i++) {
+        final report = reports[i];
+        print('🔍 RAPPORT $i: id=${report['id']}, hasPhoto=${report['photo_base64'] != null}');
+      }
+
       setState(() {
         _careReports = reports;
         _isLoadingReports = false;

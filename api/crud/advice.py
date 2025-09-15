@@ -60,8 +60,9 @@ class AdviceCRUD:
 
             results = query.offset(skip).limit(limit).all()
 
-            return [
-                {
+            data = []
+            for result in results:
+                item = {
                     "id": result.PlantCare.id,
                     "plant_id": result.PlantCare.plant_id,
                     "start_date": (
@@ -94,8 +95,11 @@ class AdviceCRUD:
                         else None
                     ),
                 }
-                for result in results
-            ]
+                # Debug logging
+                print(f"DEBUG - Plant Care {result.PlantCare.id}: {result.plant_name}, photo_base64: {bool(result.plant_photo_base64)}")
+                data.append(item)
+
+            return data
 
         except Exception as e:
             print(f"Erreur dans get_plant_cares_to_review: {e}")

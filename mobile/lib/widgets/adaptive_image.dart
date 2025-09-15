@@ -58,29 +58,10 @@ class AdaptiveImage extends StatelessWidget {
       );
     }
 
-    // Sur Flutter Web, TOUJOURS utiliser l'endpoint API pour servir les images de rapports si reportId disponible
+    // Sur Flutter Web, utiliser Base64 pour les rapports (car l'endpoint nécessite une authentification)
     if (kIsWeb && reportId != null) {
-      print('🌐 AdaptiveImage: FORCAGE du proxy d\'image pour rapport $reportId (base64=${imageBase64 != null ? "present" : "null"})');
-      const String baseUrl = "https://arosaje-backend-t2x7.onrender.com"; // API Render
-      final String proxyUrl = "$baseUrl/care-reports/$reportId/image";
-
-      return Image.network(
-        proxyUrl,
-        fit: fit,
-        width: width,
-        height: height,
-        errorBuilder: (context, error, stackTrace) {
-          print('❌ AdaptiveImage (Web): Erreur proxy image rapport: $error');
-          return _fallbackToBase64();
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) {
-            print('✅ AdaptiveImage (Web): Image rapport chargée via proxy');
-            return child;
-          }
-          return const CircularProgressIndicator();
-        },
-      );
+      print('🌐 AdaptiveImage: FORCAGE Base64 pour rapport $reportId (proxy nécessite auth)');
+      return _fallbackToBase64();
     }
 
     // Priorité au Base64 (système standard pour mobile ou fallback)

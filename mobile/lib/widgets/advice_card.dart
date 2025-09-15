@@ -310,6 +310,8 @@ class AdviceCard extends StatelessWidget {
                       // Si c'est MON avis : bouton orange "Modifier l'avis"
                       if (currentBotanistId != null && 
                           plantCare.currentAdvice!.botanistId == currentBotanistId) ...[
+                        // Debug temporaire
+                        Text('DEBUG: currentBotanistId=$currentBotanistId, adviceBotanistId=${plantCare.currentAdvice!.botanistId}', style: TextStyle(fontSize: 10, color: Colors.red)),
                         ElevatedButton.icon(
                           onPressed: () => _editAdvice(context),
                           icon: const Icon(Icons.edit, size: 18),

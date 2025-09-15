@@ -1,0 +1,29 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\Users\\ryan4\\OneDrive\\Bureau\\arosaje\\EPSI-MSPR6.1\\mobile\\build\\web"
+publishOrigin = "config"
+commandOrigin = "config"
+base = "C:\\Users\\ryan4\\OneDrive\\Bureau\\arosaje\\EPSI-MSPR6.1"
+command = "echo 'Build Flutter locally and deploy pre-built files'"
+
+[build.environment]
+FLUTTER_WEB = "true"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]

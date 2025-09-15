@@ -200,6 +200,32 @@ alembic upgrade head
 - Commits atomiques avec messages descriptifs
 - Pull avant push pour éviter les conflits
 
+## 🗄️ Base de Données
+
+### Configuration
+- **Production/Développement**: Neon PostgreSQL (cloud)
+- **URL**: `postgresql://neondb_owner:...@ep-spring-bonus-agd7s9t1-pooler.c-2.eu-central-1.aws.neon.tech/neondb`
+- **Base locale**: PostgreSQL local NON utilisée par l'API (attention aux confusions)
+- **Nettoyage**: Utiliser les outils MCP Neon (`mcp__neon__run_sql`), pas la base locale
+
+### Structure des conversations
+- Tables: `conversations`, `conversation_participants`, `messages`
+- Types: `PLANT_CARE`, `BOTANICAL_ADVICE`
+- Suppression cascade: conversations → participants + messages
+
+## 🔧 Corrections Récentes (Décembre 2024)
+
+### Problèmes résolus
+1. **Duplication conversations**: Protection contre clics multiples avec état `_isLoading`
+2. **Erreurs null safety**: Fix race conditions dans `conversation.dart` (plantInfo!/plantCareInfo!)
+3. **Icônes conversations**: Bleu=propriétaire, Vert=gardien, Gris=fallback
+4. **Cache persistant**: Force invalidation avec cache-bust meta tags + `clearCache()`
+
+### Leçons apprises
+- L'API utilise Neon, pas PostgreSQL local
+- Flutter Web a un cache service worker agressif
+- Toujours utiliser les outils MCP adaptés (ex: Neon pour la base)
+
 ## 📚 Documentation Additionnelle
 - `/docs/database_uml.md`: Modèle de données complet
 - `/docs/architecture_schema.md`: Schémas d'architecture
@@ -217,4 +243,4 @@ alembic upgrade head
 - Les middlewares de monitoring sont critiques, ne pas les désactiver en production
 
 ---
-*Dernière mise à jour: 30/08/2025*
+*Dernière mise à jour: 15/09/2024*

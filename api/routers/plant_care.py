@@ -125,16 +125,6 @@ def get_plant_care(
     if db_care is None:
         raise HTTPException(status_code=404, detail="Garde non trouvée")
     
-    # Debug log pour vérifier les données de la plante
-    if db_care.plant:
-        print(f"🌿 DEBUG PLANT DETAIL - Care ID: {care_id}")
-        print(f"   - Plant ID: {db_care.plant.id}")
-        print(f"   - Plant name: {db_care.plant.nom}")
-        print(f"   - Plant photo: {db_care.plant.photo}")
-        print(f"   - Plant photo_base64: {bool(db_care.plant.photo_base64)}")
-        if db_care.plant.photo_base64:
-            print(f"   - Photo_base64 length: {len(db_care.plant.photo_base64)}")
-    
     return db_care
 
 

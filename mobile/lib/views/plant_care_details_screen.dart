@@ -58,7 +58,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    print('🚨 DETAIL PAGE OUVERTE - Version avec refresh automatique');
     _initializeService();
   }
 
@@ -1442,7 +1441,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                               IconButton(
                                 icon: const Icon(Icons.refresh, size: 20),
                                 onPressed: () async {
-                                  print('🔄 BOUTON REFRESH MANUEL CLIQUÉ');
                                   await _loadCareReports();
                                 },
                                 tooltip: 'Actualiser les rapports',

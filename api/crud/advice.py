@@ -95,8 +95,6 @@ class AdviceCRUD:
                         else None
                     ),
                 }
-                # Debug logging
-                print(f"DEBUG - Plant Care {result.PlantCare.id}: {result.plant_name}, photo_base64: {bool(result.plant_photo_base64)}")
                 data.append(item)
 
             return data

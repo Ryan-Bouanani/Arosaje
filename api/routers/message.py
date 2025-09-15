@@ -332,6 +332,7 @@ async def create_botanist_conversation(
     return conversation
 
 
+
 @router.get("/auth/test")
 async def test_auth(current_user: User = Depends(get_current_user)):
     """Endpoint de test pour vérifier l'authentification"""

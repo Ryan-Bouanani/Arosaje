@@ -90,24 +90,31 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
     if (conversation.type == ConversationType.botanicalAdvice) {
       return Colors.green;
     }
-    
-    if (conversation.type == ConversationType.plantCare && 
-        conversation.plantCareInfo != null && 
+
+    if (conversation.type == ConversationType.plantCare &&
+        conversation.plantCareInfo != null &&
         conversation.participants.isNotEmpty) {
       final plantCare = conversation.plantCareInfo;
-      
+
       final otherParticipants = conversation.participants.where((p) => p.userId != currentUserId);
       if (otherParticipants.isNotEmpty) {
         final otherParticipant = otherParticipants.first;
-        
+
+        // DEBUG: Log pour comprendre le problème
+        _consoleLog('DEBUG Color: currentUserId=$currentUserId, otherParticipant.userId=${otherParticipant.userId}');
+        _consoleLog('DEBUG Color: plantCare.ownerId=${plantCare?.ownerId}, plantCare.caretakerid=${plantCare?.caretakerid}');
+
         if (plantCare != null && otherParticipant.userId == plantCare.ownerId) {
+          _consoleLog('DEBUG Color: Returning BLUE (owner)');
           return Colors.blue;
         } else if (plantCare != null && otherParticipant.userId == plantCare.caretakerid) {
+          _consoleLog('DEBUG Color: Returning GREEN (caretaker)');
           return Colors.green;
         }
       }
     }
-    
+
+    _consoleLog('DEBUG Color: Returning GREY (fallback)');
     return Colors.grey;
   }
 

@@ -76,10 +76,10 @@ class _CreateAdviceScreenState extends State<CreateAdviceScreen> {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: widget.plantCare.plantImageUrl != null 
+                    child: (widget.plantCare.plantImageUrl != null || widget.plantCare.plantPhotoBase64 != null)
                         ? AdaptiveImage(
-                            imageUrl: '${AppConfig.apiUrl}/${widget.plantCare.plantImageUrl!}',
-                            imageBase64: null,
+                            imageUrl: widget.plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${widget.plantCare.plantImageUrl!}' : null,
+                            imageBase64: widget.plantCare.plantPhotoBase64,
                             fit: BoxFit.cover,
                             errorWidget: Icon(
                               Icons.eco,

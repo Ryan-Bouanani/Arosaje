@@ -1,0 +1,14 @@
+FORCE NETLIFY REBUILD v3 - 2025-09-15 21:15
+=============================================
+
+CRITICAL: Netlify auto-deploy completely broken
+- Stuck on old commits despite manual deploys  
+- commit_ref: null in deploy responses
+- GitHub sync appears broken
+
+CHANGES NEEDED:
+- CreateAdviceScreen fix for plant images (commit d5750b8)
+- Display real plant photos in "Donner un avis botanique" page
+- Fix green leaf icons problem
+
+ATTEMPT #3: Force rebuild with new timestamp file

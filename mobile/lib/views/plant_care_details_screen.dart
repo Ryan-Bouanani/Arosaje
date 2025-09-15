@@ -803,8 +803,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
               ),
             ],
             
-            // Photo si disponible
-            if (photoUrl != null && photoUrl.toString().isNotEmpty) ...[
+            // Photo si disponible (photo_base64 ou photoUrl)
+            if ((report['photo_base64'] != null && report['photo_base64'].toString().isNotEmpty) ||
+                (photoUrl != null && photoUrl.toString().isNotEmpty)) ...[
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: () {

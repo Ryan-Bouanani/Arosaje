@@ -27,7 +27,7 @@ class CRUDMessage:
         """Crée une nouvelle conversation avec les participants spécifiés, ou retourne une conversation existante."""
         
         # Vérifier s'il existe déjà une conversation avec les mêmes paramètres
-        if conversation_type == ConversationType.plant_care and related_id:
+        if conversation_type == ConversationType.PLANT_CARE and related_id:
             existing_conversation = self._find_existing_plant_care_conversation(db, participant_ids, related_id)
             if existing_conversation:
                 return existing_conversation
@@ -57,7 +57,7 @@ class CRUDMessage:
         conversations = (
             db.query(Conversation)
             .filter(
-                Conversation.type == ConversationType.plant_care,
+                Conversation.type == ConversationType.PLANT_CARE,
                 Conversation.related_id == related_id
             )
             .all()

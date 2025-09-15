@@ -735,6 +735,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   Widget _buildCareReportCard(Map<String, dynamic> report) {
     final sessionDate = DateTime.tryParse(report['session_date'] ?? '');
     final photoUrl = report['photo_url'];
+
+    // DEBUG: Afficher le contenu du rapport pour diagnostiquer
+    print('🔍 RAPPORT DEBUG: id=${report['id']}, photo_url=$photoUrl, photo_base64=${report['photo_base64'] != null ? "présent (${report['photo_base64'].toString().length} chars)" : "null"}');
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

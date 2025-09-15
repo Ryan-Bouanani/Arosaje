@@ -1537,13 +1537,18 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 ),
               ),
             ElevatedButton(
-              onPressed: careHasStarted ? () {
-                Navigator.push(
+              onPressed: careHasStarted ? () async {
+                final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => RapportDeGarde(plantCareId: widget.careId),
                   ),
                 );
+
+                // Si le rapport a été créé avec succès, recharger les rapports
+                if (result == true) {
+                  await _loadCareReports();
+                }
               } : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: careHasStarted ? Colors.green : Colors.grey,

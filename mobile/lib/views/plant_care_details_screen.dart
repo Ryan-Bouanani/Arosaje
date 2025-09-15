@@ -143,7 +143,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         _isLoadingReports = false;
       });
 
-      print('🔄 _loadCareReports: setState terminé, UI mise à jour');
     } catch (e) {
       print('Erreur lors du chargement des rapports: $e');
       setState(() {
@@ -1436,7 +1435,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
-                                '🚨 NOUVEAU CODE 🚨 Rapports de séances d\'entretien',
+                                'Rapports de séances d\'entretien',
                                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                               IconButton(

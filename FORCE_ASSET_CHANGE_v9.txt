@@ -1,0 +1,17 @@
+FORCE ASSET CHANGE v9 - 2025-09-15 23:50
+==========================================
+
+PROBLEM: Netlify says "All files already uploaded" 
+- Build process works but generates identical file hashes
+- Dart code changes too small to affect main.dart.js
+- Need significant change to force new asset generation
+
+SOLUTION: Force major asset change
+- Update version significantly
+- Add large code change
+- Force Flutter rebuild with new timestamps
+
+COMMIT: 03a58dd (not deployed)
+MISSING: Plant images in AdviceDetailsScreen + debug improvements
+
+TIMESTAMP: 2025-09-15 23:50:00

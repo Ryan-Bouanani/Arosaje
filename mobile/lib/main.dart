@@ -11,6 +11,7 @@ import 'services/message_service.dart';
 import 'providers/message_provider.dart';
 import 'providers/advice_provider.dart';
 import 'config/app_config.dart';
+import 'force_rebuild_strategy_v10.dart';
 
 Future<void> main() async {
   try {
@@ -20,7 +21,14 @@ Future<void> main() async {
     // Major code addition to force asset regeneration
     print('🔥 A\'ROSA-JE v2.0.0 - FORCE REBUILD INITIATED');
     print('📱 Build timestamp: ${DateTime.now().millisecondsSinceEpoch}');
-    print('🚀 Force asset change v9 - Netlify bypass');
+    print('🚀 Force asset change v10 - Netlify bypass');
+    print('🔧 Build signature: ${AppConfig.buildSignature}');
+    print('⚡ Force rebuild ID: ${AppConfig.forceRebuildId}');
+    
+    // Initialize aggressive rebuild strategy v10
+    ForceRebuildStrategyV10.verifyStrategy();
+    final forceData = ForceRebuildStrategyV10.getForceRebuildData();
+    print('📋 Force rebuild data: $forceData');
     
     // Add significant initialization code to change app fingerprint
     _initializeForceRebuild();
@@ -56,18 +64,23 @@ Future<void> main() async {
 void _initializeForceRebuild() {
   final timestamp = DateTime.now().millisecondsSinceEpoch;
   final buildId = 'FORCE_REBUILD_${timestamp}_v2_0_0';
+  final buildInfo = AppConfig.buildInfo;
   
   print('🔧 Initializing force rebuild with ID: $buildId');
   print('📦 Asset fingerprint changed for Netlify recognition');
-  print('🔄 Cache invalidation strategy: aggressive');
+  print('🔄 Cache invalidation strategy: aggressive v10');
+  print('📋 Build info: $buildInfo');
   
-  // Force significant code execution to change app signature
+  // Force significant code execution with unique AppConfig values
   for (int i = 0; i < 100; i++) {
-    final computation = i * 42 + timestamp % 1000;
+    final computation = i * 42 + AppConfig.buildTimestamp % 1000;
     if (computation % 50 == 0) {
-      print('⚡ Force computation step $i completed');
+      print('⚡ Force computation step $i completed with signature: ${AppConfig.buildSignature.substring(0, 20)}...');
     }
   }
+  
+  // Verify unique content is loaded
+  print('✅ Force rebuild initialized with unique signature: ${AppConfig.forceRebuildId}');
 }
 
 void _initializeWebRebuild() {

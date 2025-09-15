@@ -29,6 +29,11 @@ class AdviceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasAdvice = plantCare.currentAdvice != null;
+
+    // Debug log pour diagnostiquer les images
+    print('🌱 DEBUG AdviceCard - Plant: ${plantCare.plantName}');
+    print('   - plantImageUrl: ${plantCare.plantImageUrl}');
+    print('   - plantPhotoBase64: ${plantCare.plantPhotoBase64 != null ? "HAS DATA (${plantCare.plantPhotoBase64!.length} chars)" : "NULL"}');
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

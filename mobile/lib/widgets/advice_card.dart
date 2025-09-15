@@ -306,6 +306,8 @@ class AdviceCard extends StatelessWidget {
                     
                     // Logique conditionnelle pour les boutons dans l'onglet "Avis"
                     if (showEditButton && plantCare.currentAdvice != null) ...[
+                      // Debug toujours visible
+                      Text('DEBUG: currentBotanistId=$currentBotanistId, adviceBotanistId=${plantCare.currentAdvice!.botanistId}', style: TextStyle(fontSize: 10, color: Colors.blue)),
                       const SizedBox(width: 8),
                       // Si c'est MON avis : bouton orange "Modifier l'avis"
                       if (currentBotanistId != null && 

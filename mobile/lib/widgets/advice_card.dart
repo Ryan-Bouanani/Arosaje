@@ -87,11 +87,11 @@ class AdviceCard extends StatelessWidget {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: plantCare.plantImageUrl != null 
+                    onTap: (plantCare.plantPhotoBase64 != null || plantCare.plantImageUrl != null)
                       ? () => ImageZoomDialog.show(
-                          context, 
-                          '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
-                          imageBase64: null,
+                          context,
+                          plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
+                          imageBase64: plantCare.plantPhotoBase64,
                           title: plantCare.plantName,
                         )
                       : null,
@@ -104,10 +104,10 @@ class AdviceCard extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: plantCare.plantImageUrl != null 
+                        child: (plantCare.plantPhotoBase64 != null || plantCare.plantImageUrl != null)
                           ? AdaptiveImage(
-                              imageUrl: '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
-                              imageBase64: null,
+                              imageUrl: plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
+                              imageBase64: plantCare.plantPhotoBase64,
                               width: 40,
                               height: 40,
                               fit: BoxFit.cover,

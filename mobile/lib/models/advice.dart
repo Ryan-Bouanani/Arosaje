@@ -191,6 +191,7 @@ class PlantCareWithAdvice {
   final String plantName;
   final String? plantSpecies;
   final String? plantImageUrl;
+  final String? plantPhotoBase64;
   final String ownerName;
   final String ownerEmail;
   final Advice? currentAdvice;
@@ -209,6 +210,7 @@ class PlantCareWithAdvice {
     required this.plantName,
     this.plantSpecies,
     this.plantImageUrl,
+    this.plantPhotoBase64,
     required this.ownerName,
     required this.ownerEmail,
     this.currentAdvice,
@@ -229,6 +231,7 @@ class PlantCareWithAdvice {
       plantName: json['plant_name'],
       plantSpecies: json['plant_species'],
       plantImageUrl: json['plant_image_url'],
+      plantPhotoBase64: json['plant_photo_base64'],
       ownerName: json['owner_name'],
       ownerEmail: json['owner_email'],
       currentAdvice: json['current_advice'] != null 

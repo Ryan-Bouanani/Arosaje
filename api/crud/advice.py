@@ -29,6 +29,7 @@ class AdviceCRUD:
                     Plant.nom.label("plant_name"),
                     Plant.espece.label("plant_species"),
                     Plant.photo.label("plant_image_url"),
+                    Plant.photo_base64.label("plant_photo_base64"),
                     User.prenom.label("owner_prenom"),
                     User.nom.label("owner_nom"),
                     User.email.label("owner_email"),
@@ -78,6 +79,7 @@ class AdviceCRUD:
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_image_url": result.plant_image_url,
+                    "plant_photo_base64": result.plant_photo_base64,
                     "owner_name": f"{result.owner_prenom} {result.owner_nom}",
                     "owner_email": result.owner_email,
                     "priority": AdvicePriority.NORMAL.value,  # Par défaut
@@ -118,6 +120,7 @@ class AdviceCRUD:
                 Plant.nom.label("plant_name"),
                 Plant.espece.label("plant_species"),
                 Plant.photo.label("plant_image_url"),
+                Plant.photo_base64.label("plant_photo_base64"),
                 User.prenom.label("owner_prenom"),
                 User.nom.label("owner_nom"),
                 User.email.label("owner_email"),
@@ -194,6 +197,7 @@ class AdviceCRUD:
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_image_url": result.plant_image_url,
+                    "plant_photo_base64": result.plant_photo_base64,
                     "owner_name": f"{result.owner_prenom} {result.owner_nom}",
                     "owner_email": result.owner_email,
                     "priority": (

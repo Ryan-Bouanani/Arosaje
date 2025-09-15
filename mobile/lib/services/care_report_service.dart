@@ -32,7 +32,6 @@ class CareReportService {
     required String vitalityLevel,
     String? description,
   }) async {
-    print('🚨 createCareReport APPELÉ pour plantCareId: $plantCareId');
     final token = await _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
@@ -52,11 +51,8 @@ class CareReportService {
     );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final result = json.decode(response.body);
-      print('🚨 createCareReport SUCCÈS: rapport ID ${result['id']} créé');
-      return result;
+      return json.decode(response.body);
     } else {
-      print('🚨 createCareReport ÉCHEC: ${response.statusCode} - ${response.body}');
       throw Exception('Échec de la création du rapport: ${response.statusCode} - ${response.body}');
     }
   }

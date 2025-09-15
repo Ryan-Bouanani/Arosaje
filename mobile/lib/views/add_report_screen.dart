@@ -77,7 +77,6 @@ class _RapportDeGardeState extends State<RapportDeGarde> {
   }
 
   Future<void> _submitReport() async {
-    print('🚨 _submitReport APPELÉ - plantCareId: ${widget.plantCareId}, isLoading: $_isLoading');
     if (widget.plantCareId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur: ID de garde manquant')),

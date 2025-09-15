@@ -107,12 +107,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       });
       
       // Charger les rapports de garde si on a les détails
-      print('🔥 CONDITION RAPPORTS: details[id]=${details['id']}');
       if (details['id'] != null) {
-        print('🔥 CONDITION RAPPORTS: VRAIE - Appel _loadCareReports');
         await _loadCareReports();
-      } else {
-        print('🔥 CONDITION RAPPORTS: FAUSSE - details[id] est null');
       }
       
       // Charger les conseils pour la plante
@@ -128,11 +124,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   }
 
   Future<void> _loadCareReports() async {
-    print('🔥 _loadCareReports APPELÉE: careDetailsId=${_careDetails?['id']}');
     if (_careDetails?['id'] == null) return;
 
     try {
-      print('🔥 DÉBUT DU CHARGEMENT DES RAPPORTS');
       setState(() {
         _isLoadingReports = true;
       });
@@ -750,7 +744,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     final photoUrl = report['photo_url'];
 
     // DEBUG: Afficher le contenu du rapport pour diagnostiquer
-    print('🔍 RAPPORT DEBUG: id=${report['id']}, photo_url=$photoUrl, photo_base64=${report['photo_base64'] != null ? "présent (${report['photo_base64'].toString().length} chars)" : "null"}');
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

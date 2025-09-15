@@ -124,9 +124,11 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   }
 
   Future<void> _loadCareReports() async {
+    print('🔥 _loadCareReports APPELÉE: careDetailsId=${_careDetails?['id']}');
     if (_careDetails?['id'] == null) return;
-    
+
     try {
+      print('🔥 DÉBUT DU CHARGEMENT DES RAPPORTS');
       setState(() {
         _isLoadingReports = true;
       });

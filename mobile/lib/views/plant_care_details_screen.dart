@@ -107,8 +107,12 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       });
       
       // Charger les rapports de garde si on a les détails
+      print('🔥 CONDITION RAPPORTS: details[id]=${details['id']}');
       if (details['id'] != null) {
+        print('🔥 CONDITION RAPPORTS: VRAIE - Appel _loadCareReports');
         await _loadCareReports();
+      } else {
+        print('🔥 CONDITION RAPPORTS: FAUSSE - details[id] est null');
       }
       
       // Charger les conseils pour la plante

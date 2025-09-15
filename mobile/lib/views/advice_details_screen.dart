@@ -51,10 +51,10 @@ class AdviceDetailsScreen extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: plantCare.plantImageUrl != null 
+                      child: (plantCare.plantImageUrl != null || plantCare.plantPhotoBase64 != null)
                           ? AdaptiveImage(
-                              imageUrl: '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}',
-                              imageBase64: null,
+                              imageUrl: plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
+                              imageBase64: plantCare.plantPhotoBase64,
                               fit: BoxFit.cover,
                               errorWidget: Icon(
                                 Icons.eco,

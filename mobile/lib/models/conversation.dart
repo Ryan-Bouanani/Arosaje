@@ -257,7 +257,8 @@ class Conversation {
     
     // Construire le titre avec contexte
     if (type == ConversationType.plantCare && plantInfo != null) {
-      return '$participantName - Garde ${plantInfo!.nom}';
+      final plant = plantInfo!;
+      return '$participantName - Garde ${plant.nom}';
     } else if (type == ConversationType.botanicalAdvice) {
       return '$participantName - Conseil botanique';
     }
@@ -268,8 +269,9 @@ class Conversation {
 
   String getSubtitle(int currentUserId) {
     if (type == ConversationType.plantCare && plantCareInfo != null) {
-      final startDate = plantCareInfo!.startDate;
-      final endDate = plantCareInfo!.endDate;
+      final careInfo = plantCareInfo!;
+      final startDate = careInfo.startDate;
+      final endDate = careInfo.endDate;
       return 'Du ${startDate.day}/${startDate.month}/${startDate.year} au ${endDate.day}/${endDate.month}/${endDate.year}';
     }
     return '';

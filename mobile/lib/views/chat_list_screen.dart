@@ -34,6 +34,8 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
     super.initState();
     _initializeUser();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Force refresh des conversations depuis l'API
+      context.read<MessageProvider>().clearCache();
       context.read<MessageProvider>().loadConversations();
     });
   }

@@ -1,0 +1,3 @@
+Force rebuild for plant images fix - 2025-09-15 19:10
+This file forces Netlify to rebuild when API changes don't trigger frontend rebuild.
+Botanist plant images should now display base64 data instead of green leaf icons.

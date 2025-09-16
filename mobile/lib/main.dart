@@ -13,8 +13,6 @@ import 'providers/advice_provider.dart';
 import 'config/app_config.dart';
 
 Future<void> main() async {
-  print('🚀 NUCLEAR TEST v2: Démarrage de l\'application Flutter Web NOUVEAU');
-  print('🔥 FORCE REBUILD: ${DateTime.now()}');
   try {
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -44,7 +42,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('🏗️ AROSAJE APP: Construction de MyApp widget');
     final apiService = ApiService();
     final messageService = MessageService(apiService);
 

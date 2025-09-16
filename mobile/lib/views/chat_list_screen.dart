@@ -25,7 +25,6 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
       if (kIsWeb) {
         html.window.console.log(message);
       }
-      print(message);
     }
   }
 

@@ -110,7 +110,6 @@ class WebSocketManager {
       }
       
     } catch (e) {
-      print('[WebSocketManager ERROR] Connection failed: $e');
       _setState(ConnectionState.error);
       _errorController.add('Connection failed: $e');
       _scheduleReconnect();
@@ -142,7 +141,6 @@ class WebSocketManager {
     // Déterminer si on doit tenter une reconnexion
     if (_shouldReconnect && error.toString().contains('401')) {
       // Erreur d'authentification - ne pas reconnecter
-      print('[WebSocketManager ERROR] Authentication failed - not reconnecting');
       _shouldReconnect = false;
       disconnect();
     } else if (_shouldReconnect) {
@@ -170,7 +168,6 @@ class WebSocketManager {
     if (!_shouldReconnect || _isDisposed) return;
     
     if (_reconnectAttempts >= maxReconnectAttempts) {
-      print('[WebSocketManager ERROR] Max reconnection attempts reached');
       _errorController.add('Unable to connect after $maxReconnectAttempts attempts');
       _shouldReconnect = false;
       return;

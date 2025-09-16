@@ -29,25 +29,19 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   @override
   void initState() {
     super.initState();
-    debugPrint('🌱 PlantCurrentListScreen: initState appelé');
     _tabController = TabController(length: 2, vsync: this);
     _initializeServices();
   }
 
   Future<void> _initializeServices() async {
     try {
-      print('PlantCurrentListScreen: Initialisation des services...');
       _storageService = await StorageService.init();
-      print('PlantCurrentListScreen: StorageService initialisé');
       _plantCareService = await PlantCareService.init();
-      print('PlantCurrentListScreen: PlantCareService initialisé');
       setState(() {
         _isInitialized = true;
       });
-      print('PlantCurrentListScreen: Services initialisés, chargement des plantes...');
       await _loadPlants();
     } catch (e) {
-      print('PlantCurrentListScreen: Erreur d\'initialisation: ${e.toString()}');
       setState(() {
         error = 'Erreur d\'initialisation: ${e.toString()}';
         isLoading = false;
@@ -56,33 +50,26 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
   }
 
   Future<void> _loadPlants() async {
-    print('PlantCurrentListScreen: _loadPlants appelé, _isInitialized: $_isInitialized');
     if (!_isInitialized) {
-      print('PlantCurrentListScreen: Services non initialisés, abandon');
       return;
     }
 
     try {
-      print('PlantCurrentListScreen: Début du chargement des plantes...');
       setState(() {
         isLoading = true;
         error = null;
       });
 
       // Charger mes plantes confiées (je suis propriétaire)
-      print('PlantCurrentListScreen: Appel à getMyPlantCares...');
       final myOwnedPlantCares = await _plantCareService.getMyPlantCares();
-      print('PlantCurrentListScreen: getMyPlantCares terminé');
 
       // Charger les plantes que je garde (je suis gardien)
       final myCaretakingPlants = await _plantCareService.getMyCaretakingPlants();
 
       // Logs pour déboguer
-      print('PlantCurrentListScreen: myOwnedPlantCares count: ${myOwnedPlantCares.length}');
       for (var care in myOwnedPlantCares) {
         final plant = care['plant'];
         if (plant != null) {
-          print('PlantCurrentListScreen: Plante ${plant['nom']}, photo: ${plant['photo']}, photo_base64: ${plant['photo_base64'] != null ? "présent (${plant['photo_base64'].toString().length} chars)" : "absent"}');
         }
       }
 
@@ -94,7 +81,6 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
         });
       }
     } catch (e) {
-      print('PlantCurrentListScreen: Erreur lors du chargement: ${e.toString()}');
       if (mounted) {
         setState(() {
           error = e.toString();

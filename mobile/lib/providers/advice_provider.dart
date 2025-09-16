@@ -65,7 +65,7 @@ class AdviceProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Erreur lors du chargement de l\'ID botaniste: $e');
+      // Erreur silencieuse
     }
   }
 
@@ -81,7 +81,6 @@ class AdviceProvider extends ChangeNotifier {
       _stats = await _service!.getAdviceStats();
     } catch (e) {
       _error = 'Erreur lors du chargement des statistiques: $e';
-      debugPrint('Error loading stats: $e');
     } finally {
       _isLoadingStats = false;
       notifyListeners();
@@ -115,7 +114,6 @@ class AdviceProvider extends ChangeNotifier {
       
     } catch (e) {
       _error = 'Erreur lors du chargement des gardes à examiner: $e';
-      debugPrint('Error loading plant cares to review: $e');
     } finally {
       _isLoadingToReview = false;
       notifyListeners();
@@ -157,7 +155,6 @@ class AdviceProvider extends ChangeNotifier {
       
     } catch (e) {
       _error = 'Erreur lors du chargement des avis: $e';
-      debugPrint('Error loading plant cares with advice: $e');
     } finally {
       _isLoadingReviewed = false;
       notifyListeners();
@@ -177,7 +174,6 @@ class AdviceProvider extends ChangeNotifier {
       return advice;
     } catch (e) {
       _error = 'Erreur lors de la création du conseil: $e';
-      debugPrint('Error creating advice: $e');
       notifyListeners();
       return null;
     }
@@ -200,7 +196,6 @@ class AdviceProvider extends ChangeNotifier {
       return advice;
     } catch (e) {
       _error = 'Erreur lors de la validation: $e';
-      debugPrint('Error validating advice: $e');
       notifyListeners();
       return null;
     }
@@ -227,7 +222,6 @@ class AdviceProvider extends ChangeNotifier {
     try {
       return await _service!.getAdviceHistory(plantCareId);
     } catch (e) {
-      debugPrint('Error loading advice history: $e');
       return [];
     }
   }

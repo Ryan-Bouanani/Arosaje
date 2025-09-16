@@ -42,7 +42,6 @@ class _ChatScreenState extends State<ChatScreen> {
       final prefs = await SharedPreferences.getInstance();
       _currentUserId = prefs.getInt('userId');
     } catch (e) {
-      print('[ChatScreen] Error retrieving userId: $e');
       // En cas d'erreur, on laisse _currentUserId à null
     }
     

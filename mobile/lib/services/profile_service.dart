@@ -43,7 +43,6 @@ class ProfileService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
-      print('Erreur updateProfile: $e');
       throw e;
     }
   }
@@ -79,7 +78,6 @@ class ProfileService {
         throw Exception('Erreur serveur: ${response.statusCode}');
       }
     } catch (e) {
-      print('Erreur changePassword: $e');
       throw e;
     }
   }

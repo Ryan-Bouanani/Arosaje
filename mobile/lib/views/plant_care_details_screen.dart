@@ -58,7 +58,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    print('🚨 DETAIL PAGE OUVERTE - Version avec refresh automatique');
     _initializeService();
   }
 
@@ -128,7 +127,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     if (_careDetails?['id'] == null) return;
 
     try {
-      print('🔄 _loadCareReports: Début du chargement...');
       setState(() {
         _isLoadingReports = true;
       });
@@ -136,7 +134,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final reports = await _careReportService.getCareReportsByPlantCare(_careDetails!['id']);
 
       // DEBUG: Vérifier si les rapports sont récupérés
-      print('🔄 _loadCareReports: ${reports.length} rapports récupérés');
 
       setState(() {
         _careReports = reports;
@@ -144,7 +141,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       });
 
     } catch (e) {
-      print('Erreur lors du chargement des rapports: $e');
       setState(() {
         _careReports = [];
         _isLoadingReports = false;
@@ -514,7 +510,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       setState(() {
         _isLoadingAdvices = false;
       });
-      print('Erreur lors du chargement des conseils: $e');
     }
   }
 
@@ -1359,7 +1354,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                         clipBehavior: Clip.antiAlias,
                                         child: Builder(
                                           builder: (context) {
-                                            print('🔍 PLANT DETAIL: plantId=${_careDetails?['plant']?['id']}, hasBase64=${_careDetails?['plant']?['photo_base64']?.isNotEmpty}');
                                             return AdaptiveImage(
                                               imageUrl: _careDetails?['plant']?['photo'] ?? '',
                                               imageBase64: _careDetails?['plant']?['photo_base64'],
@@ -1577,13 +1571,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 );
 
                 // Si le rapport a été créé avec succès, recharger les rapports
-                print('🔄 Retour du formulaire: result = $result');
                 if (result == true) {
-                  print('🔄 Rechargement des rapports...');
                   await _loadCareReports();
-                  print('🔄 Rapports rechargés !');
                 } else {
-                  print('🔄 Pas de rechargement (result != true)');
                 }
               } : null,
               style: ElevatedButton.styleFrom(

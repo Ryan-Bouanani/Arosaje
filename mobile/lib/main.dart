@@ -26,13 +26,11 @@ Future<void> main() async {
       try {
         await dotenv.load(fileName: "assets/.env.mobile");
       } catch (e) {
-        print('Avertissement: Impossible de charger .env.mobile, utilisation des valeurs par défaut: $e');
       }
     }
 
     runApp(const MyApp());
   } catch (e) {
-    print('Erreur lors de l\'initialisation: $e');
     runApp(const MyApp()); // Démarrer l'app même en cas d'erreur
   }
 }

@@ -61,7 +61,6 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
         Future.delayed(const Duration(seconds: 8)),
       ]);
     } catch (e) {
-      print("Timeout ou erreur géolocalisation: $e");
     } finally {
       // Toujours arrêter le loading après 8 secondes max
       if (mounted) {
@@ -111,7 +110,6 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
         });
       }
     } catch (e) {
-      print("Erreur localisation: $e");
       if (mounted) {
         setState(() {
           _locationLoading = false;
@@ -177,7 +175,6 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
       } else {
         // Fallback sur centre de la France par défaut si pas de coordonnées
         location = const LatLng(46.7, 2.2);
-        print('Garde ${care['id']} sans coordonnées, utilisation du centre de la France par défaut');
       }
       
       return {

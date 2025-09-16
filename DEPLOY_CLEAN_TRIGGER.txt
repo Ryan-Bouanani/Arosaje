@@ -1,0 +1,17 @@
+DEPLOY CLEAN TRIGGER - 2025-09-16 00:11
+=========================================
+
+This file triggers deployment on deploy-clean branch.
+Clean branch contains ONLY functional fixes:
+
+✅ Plant images in Gardes page (6373060)
+✅ Plant images in CreateAdviceScreen (51b21a3)
+✅ Removal of "NOUVEAU CODE" message (72a21ea)
+✅ Removal of reload button (ccf0b1d)
+✅ Plant images in AdviceDetailsScreen (856d029)
+
+❌ NO force rebuilds
+❌ NO cache-busters
+❌ NO toxic commits
+
+Expected: Clean deployment that works properly with Netlify.

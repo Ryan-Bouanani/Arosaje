@@ -746,6 +746,19 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
             
             const SizedBox(height: 12),
             
+            // Titre du conseil
+            if (advice.title.isNotEmpty) ...[
+              Text(
+                advice.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
+            
             // Texte du conseil
             Container(
               width: double.infinity,

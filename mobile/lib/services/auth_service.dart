@@ -51,7 +51,6 @@ class AuthService {
       onError: (error, handler) async {
         // Si on reçoit une erreur 401, tenter un refresh token
         if (error.response?.statusCode == 401) {
-          print('🔄 Token expiré détecté, tentative de renouvellement...');
           
           final refreshed = await refreshToken();
           
@@ -62,17 +61,14 @@ class AuthService {
               error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
               
               try {
-                print('🔄 Retry de la requête avec le nouveau token');
                 final response = await _dio.fetch(error.requestOptions);
                 return handler.resolve(response);
               } catch (retryError) {
-                print('❌ Échec du retry: $retryError');
                 return handler.next(error);
               }
             }
           } else {
             // Refresh échoué, déconnecter l'utilisateur
-            print('❌ Refresh token échoué, déconnexion nécessaire');
             await _storageService.clearTokens();
             _cancelRefreshTimer();
           }
@@ -119,8 +115,8 @@ class AuthService {
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
-    required String nom,
-    required String prenom,
+    required String lastName,
+    required String firstName,
     required String telephone,
     required String role,
   }) async {
@@ -131,8 +127,8 @@ class AuthService {
         body: json.encode({
           'email': email,
           'password': password,
-          'nom': nom,
-          'prenom': prenom,
+          'last_name': lastName,
+          'first_name': firstName,
           'telephone': telephone,
           'role': role,
         }),
@@ -378,7 +374,6 @@ class AuthService {
       await apiService.logout();
       await _storageService.clearAll();
     } catch (e) {
-      print('Erreur lors de la déconnexion : $e');
       // Même en cas d'erreur avec l'API, on nettoie les données locales
       await _storageService.clearAll();
       throw Exception('Erreur lors de la déconnexion : $e');
@@ -432,14 +427,11 @@ class AuthService {
         // Re-programmer le prochain refresh
         _scheduleTokenRefresh();
         
-        print('✅ Token renouvelé automatiquement');
         return true;
       } else {
-        print('❌ Échec du renouvellement automatique du token');
         return false;
       }
     } catch (e) {
-      print('❌ Erreur lors du renouvellement du token: $e');
       return false;
     } finally {
       _isRefreshing = false;

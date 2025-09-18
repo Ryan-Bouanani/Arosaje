@@ -96,7 +96,6 @@ class ApiService {
         throw Exception('Failed to load data: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error in GET request: $e');
       rethrow;
     }
   }
@@ -118,11 +117,9 @@ class ApiService {
         await clearToken(); // Effacer le token en cas d'erreur d'authentification
         throw Exception('Authentication failed');
       } else {
-        print('HTTP Error: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to post data: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error in POST request: $e');
       rethrow;
     }
   }
@@ -145,7 +142,6 @@ class ApiService {
         throw Exception('Failed to get current user: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error getting current user: $e');
       rethrow;
     }
   }
@@ -167,14 +163,11 @@ class ApiService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        print('Login failed: ${response.statusCode} - ${response.body}');
         throw Exception('Failed to login: ${response.statusCode}');
       }
     } on TimeoutException catch (e) {
-      print('Timeout error during login: $e');
       throw Exception('Request timeout. Please check your internet connection.');
     } catch (e) {
-      print('Login error: $e');
       throw Exception('Login failed: $e');
     }
   }
@@ -201,7 +194,6 @@ class ApiService {
       await prefs.remove('token');
       await prefs.remove('access_token');
     } catch (e) {
-      print('Logout error: $e');
       throw Exception('Logout failed: $e');
     }
   }

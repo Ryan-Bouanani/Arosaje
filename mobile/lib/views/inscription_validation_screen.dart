@@ -158,7 +158,7 @@ class _InscriptionValidationScreenState
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        "${user.prenom} ${user.nom}",
+                                        "${user.firstName ?? ''} ${user.lastName ?? ''}",
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,

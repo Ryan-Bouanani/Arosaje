@@ -67,14 +67,18 @@ class TestDatabaseIntegration:
         try:
             # Test d'insertion
             test_user = User(
-                nom="TestUser",
-                prenom="Integration",
+                last_name="TestUser",
+                first_name="Integration",
                 email=f"test_integration_{id(db)}@example.com",
                 telephone="0123456789",
-                localisation="Test City",
+                location="Test City",
                 password="test_hash",
                 role=UserRole.USER,
                 is_verified=True,
+                # Keep old fields for compatibility
+                nom="TestUser",
+                prenom="Integration",
+                localisation="Test City",
             )
 
             db.add(test_user)
@@ -86,15 +90,15 @@ class TestDatabaseIntegration:
             # Test de lecture
             retrieved_user = db.query(User).filter(User.id == test_user.id).first()
             assert retrieved_user is not None
-            assert retrieved_user.nom == "TestUser"
+            assert retrieved_user.last_name == "TestUser"
             assert retrieved_user.email == test_user.email
 
             # Test de mise à jour
-            retrieved_user.nom = "UpdatedTestUser"
+            retrieved_user.last_name = "UpdatedTestUser"
             db.commit()
 
             updated_user = db.query(User).filter(User.id == test_user.id).first()
-            assert updated_user.nom == "UpdatedTestUser"
+            assert updated_user.last_name == "UpdatedTestUser"
 
             # Test de suppression
             db.delete(updated_user)

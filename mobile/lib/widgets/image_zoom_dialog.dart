@@ -2,31 +2,22 @@ import 'package:flutter/material.dart';
 import 'adaptive_image.dart';
 
 class ImageZoomDialog extends StatelessWidget {
-  final String? imageUrl;
   final String? imageBase64;
   final String? title;
-  final int? plantId;
-  final int? reportId;
 
   const ImageZoomDialog({
     super.key,
-    this.imageUrl,
     this.imageBase64,
     this.title,
-    this.plantId,
-    this.reportId,
   });
 
-  static void show(BuildContext context, String? imageUrl, {String? imageBase64, String? title, int? plantId, int? reportId}) {
+  static void show(BuildContext context, {String? imageBase64, String? title}) {
     showDialog(
       context: context,
       barrierDismissible: true,
       builder: (context) => ImageZoomDialog(
-        imageUrl: imageUrl,
         imageBase64: imageBase64,
         title: title,
-        plantId: plantId,
-        reportId: reportId,
       ),
     );
   }
@@ -46,10 +37,7 @@ class ImageZoomDialog extends StatelessWidget {
               minScale: 0.5,
               maxScale: 4.0,
               child: AdaptiveImage(
-                imageUrl: imageUrl,
                 imageBase64: imageBase64,
-                plantId: plantId,
-                reportId: reportId,
                 fit: BoxFit.contain,
                 errorWidget: Container(
                   width: 200,

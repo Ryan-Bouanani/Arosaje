@@ -157,8 +157,8 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
     final filteredCares = plantsConfiees
         .where((care) => 
           care['plant'] != null && 
-          care['plant']['nom'] != null && 
-          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+          care['plant']['name'] != null && 
+          care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
     if (filteredCares.isEmpty) {
@@ -194,7 +194,6 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: AdaptiveImage(
-                        imageUrl: plant['photo'],
                         imageBase64: plant['photo_base64'],
                         width: 40,
                         height: 40,
@@ -204,13 +203,13 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
                     )
                   : Icon(Icons.local_florist, color: Colors.green[700]),
             ),
-            title: Text(plant['nom'] ?? 'Plante'),
+            title: Text(plant['name'] ?? 'Plante'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Espèce: ${plant['espece'] ?? 'Non spécifiée'}'),
+                Text('Espèce: ${plant['species'] ?? 'Non spécifiée'}'),
                 if (caretaker != null)
-                  Text('Gardé par ${caretaker['prenom'] ?? ''} ${caretaker['nom'] ?? ''}'),
+                  Text('Gardé par ${caretaker['first_name'] ?? ''} ${caretaker['last_name'] ?? ''}'),
                 Text('Terminé le ${DateFormat('dd/MM/yyyy').format(endDate)}'),
               ],
             ),
@@ -243,8 +242,8 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
     final filteredCares = plantsGardees
         .where((care) => 
           care['plant'] != null && 
-          care['plant']['nom'] != null && 
-          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+          care['plant']['name'] != null && 
+          care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
     if (filteredCares.isEmpty) {
@@ -280,7 +279,6 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(50),
                       child: AdaptiveImage(
-                        imageUrl: plant['photo'],
                         imageBase64: plant['photo_base64'],
                         width: 40,
                         height: 40,
@@ -290,13 +288,13 @@ class _PlantHistoryScreenState extends State<PlantHistoryScreen>
                     )
                   : Icon(Icons.local_florist, color: Colors.green[700]),
             ),
-            title: Text(plant['nom'] ?? 'Plante'),
+            title: Text(plant['name'] ?? 'Plante'),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Espèce: ${plant['espece'] ?? 'Non spécifiée'}'),
+                Text('Espèce: ${plant['species'] ?? 'Non spécifiée'}'),
                 if (owner != null)
-                  Text('Propriétaire: ${owner['prenom'] ?? ''} ${owner['nom'] ?? ''}'),
+                  Text('Propriétaire: ${owner['first_name']} ${owner['last_name']}'),
                 Text('Terminé le ${DateFormat('dd/MM/yyyy').format(endDate)}'),
               ],
             ),

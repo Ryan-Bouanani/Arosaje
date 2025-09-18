@@ -47,7 +47,7 @@ class NotificationService:
             </h3>
             
             <p><strong>Botaniste :</strong> {botanist_name}</p>
-            <p><strong>Plante concernée :</strong> {plant_care.plant.nom if plant_care.plant else 'Votre plante'}</p>
+            <p><strong>Plante concernée :</strong> {plant_care.plant.name if plant_care.plant else 'Votre plante'}</p>
             <p><strong>Période de garde :</strong> {plant_care.start_date.strftime('%d/%m/%Y')} - {plant_care.end_date.strftime('%d/%m/%Y')}</p>
         </div>
         
@@ -123,7 +123,7 @@ class NotificationService:
             
             <p><strong>Botaniste :</strong> {botanist_name}</p>
             <p><strong>Version :</strong> {advice.version}</p>
-            <p><strong>Plante :</strong> {plant_care.plant.nom if plant_care.plant else 'Votre plante'}</p>
+            <p><strong>Plante :</strong> {plant_care.plant.name if plant_care.plant else 'Votre plante'}</p>
         </div>
         
         <p>Le botaniste a mis à jour ses conseils avec de nouvelles informations importantes pour votre plante.</p>
@@ -253,7 +253,7 @@ class NotificationService:
         
         <div style="background-color: #f8d7da; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #f5c6cb;">
             <p><strong>Botaniste expert :</strong> {botanist_name}</p>
-            <p><strong>Plante concernée :</strong> {plant_care.plant.nom if plant_care.plant else 'Votre plante'}</p>
+            <p><strong>Plante concernée :</strong> {plant_care.plant.name if plant_care.plant else 'Votre plante'}</p>
             <p><strong>Action requise :</strong> IMMÉDIATE</p>
         </div>
         

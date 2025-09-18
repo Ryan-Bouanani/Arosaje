@@ -214,7 +214,7 @@ class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
                   ),
                   buildListTile(
                     title: "Nom complet",
-                    subtitle: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}",
+                    subtitle: "${_user?.firstName ?? ''} ${_user?.lastName ?? ''}",
                     onTap: () => _showChangeFullNameDialog(context),
                   ),
                   buildListTile(
@@ -224,7 +224,7 @@ class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
                   ),
                   buildListTile(
                     title: "Ville/Région",
-                    subtitle: _user?.localisation ?? 'Non renseignée',
+                    subtitle: _user?.location ?? 'Non renseignée',
                     onTap: () => _showChangeCityDialog(context),
                   ),
                   
@@ -547,8 +547,8 @@ class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
                     
                     try {
                       await _profileService.updateProfile(
-                        prenom: names.first,
-                        nom: names.length > 1 ? names.sublist(1).join(' ') : names.first,
+                        firstName: names.first,
+                        lastName: names.length > 1 ? names.sublist(1).join(' ') : names.first,
                       );
                       Navigator.pop(context);
                       await _loadUserData();
@@ -696,7 +696,7 @@ class _BotanistProfileScreenState extends State<BotanistProfileScreen> {
                   onPressed: () async {
                     try {
                       await _profileService.updateProfile(
-                        localisation: cityController.text,
+                        location: cityController.text,
                       );
                       Navigator.pop(context);
                       await _loadUserData();

@@ -121,8 +121,8 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         final plant = await _plantService.createPlant(
-          nom: _nomController.text,
-          espece: _especeController.text,
+          name: _nomController.text,
+          species: _especeController.text,
           imageFile: _imageFile,
           webImage: _webImage,
           originalFileName: _originalFileName,
@@ -146,7 +146,7 @@ class _AddPlantScreenState extends State<AddPlantScreen> {
           plantId: _createdPlantId!,
           startDate: _startDate!,
           endDate: _endDate!,
-          localisation: _localisationController.text,
+          location: _localisationController.text,
           careInstructions: _careInstructionsController.text,
         );
         

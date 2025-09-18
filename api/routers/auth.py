@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel
 
 from utils.database import get_db
-from utils.security import create_access_token, create_tokens, get_current_user, verify_refresh_token, revoke_user_tokens
+from utils.security import create_access_token, create_tokens, get_current_user, verify_refresh_token
 from utils.password import verify_password, get_password_hash
 from crud.user import user as user_crud
 from schemas.token import Token, RefreshTokenRequest
@@ -106,7 +106,7 @@ async def register(
     # Envoi de l'email de bienvenue
     try:
         await email_service.send_welcome_email(
-            recipient_email=user.email, user_name=f"{user.prenom} {user.nom}"
+            recipient_email=user.email, user_name=f"{user.first_name} {user.last_name}"
         )
     except Exception as e:
         print(f"Erreur lors de l'envoi de l'email de bienvenue: {e}")

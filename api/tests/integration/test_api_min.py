@@ -32,10 +32,10 @@ def test_auth_register_and_login():
     register_data = {
         "email": test_email,
         "password": "TestPassword123456",
-        "nom": "Test",
-        "prenom": "User",
+        "first_name": "Test",
+        "last_name": "User",
         "telephone": "0123456789",
-        "localisation": "Paris",
+        "location": "Paris",
         "role": "user",
     }
 

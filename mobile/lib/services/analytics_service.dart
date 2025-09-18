@@ -104,7 +104,6 @@ class AnalyticsService {
       await _apiService.post('/monitoring/events', data: eventData);
       
     } catch (e) {
-      print('Failed to log analytics event: $e'); // Debug message in English
     }
   }
 
@@ -210,7 +209,6 @@ class AnalyticsService {
 
       await _apiService.post('/monitoring/performance', data: performanceData);
     } catch (e) {
-      print('Failed to log performance metric: $e'); // Debug message in English
     }
   }
 

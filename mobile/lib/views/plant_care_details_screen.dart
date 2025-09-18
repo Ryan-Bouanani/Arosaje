@@ -102,8 +102,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         
         // Initialiser les contrôleurs avec les données actuelles
         _instructionsController.text = details['care_instructions'] ?? '';
-        _plantNameController.text = details['plant']?['nom'] ?? '';
-        _locationController.text = details['localisation'] ?? '';
+        _plantNameController.text = details['plant']?['name'] ?? '';
+        _locationController.text = details['location'] ?? '';
       });
       
       // Charger les rapports de garde si on a les détails
@@ -127,7 +127,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     if (_careDetails?['id'] == null) return;
 
     try {
-      print('🔄 _loadCareReports: Début du chargement...');
       setState(() {
         _isLoadingReports = true;
       });
@@ -135,7 +134,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final reports = await _careReportService.getCareReportsByPlantCare(_careDetails!['id']);
 
       // DEBUG: Vérifier si les rapports sont récupérés
-      print('🔄 _loadCareReports: ${reports.length} rapports récupérés');
 
       setState(() {
         _careReports = reports;
@@ -143,7 +141,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       });
 
     } catch (e) {
-      print('Erreur lors du chargement des rapports: $e');
       setState(() {
         _careReports = [];
         _isLoadingReports = false;
@@ -331,7 +328,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Demander un conseil pour cette ${_careDetails!['plant']['nom']} ?'),
+                Text('Demander un conseil pour cette ${_careDetails!['plant']['name']} ?'),
                 const SizedBox(height: 16),
                 const Text(
                   'Une conversation sera créée avec un botaniste pour vous aider.',
@@ -394,7 +391,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     });
 
     try {
-      if (_careDetails?['owner']?['nom'] == null || _careDetails?['owner']?['prenom'] == null) {
+      if (_careDetails?['owner']?['last_name'] == null || _careDetails?['owner']?['first_name'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible de contacter le propriétaire')),
         );
@@ -423,7 +420,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Conversation avec ${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}'),
+          content: Text('Conversation avec ${_careDetails!['owner']['first_name']} ${_careDetails!['owner']['last_name']}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -449,7 +446,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     });
 
     try {
-      if (_careDetails?['caretaker']?['nom'] == null || _careDetails?['caretaker']?['prenom'] == null) {
+      if (_careDetails?['caretaker']?['last_name'] == null || _careDetails?['caretaker']?['first_name'] == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Impossible de contacter le gardien')),
         );
@@ -478,7 +475,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       // Afficher un message informatif
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Conversation avec ${_careDetails!['caretaker']['prenom']} ${_careDetails!['caretaker']['nom']}'),
+          content: Text('Conversation avec ${_careDetails!['caretaker']['first_name']} ${_careDetails!['caretaker']['last_name']}'),
           backgroundColor: Colors.green,
         ),
       );
@@ -513,7 +510,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       setState(() {
         _isLoadingAdvices = false;
       });
-      print('Erreur lors du chargement des conseils: $e');
     }
   }
 
@@ -527,7 +523,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       return 'Moi';
     }
     
-    return '${_careDetails!['owner']['prenom']} ${_careDetails!['owner']['nom']}';
+    return '${_careDetails!['owner']['first_name']} ${_careDetails!['owner']['last_name']}';
   }
 
   Color _getPriorityColor(AdvicePriority priority) {
@@ -626,8 +622,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       if (!_isEditMode) {
         // Annuler les modifications - restaurer les valeurs originales
         _instructionsController.text = _careDetails!['care_instructions'] ?? '';
-        _plantNameController.text = _careDetails!['plant']?['nom'] ?? '';
-        _locationController.text = _careDetails!['localisation'] ?? '';
+        _plantNameController.text = _careDetails!['plant']?['name'] ?? '';
+        _locationController.text = _careDetails!['location'] ?? '';
         _newPlantImage = null;
       }
     });
@@ -637,13 +633,13 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     try {
       // Sauvegarder le nom de la plante si modifié
       final plantId = _careDetails!['plant']['id'];
-      final currentPlantName = _careDetails!['plant']['nom'];
+      final currentPlantName = _careDetails!['plant']['name'];
       final newPlantName = _plantNameController.text.trim();
       
       if (newPlantName.isNotEmpty && newPlantName != currentPlantName) {
         await _plantService.updatePlant(
           plantId: plantId,
-          nom: newPlantName,
+          name: newPlantName,
         );
       }
       
@@ -651,8 +647,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         _isEditMode = false;
         // Mettre à jour les détails avec les nouvelles valeurs sauvegardées
         _careDetails!['care_instructions'] = _instructionsController.text;
-        _careDetails!['plant']['nom'] = newPlantName;
-        _careDetails!['localisation'] = _locationController.text;
+        _careDetails!['plant']['name'] = newPlantName;
+        _careDetails!['location'] = _locationController.text;
         // La photo sera gérée séparément si une nouvelle image est sélectionnée
       });
       
@@ -749,6 +745,19 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
             ),
             
             const SizedBox(height: 12),
+            
+            // Titre du conseil
+            if (advice.title.isNotEmpty) ...[
+              Text(
+                advice.title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green,
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             
             // Texte du conseil
             Container(
@@ -850,9 +859,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 onTap: () {
                   ImageZoomDialog.show(
                     context,
-                    '${AppConfig.apiUrl}$photoUrl',
                     imageBase64: report['photo_base64'],
-                    reportId: report['id'],
                     title: 'Photo de la séance d\'entretien',
                   );
                 },
@@ -861,9 +868,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(8),
                       child: AdaptiveImage(
-                        imageUrl: '${AppConfig.apiUrl}$photoUrl',
                         imageBase64: report['photo_base64'],
-                        reportId: report['id'], // Utilise l'ID du rapport pour le proxy
                         height: 150,
                         width: double.infinity,
                         fit: BoxFit.cover,
@@ -933,7 +938,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                           if (advice['botanist'] != null) ...[
                             const SizedBox(height: 4),
                             Text(
-                              '— ${advice['botanist']['prenom']} ${advice['botanist']['nom'] ?? ''}',
+                              '— ${advice['botanist']['first_name']} ${advice['botanist']['last_name'] ?? ''}',
                               style: TextStyle(
                                 fontSize: 11,
                                 color: Colors.green[700],
@@ -1004,7 +1009,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
           color: Colors.black,
         ),
         title: Text(
-          _careDetails != null ? _careDetails!['plant']['nom'] : 'Chargement...',
+          _careDetails != null ? _careDetails!['plant']['name'] : 'Chargement...',
           style: const TextStyle(color: Colors.black, fontSize: 18),
         ),
         backgroundColor: Colors.white,
@@ -1072,15 +1077,15 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          '${_careDetails!['caretaker']['prenom'] ?? ''} ${_careDetails!['caretaker']['nom'] ?? ''}',
+                                          '${_careDetails!['caretaker']['first_name'] ?? ''} ${_careDetails!['caretaker']['last_name'] ?? ''}',
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
-                                        if (_careDetails!['caretaker']['localisation'] != null)
+                                        if (_careDetails!['caretaker']['location'] != null)
                                           Text(
-                                            _careDetails!['caretaker']['localisation'],
+                                            _careDetails!['caretaker']['location'],
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Colors.grey[600],
@@ -1274,7 +1279,7 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                     const SizedBox(width: 12),
                                     Expanded(
                                       child: Text(
-                                        _careDetails?['localisation'] ?? 'Localisation non spécifiée',
+                                        _careDetails?['location'] ?? 'Localisation non spécifiée',
                                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                       ),
                                     ),
@@ -1313,7 +1318,6 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                   onTap: () {
                                     ImageZoomDialog.show(
                                       context,
-                                      _newPlantImage!.path,
                                       title: 'Image de la plante',
                                     );
                                   },
@@ -1342,36 +1346,26 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                     ),
                                   ),
                                 )
-                              : (_careDetails?['plant']?['photo'] != null || _careDetails?['plant']?['photo_base64'] != null)
-                                  ? GestureDetector(
-                                      onTap: () {
-                                        ImageZoomDialog.show(
-                                          context,
-                                          _careDetails?['plant']?['photo'] ?? '',
-                                          imageBase64: _careDetails?['plant']?['photo_base64'],
-                                          plantId: _careDetails?['plant']?['id'],
-                                          title: 'Image de la plante',
-                                        );
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        clipBehavior: Clip.antiAlias,
-                                        child: Builder(
-                                          builder: (context) {
-                                            print('🔍 PLANT DETAIL: plantId=${_careDetails?['plant']?['id']}, hasBase64=${_careDetails?['plant']?['photo_base64']?.isNotEmpty}');
-                                            return AdaptiveImage(
-                                              imageUrl: _careDetails?['plant']?['photo'] ?? '',
-                                              imageBase64: _careDetails?['plant']?['photo_base64'],
-                                              plantId: _careDetails?['plant']?['id'],
-                                              fit: BoxFit.cover,
-                                            );
-                                          }
-                                        ),
+                              : GestureDetector(
+                                  onTap: () {
+                                    ImageZoomDialog.show(
+                                      context,
+                                      imageBase64: _careDetails?['plant']?['photo_base64'],
+                                      title: 'Image de la plante',
+                                    );
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: AdaptiveImage(
+                                      imageBase64: _careDetails?['plant']?['photo_base64'],
+                                      fit: BoxFit.cover,
+                                      errorWidget: const Center(
+                                        child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
                                       ),
-                                    )
-                                  : const Center(
-                                      child: Icon(Icons.image_not_supported, size: 40, color: Colors.grey),
                                     ),
+                                  ),
+                                ),
                         ),
 
                         const SizedBox(height: 16),
@@ -1386,11 +1380,11 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                                 ),
                               )
                             : Text(
-                                _careDetails!['plant']['nom'],
+                                _careDetails!['plant']['name'],
                                 style: const TextStyle(fontSize: 14),
                               ),
                         Text(
-                          'Type de Plante: ${_careDetails!['plant']['espece'] ?? 'Non spécifié'}',
+                          'Type de Plante: ${_careDetails!['plant']['species'] ?? 'Non spécifié'}',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
 
@@ -1576,13 +1570,9 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                 );
 
                 // Si le rapport a été créé avec succès, recharger les rapports
-                print('🔄 Retour du formulaire: result = $result');
                 if (result == true) {
-                  print('🔄 Rechargement des rapports...');
                   await _loadCareReports();
-                  print('🔄 Rapports rechargés !');
                 } else {
-                  print('🔄 Pas de rechargement (result != true)');
                 }
               } : null,
               style: ElevatedButton.styleFrom(

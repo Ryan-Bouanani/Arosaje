@@ -1,6 +1,6 @@
 from fastapi import WebSocket
 from typing import Dict, Set, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from models.user_status import UserPresence, UserStatus, UserTypingStatus
 from crud.message import message as message_crud
@@ -37,7 +37,7 @@ class ConnectionManager:
                 )
                 if presence:
                     presence.status = UserStatus.OFFLINE
-                    presence.last_seen_at = datetime.utcnow()
+                    presence.last_seen_at = datetime.now(timezone.utc)
                     db.commit()
 
     async def send_personal_message(self, message: dict, user_id: int):
@@ -74,7 +74,7 @@ class ConnectionManager:
             db.add(typing_status)
 
         typing_status.is_typing = is_typing
-        typing_status.last_typed_at = datetime.utcnow()
+        typing_status.last_typed_at = datetime.now(timezone.utc)
         db.commit()
 
         # Notifier les autres participants
@@ -113,7 +113,7 @@ class ConnectionManager:
             # Récupérer l'expéditeur pour son nom
             sender = user_crud.get(db, id=user_id)
             sender_name = (
-                f"{sender.prenom} {sender.nom}" if sender else "Utilisateur inconnu"
+                f"{sender.first_name} {sender.last_name}" if sender else "Utilisateur inconnu"
             )
 
             # Préparer les données du message pour la diffusion

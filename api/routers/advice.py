@@ -126,7 +126,7 @@ async def create_advice(
         # await notification_service.send_advice_notification(
         #     db=db,
         #     plant_care_id=advice_data.plant_care_id,
-        #     botanist_name=f"{current_user.prenom} {current_user.nom}",
+        #     botanist_name=f"{current_user.first_name} {current_user.last_name}",
         #     advice_title=advice_data.title,
         #     priority=advice_data.priority
         # )
@@ -182,7 +182,7 @@ async def update_advice(
         await notification_service.send_advice_update_notification(
             db=db,
             advice_id=updated_advice.id,
-            botanist_name=f"{current_user.prenom} {current_user.nom}",
+            botanist_name=f"{current_user.first_name} {current_user.last_name}",
         )
 
         return updated_advice
@@ -237,7 +237,7 @@ async def validate_advice(
         await notification_service.send_validation_notification(
             db=db,
             advice_id=advice_id,
-            validator_name=f"{current_user.prenom} {current_user.nom}",
+            validator_name=f"{current_user.first_name} {current_user.last_name}",
             validation_status=validation_data.validation_status,
         )
 

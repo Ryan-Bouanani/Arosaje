@@ -72,7 +72,7 @@ class _AdminUserManagementState extends State<AdminUserManagement> with SingleTi
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text('Changer le rôle de ${user.prenom} ${user.nom}'),
+              title: Text('Changer le rôle de ${user.firstName ?? ''} ${user.lastName ?? ''}'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -139,7 +139,7 @@ class _AdminUserManagementState extends State<AdminUserManagement> with SingleTi
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Rôle de ${user.prenom} ${user.nom} changé vers $newRole'),
+          content: Text('Rôle de ${user.firstName ?? ''} ${user.lastName ?? ''} changé vers $newRole'),
           backgroundColor: Colors.green,
         ),
       );
@@ -194,7 +194,7 @@ class _AdminUserManagementState extends State<AdminUserManagement> with SingleTi
           return Card(
             margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              title: Text("${user.prenom} ${user.nom}"),
+              title: Text("${user.firstName ?? ''} ${user.lastName ?? ''}"),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

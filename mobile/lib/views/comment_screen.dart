@@ -175,7 +175,7 @@ class _CommentScreenState extends State<CommentScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Plante : ${(request['plant'] as Map<String, dynamic>?)?.containsKey('nom') ?? false ? request['plant']['nom'] : 'Non spécifié'}',
+                                      'Plante : ${request['plant']?['name'] ?? 'Non spécifié'}','
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -184,7 +184,7 @@ class _CommentScreenState extends State<CommentScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Espèce : ${(request['plant'] as Map<String, dynamic>?)?.containsKey('espece') ?? false ? request['plant']['espece'] : 'Non spécifiée'}',
+                                      'Espèce : ${request['plant']?['species'] ?? 'Non spécifiée'}',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.black54,

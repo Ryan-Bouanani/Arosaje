@@ -38,7 +38,6 @@ class MessageProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _currentUserId = prefs.getInt('userId');
     } catch (e) {
-      print('[MessageProvider] Error loading user ID: $e');
     }
   }
   
@@ -81,7 +80,6 @@ class MessageProvider extends ChangeNotifier {
       messages?.removeAt(tempIndex);
       _tempMessageMapping.remove(tempId);
       notifyListeners();
-      print('[MessageProvider] Replaced temporary message $tempId with real message ${recentRealMessage.id}');
     }
   }
 
@@ -129,7 +127,6 @@ class MessageProvider extends ChangeNotifier {
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
-      print('Erreur lors du chargement des conversations: $e');
     }
   }
 
@@ -166,7 +163,6 @@ class MessageProvider extends ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
-      print('Erreur lors du chargement des messages: $e');
     }
   }
 
@@ -222,7 +218,6 @@ class MessageProvider extends ChangeNotifier {
             _messages[conversationId] = [];
           }
           
-          print('[MessageProvider] Received new message: ${message.id}, content: "${message.content}", sender: ${message.senderId}');
           
           // Vérifier que le message n'existe pas déjà (par ID réel)
           final existingIndex = _messages[conversationId]?.indexWhere((m) => 
@@ -230,7 +225,6 @@ class MessageProvider extends ChangeNotifier {
           ) ?? -1;
           
           if (existingIndex != -1) {
-            print('[MessageProvider] Message ${message.id} already exists, ignoring');
             return; // Message déjà présent
           }
           
@@ -251,7 +245,6 @@ class MessageProvider extends ChangeNotifier {
               _messages[conversationId]![tempIndex] = message;
               _tempMessageMapping.remove(tempId);
               
-              print('[MessageProvider] Replaced temporary message $tempId with real message ${message.id}');
               
               // Trier les messages par date
               _messages[conversationId]?.sort((a, b) => a.createdAt.compareTo(b.createdAt));
@@ -270,7 +263,6 @@ class MessageProvider extends ChangeNotifier {
           ) ?? false;
           
           if (recentDuplicate) {
-            print('[MessageProvider] Recent duplicate message detected, ignoring');
             return;
           }
           
@@ -281,7 +273,6 @@ class MessageProvider extends ChangeNotifier {
           }
           notifyListeners();
           
-          print('[MessageProvider] Added new message ${message.id}');
         }
         break;
         
@@ -376,7 +367,6 @@ class MessageProvider extends ChangeNotifier {
       ) ?? false;
       
       if (existingTemp) {
-        print('[MessageProvider] Duplicate temporary message detected, ignoring');
         return;
       }
       
@@ -403,7 +393,6 @@ class MessageProvider extends ChangeNotifier {
       _tempMessageMapping[tempId] = conversationId;
       notifyListeners();
       
-      print('[MessageProvider] Added temporary message: $tempId');
       
       // Si WebSocket connecté, envoyer via WebSocket
       if (_webSocketManager.isConnected) {
@@ -415,7 +404,6 @@ class MessageProvider extends ChangeNotifier {
         });
       } else {
         // Sinon, utiliser l'API REST comme fallback
-        print('[MessageProvider] WebSocket not connected, using REST API');
         await _messageService.sendMessageViaAPI(conversationId, content);
         
         // Recharger les messages pour obtenir le message créé
@@ -426,7 +414,6 @@ class MessageProvider extends ChangeNotifier {
         _tryReplaceTemporaryMessage(conversationId, tempId, content);
       }
     } catch (e) {
-      print('[MessageProvider] Error sending message: $e');
       _error = e.toString();
       
       // En cas d'erreur, retirer le message temporaire si présent
@@ -529,7 +516,6 @@ class MessageProvider extends ChangeNotifier {
     }
     
     if (hasChanges) {
-      print('[MessageProvider] Cleaned up ${toRemove.length} old temporary messages');
       notifyListeners();
     }
   }

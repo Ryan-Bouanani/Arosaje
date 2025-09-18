@@ -103,8 +103,8 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
   Widget _buildReportCard(Map<String, dynamic> report, {bool isInAdviceTab = false}) {
     final healthStatus = report['health_level'] ?? 'Inconnu';
     final healthColor = _getHealthColor(healthStatus);
-    final plantName = report['plant_care']?['plant']?['nom'] ?? 'Plante inconnue';
-    final caretakerName = report['caretaker']?['prenom'] ?? 'Gardien inconnu';
+    final plantName = report['plant_care']?['plant']?['name'] ?? 'Plante inconnue';
+    final caretakerName = report['caretaker']?['first_name'] ?? 'Gardien inconnu';
     
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -183,8 +183,7 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
             if (report['photo_url'] != null || report['photo_base64'] != null)
               GestureDetector(
                 onTap: () => ImageZoomDialog.show(
-                  context, 
-                  report['photo_url'], 
+                  context,
                   imageBase64: report['photo_base64']
                 ),
                 child: Container(
@@ -198,9 +197,7 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(7),
                     child: AdaptiveImage(
-                      imageUrl: report['photo_url'],
                       imageBase64: report['photo_base64'],
-                      reportId: report['id'], // ID du rapport pour le proxy
                       fit: BoxFit.contain,
                       width: 80,
                       height: 80,
@@ -248,8 +245,8 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Plante: ${report['plant_care']?['plant']?['nom'] ?? 'Inconnue'}'),
-              Text('Gardien: ${report['caretaker']?['prenom'] ?? 'Inconnu'}'),
+              Text('Plante: ${report['plant_care']?['plant']?['name'] ?? 'Inconnue'}'),
+              Text('Gardien: ${report['caretaker']?['first_name'] ?? 'Inconnu'}'),
               Text('État santé: ${report['health_level'] ?? 'Inconnu'}'),
               Text('Hydratation: ${report['hydration_level'] ?? 'Inconnu'}'),
               Text('Vitalité: ${report['vitality_level'] ?? 'Inconnu'}'),
@@ -285,7 +282,7 @@ class _BotanistReportsScreenState extends State<BotanistReportsScreen> with Sing
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${isUpdate ? 'Modifier l\'avis' : 'Avis'} pour ${report['plant_care']?['plant']?['nom'] ?? 'la plante'}'),
+        title: Text('${isUpdate ? 'Modifier l\'avis' : 'Avis'} pour ${report['plant_care']?['plant']?['name'] ?? 'la plante'}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

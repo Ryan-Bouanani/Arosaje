@@ -23,68 +23,19 @@
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="A'rosa-je">
+  <meta name="apple-mobile-web-app-title" content="mobile">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
-
-  <!-- Cache Control -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta name="cache-buster" content="2025-09-15-2350-FORCE-ASSET-v9">
-  <meta name="app-version" content="2.0.0+15092025">
-  <meta name="build-timestamp" content="1726435800000">
 
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>A'rosa-je v2.0 - Force Rebuild</title>
-  <meta name="cache-bust" content="v2.0.0-FORCE-MAJOR-REBUILD">
+  <title>A'rosa-je</title>
+  <meta name="cache-bust" content="v1.0.2-clean-deploy">
+  <meta name="deployment-trigger" content="clean-branch-fix-20250916">
+  <meta name="build-timestamp" content="20250916010000">
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
-  <script>
-    // FORCE MAJOR REBUILD - v2.0.0 - 2025-09-15 23:50
-    console.log('🔥 FORCE REBUILD v2.0.0 - Clearing all caches');
-    
-    // Force clear service worker cache
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for(let registration of registrations) {
-          registration.unregister();
-          console.log('🗑️ Unregistered service worker');
-        }
-      });
-    }
-    
-    // Clear ALL caches aggressively
-    if ('caches' in window) {
-      caches.keys().then(function(cacheNames) {
-        cacheNames.forEach(function(cacheName) {
-          caches.delete(cacheName);
-          console.log('🗑️ Deleted cache:', cacheName);
-        });
-      });
-    }
-    
-    // Clear localStorage and sessionStorage
-    try {
-      localStorage.clear();
-      sessionStorage.clear();
-      console.log('🗑️ Cleared local storage');
-    } catch(e) {
-      console.log('⚠️ Could not clear storage:', e);
-    }
-    
-    // Force reload if URL contains force parameter
-    if (window.location.search.includes('force=true')) {
-      console.log('🔄 Force reload detected');
-      window.location.reload(true);
-    }
-    
-    // Add timestamp for cache busting
-    window.FORCE_REBUILD_TIMESTAMP = 1726435800000;
-    window.APP_VERSION = '2.0.0+15092025';
-  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

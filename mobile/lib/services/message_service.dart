@@ -60,7 +60,6 @@ class MessageService {
           'conversation_id': conversationId
         },
       );
-      print('Message sent via API: $response');
     } catch (e) {
       throw Exception('Erreur lors de l\'envoi du message: $e');
     }

@@ -6,11 +6,14 @@ from utils.database import Base
 class Plant(Base):
     __tablename__ = "plants"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    # Anciens champs français (compatibilité temporaire)
     nom = Column(String, nullable=False)
     espece = Column(String, nullable=True)
+    # Nouveaux champs anglais
+    name = Column(String, nullable=True)
+    species = Column(String, nullable=True)
     description = Column(String, nullable=True)
-    photo = Column(String, nullable=True)  # Legacy: URL vers fichier
-    photo_base64 = Column(Text, nullable=True)  # Nouveau: Image encodée en Base64
+    photo_base64 = Column(Text, nullable=True)  # Image encodée en Base64
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relations

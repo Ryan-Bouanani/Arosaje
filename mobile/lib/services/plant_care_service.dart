@@ -26,7 +26,7 @@ class PlantCareService {
     required int plantId,
     required DateTime startDate,
     required DateTime endDate,
-    required String localisation,
+    required String location,
     String? careInstructions,
   }) async {
     final token = _storageService.getToken();
@@ -42,7 +42,7 @@ class PlantCareService {
         'plant_id': plantId,
         'start_date': startDate.toIso8601String(),
         'end_date': endDate.toIso8601String(),
-        'localisation': localisation,
+        'location': location,
         'care_instructions': careInstructions,
       }),
     );

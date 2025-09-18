@@ -18,16 +18,6 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from utils.database import Base
 
 # Import all models to ensure they're registered with Base.metadata
-from models.user import User
-from models.plant import Plant
-from models.plant_care import PlantCare
-from models.message import Message, Conversation, ConversationParticipant
-from models.advice import Advice
-from models.photo import Photo
-from models.care_report import CareReport
-from models.botanist_report_advice import BotanistReportAdvice
-from models.user_status import UserStatus, UserPresence, UserTypingStatus
-from models.refresh_token import RefreshToken
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

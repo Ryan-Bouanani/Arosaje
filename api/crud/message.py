@@ -8,7 +8,7 @@ from models.message import (
     ConversationType,
 )
 from schemas.message import MessageCreate
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from models.user import User
 from models.user_status import UserTypingStatus
 from models.plant import Plant
@@ -109,8 +109,8 @@ class CRUDMessage:
             conv_dict["participants"].append({
                 "id": participant.id,
                 "user_id": participant.id,  # Pour compatibilité
-                "nom": participant.nom,
-                "prenom": participant.prenom,
+                "nom": participant.last_name,
+                "prenom": participant.first_name,
                 "email": participant.email,
             })
 
@@ -136,8 +136,8 @@ class CRUDMessage:
                 if plant:
                     conv_dict["plant_info"] = {
                         "id": plant.id,
-                        "nom": plant.nom,
-                        "espece": plant.espece,
+                        "nom": plant.name,
+                        "espece": plant.species,
                     }
 
                 conv_dict["plant_care_info"] = {
@@ -244,8 +244,8 @@ class CRUDMessage:
                     conv_dict["participants"].append(
                         {
                             "id": participant.id,
-                            "nom": participant.nom,
-                            "prenom": participant.prenom,
+                            "nom": participant.last_name,
+                            "prenom": participant.first_name,
                             "email": participant.email,
                         }
                     )
@@ -272,8 +272,8 @@ class CRUDMessage:
                         if plant:
                             conv_dict["plant_info"] = {
                                 "id": plant.id,
-                                "nom": plant.nom,
-                                "espece": plant.espece,
+                                "nom": plant.name,
+                                "espece": plant.species,
                             }
 
                         conv_dict["plant_care_info"] = {
@@ -340,7 +340,7 @@ class CRUDMessage:
             if not conversation:
                 raise ValueError("Conversation non trouvée")
 
-            conversation.updated_at = datetime.utcnow()
+            conversation.updated_at = datetime.now(timezone.utc)
             db.commit()
             db.refresh(db_message)
 
@@ -403,7 +403,7 @@ class CRUDMessage:
                 .first()
             )
             if participant:
-                participant.last_read_at = datetime.utcnow()
+                participant.last_read_at = datetime.now(timezone.utc)
 
             db.commit()
 
@@ -520,7 +520,7 @@ class CRUDMessage:
         self, db: Session, conversation_id: int
     ) -> List[UserTypingStatus]:
         """Récupère la liste des utilisateurs en train d'écrire"""
-        thirty_seconds_ago = datetime.utcnow() - timedelta(seconds=30)
+        thirty_seconds_ago = datetime.now(timezone.utc) - timedelta(seconds=30)
         return (
             db.query(UserTypingStatus)
             .filter(

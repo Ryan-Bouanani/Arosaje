@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
 from jose import JWTError, jwt
 from fastapi import HTTPException, Security, Depends, status, Request
@@ -18,9 +18,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """Crée un token JWT"""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -152,7 +152,7 @@ def cleanup_expired_tokens(db: Session) -> int:
     Retourne le nombre de tokens supprimés
     """
     expired_tokens = db.query(RefreshToken).filter(
-        RefreshToken.expires_at < datetime.utcnow()
+        RefreshToken.expires_at < datetime.now(timezone.utc)
     ).all()
     
     count = len(expired_tokens)

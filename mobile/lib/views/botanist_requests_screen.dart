@@ -90,14 +90,14 @@ class _BotanistRequestsScreenState extends State<BotanistRequestsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    request['plant']?['nom'] ?? 'Plante inconnue',
+                                    request['plant']?['name'] ?? 'Plante inconnue',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
-                                  Text('Espèce: ${request['plant']?['espece'] ?? 'Non spécifiée'}'),
+                                  Text('Espèce: ${request['plant']?['species'] ?? 'Non spécifiée'}'),
                                   const SizedBox(height: 8),
                                   Text(request['texte'] ?? ''),
                                   const SizedBox(height: 12),

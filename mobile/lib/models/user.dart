@@ -1,20 +1,20 @@
 class User {
   final int id;
   final String email;
-  final String nom;
-  final String prenom;
+  final String firstName;
+  final String lastName;
   final String? telephone;
-  final String? localisation;
+  final String? location;
   final String role;
   final bool isVerified;
 
   User({
     required this.id,
     required this.email,
-    required this.nom,
-    required this.prenom,
+    required this.firstName,
+    required this.lastName,
     this.telephone,
-    this.localisation,
+    this.location,
     required this.role,
     required this.isVerified,
   });
@@ -23,10 +23,10 @@ class User {
     return User(
       id: json['id'],
       email: json['email'],
-      nom: json['nom'],
-      prenom: json['prenom'],
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
       telephone: json['telephone'],
-      localisation: json['localisation'],
+      location: json['location'],
       role: json['role'],
       isVerified: json['is_verified'] ?? false,
     );
@@ -36,12 +36,18 @@ class User {
     return {
       'id': id,
       'email': email,
-      'nom': nom,
-      'prenom': prenom,
+      'first_name': firstName,
+      'last_name': lastName,
       'telephone': telephone,
-      'localisation': localisation,
+      'location': location,
       'role': role,
       'is_verified': isVerified,
     };
   }
+  
+  // Helper method pour obtenir le nom complet
+  String get fullName => '$firstName $lastName';
+  
+  // Alias pour compatibilité
+  String get username => fullName;
 } 

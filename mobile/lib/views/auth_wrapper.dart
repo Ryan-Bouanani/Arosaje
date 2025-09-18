@@ -63,7 +63,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
       
     } catch (e) {
-      print('[AuthWrapper] Auth check failed: $e');
       // En cas d'erreur, on déconnecte pour être sûr
       try {
         final apiService = ApiService();

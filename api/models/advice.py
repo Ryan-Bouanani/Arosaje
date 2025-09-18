@@ -84,18 +84,24 @@ class Advice(Base):
         if self.botanist:
             botanist_info = {
                 "id": self.botanist.id,
+                "first_name": self.botanist.first_name or self.botanist.prenom,
+                "last_name": self.botanist.last_name or self.botanist.nom,
+                "email": self.botanist.email,
+                # Anciens champs pour compatibilité
                 "prenom": self.botanist.prenom,
                 "nom": self.botanist.nom,
-                "email": self.botanist.email,
             }
 
         validator_info = None
         if self.validator:
             validator_info = {
                 "id": self.validator.id,
+                "first_name": self.validator.first_name or self.validator.prenom,
+                "last_name": self.validator.last_name or self.validator.nom,
+                "email": self.validator.email,
+                # Anciens champs pour compatibilité
                 "prenom": self.validator.prenom,
                 "nom": self.validator.nom,
-                "email": self.validator.email,
             }
 
         return {

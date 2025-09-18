@@ -1,0 +1,19 @@
+DEPLOY CLEAN TRIGGER - 2025-09-16 01:00
+=========================================
+
+This file forces significant deployment changes on deploy-clean branch.
+Clean branch contains ONLY functional fixes:
+
+✅ Plant images in Gardes page (6373060)
+✅ Plant images in CreateAdviceScreen (51b21a3)
+✅ Removal of "NOUVEAU CODE" message (72a21ea)
+✅ Removal of reload button (ccf0b1d)
+✅ Plant images in AdviceDetailsScreen (856d029)
+✅ Debug logs cleanup in main.dart
+✅ Significant file changes to force Netlify rebuild
+
+🔄 DEPLOYMENT STRATEGY: Force significant file modifications
+🎯 TARGET: Fix "All files already uploaded" Netlify issue
+⚡ METHOD: Multiple critical file updates with unique identifiers
+
+Expected: FORCE Netlify to recognize new deployment content.

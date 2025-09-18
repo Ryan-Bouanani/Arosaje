@@ -47,7 +47,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _storageService = await StorageService.init();
       setState(() {});
     } catch (e) {
-      print('Erreur lors de l\'initialisation du stockage: $e');
     }
   }
 

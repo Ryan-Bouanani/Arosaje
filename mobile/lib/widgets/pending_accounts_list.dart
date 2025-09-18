@@ -108,7 +108,7 @@ class _PendingAccountsListState extends State<PendingAccountsList> {
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: ListTile(
-              title: Text("${user.prenom} ${user.nom}"),
+              title: Text("${user.firstName ?? ''} ${user.lastName ?? ''}"),
               subtitle: Text(user.email),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,

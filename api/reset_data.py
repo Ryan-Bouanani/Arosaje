@@ -5,7 +5,6 @@ tout en conservant les comptes utilisateurs
 """
 
 import sys
-import os
 sys.path.append('/app')
 
 from sqlalchemy import create_engine

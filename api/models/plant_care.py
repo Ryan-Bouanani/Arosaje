@@ -36,7 +36,10 @@ class PlantCare(Base):
     status = Column(Enum(CareStatus), default=CareStatus.PENDING)
 
     care_instructions = Column(String, nullable=True)
+    # Ancien champ français (compatibilité temporaire)
     localisation = Column(String, nullable=True)
+    # Nouveau champ anglais
+    location = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 

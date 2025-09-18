@@ -125,6 +125,7 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
         ),
         backgroundColor: Colors.white,
         elevation: 1,
+        automaticallyImplyLeading: false,
       ),
       body: Consumer<MessageProvider>(
         builder: (context, provider, child) {

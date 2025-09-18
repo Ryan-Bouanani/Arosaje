@@ -406,14 +406,13 @@ async def debug_plant_images(
     """Debug endpoint to check plant image data"""
     from models.plant import Plant
 
-    plants = db.query(Plant.id, Plant.nom, Plant.photo, Plant.photo_base64).limit(5).all()
+    plants = db.query(Plant.id, Plant.name, Plant.photo_base64).limit(5).all()
 
     result = []
     for plant in plants:
         result.append({
             "id": plant.id,
-            "nom": plant.nom,
-            "photo": plant.photo,
+            "name": plant.name,
             "has_photo_base64": plant.photo_base64 is not None,
             "photo_base64_length": len(plant.photo_base64) if plant.photo_base64 else 0,
             "photo_base64_preview": plant.photo_base64[:50] + "..." if plant.photo_base64 else None

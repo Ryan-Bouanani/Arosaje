@@ -4,7 +4,7 @@ Conforme aux exigences: durée définie + service planifié
 """
 
 from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from utils.database import get_db
 from models.message import Message
 from config.rgpd import MESSAGE_RETENTION_DAYS, CLEANUP_SCHEDULE_HOUR
@@ -42,7 +42,7 @@ class RGPDCleanupService:
         """Supprime les messages de plus de MESSAGE_RETENTION_DAYS jours"""
         db = next(get_db())
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=self.retention_days)
 
             # Suppression des messages anciens
             deleted_count = (

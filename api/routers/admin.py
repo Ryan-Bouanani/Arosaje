@@ -81,7 +81,7 @@ async def verify_user(
     background_tasks.add_task(
         send_validation_email,
         user_email=user.email,
-        user_name=f"{user.prenom} {user.nom}",
+        user_name=f"{user.first_name} {user.last_name}",
     )
 
     return {"message": "Compte vérifié avec succès"}
@@ -103,7 +103,7 @@ async def reject_user(
 
     # Sauvegarder les informations de l'utilisateur avant suppression
     user_email = user.email
-    user_name = f"{user.prenom} {user.nom}"
+    user_name = f"{user.first_name} {user.last_name}"
 
     # Supprimer l'utilisateur
     db.delete(user)
@@ -258,11 +258,11 @@ async def change_user_role(
     db.refresh(user)
 
     return {
-        "message": f"Rôle de l'utilisateur {user.prenom} {user.nom} changé vers {new_role}",
+        "message": f"Rôle de l'utilisateur {user.first_name} {user.last_name} changé vers {new_role}",
         "user": {
             "id": user.id,
-            "nom": user.nom,
-            "prenom": user.prenom,
+            "nom": user.last_name,
+            "prenom": user.first_name,
             "email": user.email,
             "role": user.role.value,
         },

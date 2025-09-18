@@ -48,24 +48,24 @@ enum ValidationFilter {
 
 class BotanistInfo {
   final int id;
-  final String prenom;
-  final String nom;
+  final String firstName;
+  final String lastName;
   final String email;
 
   BotanistInfo({
     required this.id,
-    required this.prenom,
-    required this.nom,
+    required this.firstName,
+    required this.lastName,
     required this.email,
   });
 
-  String get fullName => '$prenom $nom';
+  String get fullName => '$firstName $lastName';
 
   factory BotanistInfo.fromJson(Map<String, dynamic> json) {
     return BotanistInfo(
       id: json['id'],
-      prenom: json['prenom'] ?? '',
-      nom: json['nom'] ?? '',
+      firstName: json['first_name'] ?? '',
+      lastName: json['last_name'] ?? '',
       email: json['email'] ?? '',
     );
   }
@@ -173,8 +173,8 @@ extension BotanistInfoToJson on BotanistInfo {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'prenom': prenom,
-      'nom': nom,
+      'first_name': firstName,
+      'last_name': lastName,
       'email': email,
     };
   }
@@ -186,7 +186,7 @@ class PlantCareWithAdvice {
   final DateTime startDate;
   final DateTime endDate;
   final String? careInstructions;
-  final String? localisation;
+  final String? location;
   final AdvicePriority priority;
   final String plantName;
   final String? plantSpecies;
@@ -205,7 +205,7 @@ class PlantCareWithAdvice {
     required this.startDate,
     required this.endDate,
     this.careInstructions,
-    this.localisation,
+    this.location,
     required this.priority,
     required this.plantName,
     this.plantSpecies,
@@ -226,7 +226,7 @@ class PlantCareWithAdvice {
       startDate: DateTime.parse(json['start_date']),
       endDate: DateTime.parse(json['end_date']),
       careInstructions: json['care_instructions'],
-      localisation: json['localisation'],
+      location: json['location'],
       priority: AdvicePriority.fromString(json['priority'] ?? 'normal'),
       plantName: json['plant_name'],
       plantSpecies: json['plant_species'],

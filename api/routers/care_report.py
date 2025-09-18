@@ -4,7 +4,6 @@ from typing import List
 import base64
 from utils.database import get_db
 from utils.security import get_current_user
-from utils.image_handler import ImageHandler
 from models.user import User, UserRole
 from crud import care_report as crud_care_report
 from models.care_report import CareReport as CareReportModel

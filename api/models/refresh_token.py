@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 import secrets
@@ -39,19 +39,20 @@ class RefreshToken(Base):
     ) -> "RefreshToken":
         """Crée un nouveau refresh token pour un utilisateur"""
         token = cls.generate_token()
-        expires_at = datetime.utcnow() + timedelta(days=expires_in_days)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=expires_in_days)
         
         return cls(
             token=token,
             user_id=user_id,
             expires_at=expires_at,
+            is_revoked=False,
             device_info=device_info,
-            last_used_at=datetime.utcnow()
+            last_used_at=datetime.now(timezone.utc)
         )
 
     def is_expired(self) -> bool:
         """Vérifie si le token a expiré"""
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def is_valid(self) -> bool:
         """Vérifie si le token est valide (non révoqué et non expiré)"""
@@ -60,12 +61,12 @@ class RefreshToken(Base):
     def revoke(self) -> None:
         """Révoque le token"""
         self.is_revoked = True
-        self.updated_at = datetime.utcnow()
+        self.updated_at = datetime.now(timezone.utc)
 
     def update_last_used(self) -> None:
         """Met à jour la date de dernière utilisation"""
-        self.last_used_at = datetime.utcnow()
-        self.updated_at = datetime.utcnow()
+        self.last_used_at = datetime.now(timezone.utc)
+        self.updated_at = datetime.now(timezone.utc)
 
     def to_dict(self) -> dict:
         """Convertit en dictionnaire pour sérialisation"""

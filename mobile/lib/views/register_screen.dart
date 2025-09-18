@@ -14,8 +14,8 @@ class _InscriptionPageState extends State<InscriptionPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _nomController = TextEditingController();
-  final _prenomController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
   final _telephoneController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -52,8 +52,8 @@ class _InscriptionPageState extends State<InscriptionPage> {
       await authService.register(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        nom: _nomController.text.trim(),
-        prenom: _prenomController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        firstName: _firstNameController.text.trim(),
         telephone: _telephoneController.text.trim(),
         role: backendRole,
       );
@@ -88,8 +88,8 @@ class _InscriptionPageState extends State<InscriptionPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _nomController.dispose();
-    _prenomController.dispose();
+    _lastNameController.dispose();
+    _firstNameController.dispose();
     _telephoneController.dispose();
     super.dispose();
   }
@@ -314,7 +314,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
-                      controller: _nomController,
+                      controller: _lastNameController,
                       hintText: 'Nom',
                       icon: Icons.person_outline,
                       validator: (value) {
@@ -326,7 +326,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                     ),
                     const SizedBox(height: 16),
                     _buildTextField(
-                      controller: _prenomController,
+                      controller: _firstNameController,
                       hintText: 'Prénom',
                       icon: Icons.person_outline,
                       validator: (value) {

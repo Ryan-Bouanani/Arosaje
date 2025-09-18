@@ -110,7 +110,6 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                         topRight: Radius.circular(12),
                       ),
                       child: AdaptiveImage(
-                        imageUrl: plant.photo!,
                         imageBase64: plant.photoBase64,
                         fit: BoxFit.cover,
                         width: double.infinity,
@@ -137,16 +136,16 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      plant.nom,
+                      plant.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (plant.espece != null)
+                    if (plant.species != null || plant.espece != null)
                       Text(
-                        plant.espece!,
+                        plant.species ?? plant.espece!,
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -178,7 +177,7 @@ class _HomeAfterLoginAdminState extends State<HomeAfterLoginAdmin> {
   @override
   Widget build(BuildContext context) {
     final filteredPlants = _allPlants
-        .where((plant) => plant.nom.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .where((plant) => plant.name.toLowerCase().contains(_searchQuery.toLowerCase()))
         .toList();
 
     return BasePageBotaniste(

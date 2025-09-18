@@ -181,7 +181,6 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
         'id': care['id'],
         'plant': care['plant'],
         'location': location,
-        'localisation': care['localisation'] ?? 'Localisation non spécifiée',
         'care_instructions': care['care_instructions'] ?? 'Aucune instruction spécifique',
         'start_date': care['start_date'],
         'end_date': care['end_date'],
@@ -325,27 +324,18 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       color: Colors.grey[200],
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child:
-                        (plant['photo'] != null || plant['photo_base64'] != null)
-                            ? ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: AdaptiveImage(
-                                imageUrl: plant['photo'],
-                                imageBase64: plant['photo_base64'],
-                                plantId: plant['id'],
-                                fit: BoxFit.cover,
-                                errorWidget: Icon(
-                                  Icons.local_florist,
-                                  size: 30,
-                                  color: Colors.green[700],
-                                ),
-                              ),
-                            )
-                            : Icon(
-                              Icons.local_florist,
-                              size: 30,
-                              color: Colors.green[700],
-                            ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: AdaptiveImage(
+                        imageBase64: plant['photo_base64'],
+                        fit: BoxFit.cover,
+                        errorWidget: Icon(
+                          Icons.local_florist,
+                          size: 30,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -353,14 +343,14 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          plant['nom'] ?? 'Plante inconnue',
+                          plant['name'] ?? 'Plante inconnue',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
                           ),
                         ),
                         Text(
-                          'de ${owner['prenom'] ?? ''} ${owner['nom'] ?? 'Propriétaire'}',
+                          'de ${owner['first_name']} ${owner['last_name']}',
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
@@ -368,7 +358,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                           ),
                         ),
                         Text(
-                          plant['espece'] ?? 'Espèce inconnue',
+                          plant['species'] ?? 'Espèce inconnue',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -386,7 +376,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      care['localisation'] ?? 'Localisation non spécifiée',
+                      care['location'] ?? 'Localisation non spécifiée',
                       style: TextStyle(color: Colors.grey[800]),
                     ),
                   ),
@@ -533,33 +523,22 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     topRight: Radius.circular(12),
                   ),
                 ),
-                child:
-                    plant != null && (plant['photo'] != null || plant['photo_base64'] != null)
-                        ? ClipRRect(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            topRight: Radius.circular(12),
-                          ),
-                          child: AdaptiveImage(
-                            imageUrl: plant['photo'],
-                            imageBase64: plant['photo_base64'],
-                            plantId: plant['id'],
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorWidget: Icon(
-                              Icons.local_florist,
-                              size: 40,
-                              color: Colors.green[700],
-                            ),
-                          ),
-                        )
-                        : Center(
-                          child: Icon(
-                            Icons.local_florist,
-                            size: 40,
-                            color: Colors.green[700],
-                          ),
-                        ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12),
+                  ),
+                  child: AdaptiveImage(
+                    imageBase64: plant != null ? plant['photo_base64'] : null,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    errorWidget: Icon(
+                      Icons.local_florist,
+                      size: 40,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ),
               ),
             ),
             Expanded(
@@ -573,14 +552,14 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          plant != null ? plant['nom'] : 'Plante inconnue',
+                          plant != null ? plant['name'] : 'Plante inconnue',
                           style: const TextStyle(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           plant != null
-                              ? (plant['espece'] ?? 'Espèce non spécifiée')
+                              ? (plant['species'] ?? 'Espèce non spécifiée')
                               : 'Espèce inconnue',
                           style: TextStyle(
                             color: Colors.grey[600],
@@ -638,36 +617,27 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child:
-                      (plant['photo'] != null || plant['photo_base64'] != null)
-                          ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: AdaptiveImage(
-                              imageUrl: plant['photo'],
-                              imageBase64: plant['photo_base64'],
-                              plantId: plant['id'],
-                              fit: BoxFit.cover,
-                              errorWidget: Icon(
-                                Icons.local_florist,
-                                size: 25,
-                                color: Colors.green[700],
-                              ),
-                            ),
-                          )
-                          : Icon(
-                            Icons.local_florist,
-                            size: 25,
-                            color: Colors.green[700],
-                          ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: AdaptiveImage(
+                      imageBase64: plant['photo_base64'],
+                      fit: BoxFit.cover,
+                      errorWidget: Icon(
+                        Icons.local_florist,
+                        size: 25,
+                        color: Colors.green[700],
+                      ),
+                    ),
+                  ),
                 ),
                 title: Text(
-                  plant['nom'] ?? 'Plante inconnue',
+                  plant['name'] ?? 'Plante inconnue',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${plant['espece'] ?? 'Espèce inconnue'} - ${(care['owner'] != null) ? '${care['owner']['prenom']} ${care['owner']['nom']}' : 'Propriétaire inconnu'}'),
+                    Text('${plant['species'] ?? 'Espèce inconnue'} - ${(care['owner'] != null) ? '${care['owner']['first_name']} ${care['owner']['last_name']}' : 'Propriétaire inconnu'}'),
                     const SizedBox(height: 4),
                     Row(
                       children: [
@@ -679,7 +649,7 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            care['localisation'] ?? 'Localisation non spécifiée',
+                            care['location'] ?? 'Localisation non spécifiée',
                             style: const TextStyle(fontSize: 12),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -775,35 +745,27 @@ class _HomeAfterLoginState extends State<HomeAfterLogin> {
                               color: Colors.grey[200],
                               borderRadius: BorderRadius.circular(8),
                             ),
-                            child: plant != null && (plant['photo'] != null || plant['photo_base64'] != null)
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: AdaptiveImage(
-                                      imageUrl: plant['photo'],
-                                      imageBase64: plant['photo_base64'],
-                                      plantId: plant['id'],
-                                      fit: BoxFit.cover,
-                                      errorWidget: Icon(
-                                        Icons.local_florist,
-                                        size: 25,
-                                        color: Colors.green[700],
-                                      ),
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.local_florist,
-                                    size: 25,
-                                    color: Colors.green[700],
-                                  ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: AdaptiveImage(
+                                imageBase64: plant != null ? plant['photo_base64'] : null,
+                                fit: BoxFit.cover,
+                                errorWidget: Icon(
+                                  Icons.local_florist,
+                                  size: 25,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ),
                           ),
                           title: Text(
-                            plant != null ? plant['nom'] : 'Plante inconnue',
+                            plant != null ? plant['name'] : 'Plante inconnue',
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(plant != null ? (plant['espece'] ?? 'Espèce non spécifiée') : 'Espèce inconnue'),
+                              Text(plant != null ? (plant['species'] ?? 'Espèce non spécifiée') : 'Espèce inconnue'),
                               const SizedBox(height: 4),
                               Row(
                                 children: [

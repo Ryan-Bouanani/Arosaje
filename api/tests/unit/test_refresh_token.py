@@ -1,13 +1,11 @@
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from unittest.mock import Mock
 
 from models.refresh_token import RefreshToken
 from models.user import User, UserRole
 from utils.security import create_tokens, verify_refresh_token, revoke_user_tokens, cleanup_expired_tokens
-from crud.user import user as user_crud
-from schemas.user import UserCreate
 
 
 class TestRefreshTokenModel:
@@ -33,7 +31,7 @@ class TestRefreshTokenModel:
         assert token_obj.user_id == 1
         assert token_obj.device_info == "Test device"
         assert token_obj.is_revoked == False
-        assert token_obj.expires_at > datetime.utcnow()
+        assert token_obj.expires_at > datetime.now(timezone.utc)
         assert token_obj.last_used_at is not None
     
     def test_is_expired(self):
@@ -44,7 +42,7 @@ class TestRefreshTokenModel:
         
         # Token expiré
         token_expired = RefreshToken.create_for_user(user_id=1, expires_in_days=1)
-        token_expired.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token_expired.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert token_expired.is_expired()
     
     def test_is_valid(self):
@@ -60,7 +58,7 @@ class TestRefreshTokenModel:
         
         # Token expiré
         token.is_revoked = False
-        token.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         assert not token.is_valid()
     
     def test_revoke(self):
@@ -144,7 +142,10 @@ class TestRefreshTokenSecurity:
         token1 = RefreshToken.create_for_user(user_id=1, expires_in_days=7)
         token2 = RefreshToken.create_for_user(user_id=1, expires_in_days=7)
         
-        mock_db.query.return_value.filter.return_value.filter.return_value.all.return_value = [token1, token2]
+        # Configuration du mock pour la query avec deux filtres chaînés
+        mock_query = mock_db.query.return_value
+        mock_filtered = mock_query.filter.return_value 
+        mock_filtered.all.return_value = [token1, token2]
         mock_db.commit.return_value = None
         
         revoke_user_tokens(1, mock_db)
@@ -156,10 +157,10 @@ class TestRefreshTokenSecurity:
     def test_cleanup_expired_tokens(self, mock_db):
         """Test de nettoyage des tokens expirés"""
         expired_token1 = RefreshToken.create_for_user(user_id=1, expires_in_days=1)
-        expired_token1.expires_at = datetime.utcnow() - timedelta(hours=1)
+        expired_token1.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         
         expired_token2 = RefreshToken.create_for_user(user_id=2, expires_in_days=1)
-        expired_token2.expires_at = datetime.utcnow() - timedelta(days=1)
+        expired_token2.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
         
         mock_db.query.return_value.filter.return_value.all.return_value = [expired_token1, expired_token2]
         mock_db.delete.return_value = None

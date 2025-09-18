@@ -122,7 +122,7 @@ async def create_message(
                 try:
                     await email_service.send_new_message_notification(
                         recipient_email=participant.email,
-                        sender_name=f"{current_user.prenom} {current_user.nom}",
+                        sender_name=f"{current_user.first_name} {current_user.last_name}",
                         conversation_id=str(conv_id),
                     )
                 except Exception:
@@ -324,7 +324,7 @@ async def create_botanist_conversation(
         db=db,
         message=MessageCreate(
             conversation_id=conversation["id"],
-            content=f"Bonjour, j'aimerais avoir des conseils pour l'entretien de ma plante '{plant.nom}'{f' ({plant.espece})' if plant.espece else ''}. Pouvez-vous m'aider ?",
+            content=f"Bonjour, j'aimerais avoir des conseils pour l'entretien de ma plante '{plant.name}'{f' ({plant.species})' if plant.species else ''}. Pouvez-vous m'aider ?",
         ),
         sender_id=current_user.id,
     )

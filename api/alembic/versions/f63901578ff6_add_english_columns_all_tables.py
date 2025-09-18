@@ -1,8 +1,8 @@
-"""neon_schema_update
+"""add_english_columns_all_tables
 
-Revision ID: 8494fbbf9724
-Revises: 7a013e7dcad2
-Create Date: 2025-09-12 15:18:14.300018
+Revision ID: f63901578ff6
+Revises: f997224f0474
+Create Date: 2025-09-17 10:47:14.531177
 
 """
 from typing import Sequence, Union
@@ -10,8 +10,8 @@ from typing import Sequence, Union
 
 
 # revision identifiers, used by Alembic.
-revision: str = '8494fbbf9724'
-down_revision: Union[str, None] = '7a013e7dcad2'
+revision: str = 'f63901578ff6'
+down_revision: Union[str, None] = 'f997224f0474'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

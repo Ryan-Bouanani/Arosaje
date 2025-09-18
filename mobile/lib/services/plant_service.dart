@@ -29,8 +29,8 @@ class PlantService {
   }
 
   Future<Plant> createPlant({
-    required String nom,
-    String? espece,
+    required String name,
+    String? species,
     dynamic imageFile, // File sur mobile
     Uint8List? webImage, // Bytes sur web
     String? originalFileName, // Nom original avec extension
@@ -47,8 +47,10 @@ class PlantService {
       'Authorization': 'Bearer $token',
     });
 
-    request.fields['nom'] = nom;
-    if (espece != null) request.fields['espece'] = espece;
+    request.fields['name'] = name;
+    if (species != null) {
+      request.fields['species'] = species;
+    }
 
     if (kIsWeb && webImage != null) {
       request.files.add(http.MultipartFile.fromBytes(
@@ -179,13 +181,15 @@ class PlantService {
 
   Future<Map<String, dynamic>> updatePlant({
     required int plantId,
-    String? nom,
+    String? name,
   }) async {
     final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');
 
     final Map<String, dynamic> updateData = {};
-    if (nom != null) updateData['nom'] = nom;
+    if (name != null) {
+      updateData['name'] = name;
+    }
 
     final response = await http.put(
       Uri.parse('$baseUrl/plants/$plantId'),

@@ -230,7 +230,7 @@ class _PlantDetailBotanisteState extends State<PlantDetailBotaniste> {
           color: Colors.black,
         ),
         title: Text(
-          _plant?.nom ?? 'Détail de la plante',
+          _plant?.name ?? 'Détail de la plante',
           style: const TextStyle(color: Colors.black, fontSize: 18),
         ),
         backgroundColor: Colors.white,
@@ -325,9 +325,9 @@ class _PlantDetailBotanisteState extends State<PlantDetailBotaniste> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Nom: ${_plant?.nom ?? 'Non spécifié'}'),
-                                    if (_plant?.espece != null)
-                                      Text('Espèce: ${_plant!.espece}'),
+                                    Text('Nom: ${_plant?.name ?? 'Non spécifié'}'),
+                                    if (_plant?.species != null || _plant?.espece != null)
+                                      Text('Espèce: ${_plant!.species ?? _plant!.espece}'),
                                   ],
                                 ),
                               ),

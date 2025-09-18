@@ -3,10 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from utils.database import get_db
 from utils.security import get_current_user
-from utils.image_handler import ImageHandler
 from crud.photo import photo as photo_crud
 from schemas.photo import PhotoResponse, PhotoCreate
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(prefix="/photos", tags=["photos"])
 
@@ -49,7 +48,7 @@ async def upload_photo(
             "plant_id": plant_id,
             "description": description,
             "type": type,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
         }
 
         photo_in = PhotoCreate(**photo_data)

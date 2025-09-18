@@ -4,7 +4,6 @@ Script pour corriger le mot de passe de botanist2@arosaje.fr
 """
 
 import sys
-import os
 sys.path.append('/app')
 
 from sqlalchemy import create_engine

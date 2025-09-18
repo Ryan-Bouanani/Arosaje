@@ -115,8 +115,8 @@ class AuthService {
   Future<Map<String, dynamic>> register({
     required String email,
     required String password,
-    required String nom,
-    required String prenom,
+    required String lastName,
+    required String firstName,
     required String telephone,
     required String role,
   }) async {
@@ -127,8 +127,8 @@ class AuthService {
         body: json.encode({
           'email': email,
           'password': password,
-          'nom': nom,
-          'prenom': prenom,
+          'last_name': lastName,
+          'first_name': firstName,
           'telephone': telephone,
           'role': role,
         }),

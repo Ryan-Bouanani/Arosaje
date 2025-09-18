@@ -5,7 +5,6 @@ import sys
 # Ajouter le répertoire API au path
 sys.path.append('/app')
 
-from database import get_db
 from models.message import Conversation, Message
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine

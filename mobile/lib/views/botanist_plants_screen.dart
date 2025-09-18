@@ -57,12 +57,12 @@ class _BotanistPlantsScreenState extends State<BotanistPlantsScreen> {
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Conseil pour ${plant.nom}'),
+        title: Text('Conseil pour ${plant.name}'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Espèce: ${plant.espece ?? 'Non spécifié'}'),
+            Text('Espèce: ${plant.species ?? plant.espece ?? 'Non spécifié'}'),
             const SizedBox(height: 16),
             TextField(
               controller: adviceController,
@@ -157,8 +157,8 @@ class _BotanistPlantsScreenState extends State<BotanistPlantsScreen> {
                                 backgroundColor: Colors.green,
                                 child: Icon(Icons.local_florist, color: Colors.white),
                               ),
-                              title: Text(plant.nom),
-                              subtitle: Text('Espèce: ${plant.espece ?? 'Non spécifiée'}'),
+                              title: Text(plant.name),
+                              subtitle: Text('Espèce: ${plant.species ?? plant.espece ?? 'Non spécifiée'}'),
                               trailing: ElevatedButton.icon(
                                 onPressed: () => _showAddAdviceDialog(plant),
                                 icon: const Icon(Icons.add_comment, size: 16),

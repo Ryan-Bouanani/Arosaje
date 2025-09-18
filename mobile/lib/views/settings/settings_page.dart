@@ -123,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 buildListTile(
                   title: "Nom complet",
-                  subtitle: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}",
+                  subtitle: "${_user?.firstName ?? ''} ${_user?.lastName ?? ''}",
                   onTap: () => _showChangeFullNameDialog(context),
                 ),
                 buildListTile(
@@ -133,7 +133,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 buildListTile(
                   title: "Ville/Région",
-                  subtitle: _user?.localisation ?? 'Non renseignée',
+                  subtitle: _user?.location ?? 'Non renseignée',
                   onTap: () => _showChangeCityDialog(context),
                 ),
                 const SizedBox(height: 16),
@@ -411,7 +411,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _showChangeFullNameDialog(BuildContext context) {
     final fullNameController = TextEditingController(
-      text: "${_user?.prenom ?? ''} ${_user?.nom ?? ''}".trim()
+      text: "${_user?.firstName ?? ''} ${_user?.lastName ?? ''}".trim()
     );
 
     showDialog(
@@ -477,8 +477,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       
                       // Appeler l'API pour mettre à jour le profil
                       final updatedUser = await authService.updateProfile(token, {
-                        'prenom': prenom,
-                        'nom': nom,
+                        'first_name': prenom,
+                        'last_name': nom,
                       });
                       
                       // Mettre à jour l'état local
@@ -610,7 +610,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _showChangeCityDialog(BuildContext context) {
     final cityController = TextEditingController(
-      text: _user?.localisation ?? ''
+      text: _user?.location ?? ''
     );
 
     showDialog(
@@ -662,7 +662,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       
                       // Appeler l'API pour mettre à jour le profil
                       final updatedUser = await authService.updateProfile(token, {
-                        'localisation': city.isNotEmpty ? city : null,
+                        'location': city.isNotEmpty ? city : null,
                       });
                       
                       // Mettre à jour l'état local

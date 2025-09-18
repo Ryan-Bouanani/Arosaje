@@ -1,8 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mobile/views/plant_care_details_screen.dart';
-import 'package:mobile/services/storage_service.dart';
 import 'package:mobile/services/plant_care_service.dart';
 import '../widgets/adaptive_image.dart';
 
@@ -10,15 +8,14 @@ class PlantCurrentListScreen extends StatefulWidget {
   const PlantCurrentListScreen({super.key});
 
   @override
-  _PlantCurrentListScreenState createState() => _PlantCurrentListScreenState();
+  PlantCurrentListScreenState createState() => PlantCurrentListScreenState();
 }
 
-class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with SingleTickerProviderStateMixin {
+class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   late final PlantCareService _plantCareService;
-  late final StorageService _storageService;
   bool _isInitialized = false;
 
   List<Map<String, dynamic>> mesGardes = []; // Plantes confiées (je suis propriétaire)
@@ -35,7 +32,7 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
 
   Future<void> _initializeServices() async {
     try {
-      _storageService = await StorageService.init();
+      // Services initialization
       _plantCareService = await PlantCareService.init();
       setState(() {
         _isInitialized = true;
@@ -173,18 +170,19 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
     final filteredCares = sortedCares
         .where((care) => 
           care['plant'] != null && 
-          care['plant']['nom'] != null && 
-          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+          care['plant']['name'] != null && 
+          care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
     if (filteredCares.isEmpty) {
       return const Center(child: Text('Aucune plante confiée'));
     }
 
+    // Affichage de la liste des gardes sous forme de liste
     return ListView.builder(
       padding: const EdgeInsets.all(8),
-      itemCount: filteredCares.length,
-      itemBuilder: (context, index) {
+      itemCount: filteredCares.length,              // Nombre total de gardes filtrées à afficher
+      itemBuilder: (context, index) {               // Construction de chaque carte de garde (appelée pour chaque élément)
         final care = filteredCares[index];
         final plant = care['plant'];
         final startDate = DateTime.parse(care['start_date']);
@@ -194,41 +192,38 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
         return Column(
           children: [
             ListTile(
+              // Photo de la plante
               leading: CircleAvatar(
                 backgroundColor: Colors.grey[200],
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(50),
-                  child: (plant['photo'] != null || plant['photo_base64'] != null)
-                    ? AdaptiveImage(
-                        imageUrl: plant['photo'],
-                        imageBase64: plant['photo_base64'],
-                        plantId: plant['id'], // Ajout de l'ID pour le proxy
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorWidget: Icon(
-                          Icons.local_florist,
-                          color: Colors.green[700],
-                        ),
-                      )
-                    : Icon(
-                        Icons.local_florist,
-                        color: Colors.green[700],
-                      ),
+                  child: AdaptiveImage(
+                    imageBase64: plant['photo_base64'],
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                    errorWidget: Icon(
+                      Icons.local_florist,
+                      color: Colors.green[700],
+                    ),
+                  ),
                 ),
               ),
-              title: Text(plant['nom'] ?? 'Plante'),
+              // Nom de la plante
+              title: Text(plant['name'] ?? 'Plante'),
+              // Propriétaire et dates de garde
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Propriétaire: ${owner['prenom']} ${owner['nom']}'),
+                  Text('Propriétaire: ${owner['first_name']} ${owner['last_name']}'),
                   Text('Du ${DateFormat('dd/MM/yy').format(startDate)} au ${DateFormat('dd/MM/yy').format(endDate)}'),
-                  if (care['localisation'] != null)
-                    Text('Lieu: ${care['localisation']}', 
+                  if (care['location'] != null)  // Affichage conditionnel
+                    Text('Lieu: ${care['location']}', 
                       style: const TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
               trailing: const Icon(Icons.chevron_right),
+              // Navigation vers la page de détails de la garde
               onTap: () {
                 Navigator.push(
                   context,
@@ -252,8 +247,8 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
     final filteredCares = mesCaretaking
         .where((care) => 
           care['plant'] != null && 
-          care['plant']['nom'] != null && 
-          care['plant']['nom'].toLowerCase().contains(_searchQuery))
+          care['plant']['name'] != null && 
+          care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
     if (filteredCares.isEmpty) {
@@ -278,23 +273,16 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                     backgroundColor: Colors.grey[200],
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(50),
-                      child: (plant['photo'] != null || plant['photo_base64'] != null)
-                        ? AdaptiveImage(
-                            imageUrl: plant['photo'],
-                            imageBase64: plant['photo_base64'],
-                            plantId: plant['id'], // Ajout de l'ID pour le proxy
-                            width: 40,
-                            height: 40,
-                            fit: BoxFit.cover,
-                            errorWidget: Icon(
-                              Icons.local_florist,
-                              color: Colors.green[700],
-                            ),
-                          )
-                        : Icon(
-                            Icons.local_florist,
-                            color: Colors.green[700],
-                          ),
+                      child: AdaptiveImage(
+                        imageBase64: plant['photo_base64'],
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorWidget: Icon(
+                          Icons.local_florist,
+                          color: Colors.green[700],
+                        ),
+                      ),
                     ),
                   ),
                   if (mesCaretaking.any((care) => 
@@ -325,13 +313,13 @@ class _PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Si
                 ],
               ),
               title: Text(
-                plant['nom'] ?? 'Plante sans nom',
+                plant['name'] ?? 'Plante sans nom',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(plant['espece'] ?? 'Espèce non spécifiée'),
+                  Text(plant['species'] ?? 'Espèce non spécifiée'),
                   Text(
                     'Du ${startDate.day}/${startDate.month}/${startDate.year} au ${endDate.day}/${endDate.month}/${endDate.year}',
                     style: TextStyle(color: Colors.grey[600], fontSize: 12),

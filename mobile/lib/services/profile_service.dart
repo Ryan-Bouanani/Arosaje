@@ -7,10 +7,10 @@ class ProfileService {
 
   Future<bool> updateProfile({
     String? email,
-    String? nom,
-    String? prenom,
+    String? lastName,
+    String? firstName,
     String? telephone,
-    String? localisation,
+    String? location,
   }) async {
     try {
       final token = await _apiService.getToken();
@@ -20,10 +20,10 @@ class ProfileService {
 
       Map<String, dynamic> data = {};
       if (email != null) data['email'] = email;
-      if (nom != null) data['nom'] = nom;
-      if (prenom != null) data['prenom'] = prenom;
+      if (lastName != null) data['last_name'] = lastName;
+      if (firstName != null) data['first_name'] = firstName;
       if (telephone != null) data['telephone'] = telephone;
-      if (localisation != null) data['localisation'] = localisation;
+      if (location != null) data['location'] = location;
 
       final response = await http.put(
         Uri.parse('${_apiService.baseUrl}/auth/profile'),

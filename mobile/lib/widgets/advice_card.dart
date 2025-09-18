@@ -4,7 +4,6 @@ import '../models/advice.dart';
 import '../views/create_advice_screen.dart';
 import '../views/advice_details_screen.dart';
 import '../views/validate_advice_screen.dart';
-import '../config/app_config.dart';
 import 'image_zoom_dialog.dart';
 import 'adaptive_image.dart';
 
@@ -17,14 +16,14 @@ class AdviceCard extends StatelessWidget {
   final VoidCallback? onValidation;
 
   const AdviceCard({
-    Key? key,
+    super.key,
     required this.plantCare,
     this.showAdviceDetails = false,
     this.showEditButton = false,
     this.currentBotanistId,
     this.onAdviceGiven,
     this.onValidation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,9 +48,9 @@ class AdviceCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _getPriorityColor().withOpacity(0.1),
+                      color: _getPriorityColor().withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: _getPriorityColor().withOpacity(0.3)),
+                      border: Border.all(color: _getPriorityColor().withValues(alpha: 0.3)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -87,10 +86,9 @@ class AdviceCard extends StatelessWidget {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: (plantCare.plantPhotoBase64 != null || plantCare.plantImageUrl != null)
+                    onTap: plantCare.plantPhotoBase64 != null
                       ? () => ImageZoomDialog.show(
                           context,
-                          plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
                           imageBase64: plantCare.plantPhotoBase64,
                           title: plantCare.plantName,
                         )
@@ -104,9 +102,8 @@ class AdviceCard extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: (plantCare.plantPhotoBase64 != null || plantCare.plantImageUrl != null)
+                        child: plantCare.plantPhotoBase64 != null
                           ? AdaptiveImage(
-                              imageUrl: plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
                               imageBase64: plantCare.plantPhotoBase64,
                               width: 40,
                               height: 40,
@@ -201,7 +198,7 @@ class AdviceCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    if (plantCare.localisation != null) ...[
+                    if (plantCare.location != null) ...[
                       const SizedBox(height: 6),
                       Row(
                         children: [
@@ -213,7 +210,7 @@ class AdviceCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              plantCare.localisation!,
+                              plantCare.location ?? '',
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Colors.grey.shade700,
@@ -270,9 +267,10 @@ class AdviceCard extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              // Actions
+              // Logique conditionnelle pour les boutons dans l'onglet "Avis" de la page "Gardes" (botanist)
               Row(
                 children: [
+                  // CAS 1: Aucun avis botaniste n'existe encore
                   if (!hasAdvice) ...[
                     Expanded(
                       child: ElevatedButton.icon(
@@ -289,6 +287,7 @@ class AdviceCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  // CAS 2: Un avis existe déjà - Affichage du bouton de détails
                   ] else ...[
                     Expanded(
                       child: OutlinedButton.icon(
@@ -358,10 +357,10 @@ class AdviceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: _getValidationColor(advice.validationStatus).withOpacity(0.1),
+        color: _getValidationColor(advice.validationStatus).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: _getValidationColor(advice.validationStatus).withOpacity(0.3),
+          color: _getValidationColor(advice.validationStatus).withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -389,9 +388,9 @@ class AdviceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

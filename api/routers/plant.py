@@ -1,14 +1,11 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, File, UploadFile, Form
-from fastapi.responses import Response
 from sqlalchemy.orm import Session
 import base64
-import re
 from crud.plant import plant
 from schemas.plant import Plant, PlantCreate, PlantUpdate
 from utils.database import get_db
 from utils.security import get_current_user
-from utils.image_handler import ImageHandler
 
 router = APIRouter(prefix="/plants", tags=["plants"])
 
@@ -124,49 +121,3 @@ def delete_plant(*, db: Session = Depends(get_db), plant_id: int):
     return plant.delete(db=db, id=plant_id)
 
 
-@router.get("/{plant_id}/image")
-def get_plant_image(plant_id: int, db: Session = Depends(get_db)):
-    """
-    Servir l'image d'une plante en format binaire pour contourner
-    les problèmes de décodage base64 dans Flutter Web
-    """
-    db_plant = plant.get(db=db, id=plant_id)
-    if db_plant is None:
-        raise HTTPException(status_code=404, detail="Plant not found")
-
-    if not db_plant.photo_base64:
-        raise HTTPException(status_code=404, detail="No image available for this plant")
-
-    try:
-        # Extraire les données base64 du data URL
-        base64_data = db_plant.photo_base64
-        if base64_data.startswith('data:'):
-            # Extraire le type MIME et les données
-            match = re.match(r'data:([^;]+);base64,(.+)', base64_data)
-            if match:
-                mime_type = match.group(1)
-                base64_data = match.group(2)
-            else:
-                mime_type = "image/jpeg"  # Fallback
-        else:
-            mime_type = "image/jpeg"  # Fallback
-
-        # Décoder les données base64
-        image_bytes = base64.b64decode(base64_data)
-
-        # Retourner l'image binaire avec le bon Content-Type
-        return Response(
-            content=image_bytes,
-            media_type=mime_type,
-            headers={
-                "Cache-Control": "max-age=3600",  # Cache 1 heure
-                "Content-Length": str(len(image_bytes))
-            }
-        )
-
-    except Exception as e:
-        print(f"ERROR serving plant image {plant_id}: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error serving plant image: {str(e)}"
-        )

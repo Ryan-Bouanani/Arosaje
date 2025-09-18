@@ -61,16 +61,17 @@ async def create_plant_care(
                 raise HTTPException(status_code=404, detail="Gardien non trouvé")
 
         # Géocoder l'adresse si fournie
-        if plant_care_in.localisation:
-            logging.info(f"Géocodage de l'adresse: {plant_care_in.localisation}")
-            coords = await geocoding_service.geocode_address(plant_care_in.localisation)
+        if plant_care_in.location or plant_care_in.localisation:
+            address = plant_care_in.location or plant_care_in.localisation
+            logging.info(f"Géocodage de l'adresse: {address}")
+            coords = await geocoding_service.geocode_address(address)
             if coords:
                 plant_care_in.latitude = coords[0]
                 plant_care_in.longitude = coords[1]
                 logging.info(f"Coordonnées obtenues: {coords}")
             else:
                 logging.warning(
-                    f"Impossible de géocoder l'adresse: {plant_care_in.localisation}"
+                    f"Impossible de géocoder l'adresse: {address}"
                 )
 
         logging.info("Création de la garde...")
@@ -303,7 +304,7 @@ async def complete_plant_care_by_owner(
         #         caretaker_email=caretaker.email,
         #         caretaker_name=caretaker.get_full_name(),
         #         owner_name=current_user.get_full_name(),
-        #         plant_name=plant.nom,
+        #         plant_name=plant.name,
         #     )
         # except Exception as e:
         #     print(f"Erreur envoi email: {e}")
@@ -362,8 +363,8 @@ def get_plant_care_by_plant(
                 },
                 "owner": {
                     "id": current_user.id,
-                    "nom": current_user.nom,
-                    "prenom": current_user.prenom,
+                    "nom": current_user.last_name,
+                    "prenom": current_user.first_name,
                     "email": current_user.email,
                 },
             }
@@ -411,15 +412,15 @@ def get_plant_care_by_plant(
             "updated_at": datetime.now(),
             "plant": {
                 "id": plant.id,
-                "nom": plant.nom,
-                "espece": plant.espece,
+                "nom": plant.name,
+                "espece": plant.species,
                 "photo": plant.photo,
             },
             "owner": (
                 {
                     "id": owner.id,
-                    "nom": owner.nom,
-                    "prenom": owner.prenom,
+                    "nom": owner.last_name,
+                    "prenom": owner.first_name,
                     "email": owner.email,
                 }
                 if owner

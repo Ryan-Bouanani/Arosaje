@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-// Importation conditionnelle pour éviter les problèmes de compatibilité
-import 'dart:html' as html show window;
 import 'chat_screen.dart';
 import 'package:mobile/providers/message_provider.dart';
 import 'package:mobile/models/conversation.dart';
@@ -22,9 +20,7 @@ class _ChatMenuScreenState extends State<ChatMenuScreen> {
   // Helper pour logger dans la console du navigateur
   void _consoleLog(String message) {
     if (kDebugMode) {
-      if (kIsWeb) {
-        html.window.console.log(message);
-      }
+      print(message);
     }
   }
 

@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, desc, func, not_, exists
-from datetime import datetime
+from datetime import datetime, timezone
 
 from models.advice import Advice, AdvicePriority, ValidationStatus
 from models.plant_care import PlantCare, CareStatus
@@ -26,12 +26,12 @@ class AdviceCRUD:
             query = (
                 db.query(
                     PlantCare,
-                    Plant.nom.label("plant_name"),
-                    Plant.espece.label("plant_species"),
+                    Plant.name.label("plant_name"),
+                    Plant.species.label("plant_species"),
                     Plant.photo.label("plant_image_url"),
                     Plant.photo_base64.label("plant_photo_base64"),
-                    User.prenom.label("owner_prenom"),
-                    User.nom.label("owner_nom"),
+                    User.first_name.label("owner_prenom"),
+                    User.last_name.label("owner_nom"),
                     User.email.label("owner_email"),
                 )
                 .join(Plant, PlantCare.plant_id == Plant.id)
@@ -75,7 +75,7 @@ class AdviceCRUD:
                         else None
                     ),
                     "care_instructions": result.PlantCare.care_instructions,
-                    "localisation": result.PlantCare.localisation,
+                    "localisation": result.PlantCare.location,
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_image_url": result.plant_image_url,
@@ -117,12 +117,12 @@ class AdviceCRUD:
         query = (
             db.query(
                 PlantCare,
-                Plant.nom.label("plant_name"),
-                Plant.espece.label("plant_species"),
+                Plant.name.label("plant_name"),
+                Plant.species.label("plant_species"),
                 Plant.photo.label("plant_image_url"),
                 Plant.photo_base64.label("plant_photo_base64"),
-                User.prenom.label("owner_prenom"),
-                User.nom.label("owner_nom"),
+                User.first_name.label("owner_prenom"),
+                User.last_name.label("owner_nom"),
                 User.email.label("owner_email"),
             )
             .join(Plant, PlantCare.plant_id == Plant.id)
@@ -193,7 +193,7 @@ class AdviceCRUD:
                         else None
                     ),
                     "care_instructions": result.PlantCare.care_instructions,
-                    "localisation": result.PlantCare.localisation,
+                    "localisation": result.PlantCare.location,
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_image_url": result.plant_image_url,
@@ -347,7 +347,7 @@ class AdviceCRUD:
         advice.validation_status = validation_data.validation_status
         advice.validation_comment = validation_data.validation_comment
         advice.validator_id = validator_id
-        advice.validated_at = datetime.utcnow()
+        advice.validated_at = datetime.now(timezone.utc)
         advice.botanist_notified = False  # Pour déclencher la notification
 
         db.commit()

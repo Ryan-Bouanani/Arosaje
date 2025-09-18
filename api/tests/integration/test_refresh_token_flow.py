@@ -1,5 +1,5 @@
 import pytest
-import json
+from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -197,12 +197,11 @@ class TestRefreshTokenFlow:
         refresh_token = login_response.json()["refresh_token"]
         
         # 2. Marquer le token comme expiré en base
-        from datetime import datetime, timedelta
         db = TestingSessionLocal()
         token_obj = db.query(RefreshToken).filter(
             RefreshToken.token == refresh_token
         ).first()
-        token_obj.expires_at = datetime.utcnow() - timedelta(hours=1)
+        token_obj.expires_at = datetime.now(timezone.utc) - timedelta(hours=1)
         db.commit()
         db.close()
         

@@ -3,22 +3,31 @@ from .base import BaseSchema, IDSchema
 
 
 class PlantBase(BaseSchema):
-    nom: str
-    espece: Optional[str] = None
+    # Nouveaux champs anglais (standard technique)
+    name: str
+    species: Optional[str] = None
     description: Optional[str] = None
-    photo: Optional[str] = None
     photo_base64: Optional[str] = None  # Image encodée en Base64
     owner_id: int
+    # Anciens champs français (compatibilité temporaire)
+    nom: Optional[str] = None
+    espece: Optional[str] = None
 
 
 class PlantCreate(PlantBase):
     pass
 
 
-class PlantUpdate(PlantBase):
-    nom: Optional[str] = None
+class PlantUpdate(BaseSchema):
+    # Nouveaux champs anglais
+    name: Optional[str] = None
+    species: Optional[str] = None
     description: Optional[str] = None
+    photo_base64: Optional[str] = None
     owner_id: Optional[int] = None
+    # Anciens champs français (compatibilité temporaire)
+    nom: Optional[str] = None
+    espece: Optional[str] = None
 
 
 class Plant(PlantBase, IDSchema):

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/advice.dart';
-import '../config/app_config.dart';
 import '../widgets/adaptive_image.dart';
 
 class AdviceDetailsScreen extends StatelessWidget {
@@ -51,9 +50,8 @@ class AdviceDetailsScreen extends StatelessWidget {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: (plantCare.plantImageUrl != null || plantCare.plantPhotoBase64 != null)
+                      child: plantCare.plantPhotoBase64 != null
                           ? AdaptiveImage(
-                              imageUrl: plantCare.plantImageUrl != null ? '${AppConfig.apiUrl}/${plantCare.plantImageUrl!}' : null,
                               imageBase64: plantCare.plantPhotoBase64,
                               fit: BoxFit.cover,
                               errorWidget: Icon(

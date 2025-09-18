@@ -26,23 +26,22 @@ enum ConversationType {
 class ConversationParticipant {
   final int userId;
   final DateTime? lastReadAt;
-  final String? nom;
-  final String? prenom;
+  final String? lastName;
+  final String? firstName;
   final String? email;
 
   ConversationParticipant({
     required this.userId,
     this.lastReadAt,
-    this.nom,
-    this.prenom,
+    this.lastName,
+    this.firstName,
     this.email,
   });
 
   factory ConversationParticipant.fromJson(Map<String, dynamic> json) {
-    // Gestion flexible des différents formats de l'API
     final userId = json['user_id'] ?? json['id'] ?? 0;
-    final nom = json['nom'] ?? json['last_name'] ?? '';
-    final prenom = json['prenom'] ?? json['first_name'] ?? '';
+    final lastName = json['last_name'] ?? '';
+    final firstName = json['first_name'] ?? '';
     final email = json['email'] ?? '';
     
     return ConversationParticipant(
@@ -50,8 +49,8 @@ class ConversationParticipant {
       lastReadAt: json['last_read_at'] != null
           ? DateTime.parse(json['last_read_at'])
           : null,
-      nom: nom,
-      prenom: prenom,
+      lastName: lastName,
+      firstName: firstName,
       email: email,
     );
   }
@@ -59,35 +58,35 @@ class ConversationParticipant {
   Map<String, dynamic> toJson() => {
         'user_id': userId,
         'last_read_at': lastReadAt?.toIso8601String(),
-        'nom': nom,
-        'prenom': prenom,
+        'last_name': lastName,
+        'first_name': firstName,
         'email': email,
       };
 }
 
 class PlantInfo {
   final int id;
-  final String nom;
-  final String? espece;
+  final String name;
+  final String? species;
 
   PlantInfo({
     required this.id,
-    required this.nom,
-    this.espece,
+    required this.name,
+    this.species,
   });
 
   factory PlantInfo.fromJson(Map<String, dynamic> json) {
     return PlantInfo(
       id: json['id'],
-      nom: json['nom'],
-      espece: json['espece'],
+      name: json['name'],
+      species: json['species'],
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'nom': nom,
-        'espece': espece,
+        'name': name,
+        'species': species,
       };
 }
 
@@ -246,8 +245,8 @@ class Conversation {
       );
       
       // Construire le nom complet
-      final firstName = otherParticipant.prenom ?? '';
-      final lastName = otherParticipant.nom ?? '';
+      final firstName = otherParticipant.firstName ?? '';
+      final lastName = otherParticipant.lastName ?? '';
       final fullName = '$firstName $lastName'.trim();
       
       if (fullName.isNotEmpty) {
@@ -258,7 +257,7 @@ class Conversation {
     // Construire le titre avec contexte
     if (type == ConversationType.plantCare && plantInfo != null) {
       final plant = plantInfo!;
-      return '$participantName - Garde ${plant.nom}';
+      return '$participantName - Garde ${plant.name}';
     } else if (type == ConversationType.botanicalAdvice) {
       return '$participantName - Conseil botanique';
     }
@@ -280,7 +279,7 @@ class Conversation {
   String getEmptyMessage(int currentUserId) {
     if (participants.isNotEmpty) {
       final otherParticipant = participants.first;
-      final participantName = '${otherParticipant.prenom ?? ''} ${otherParticipant.nom ?? ''}'.trim();
+      final participantName = '${otherParticipant.firstName ?? ''} ${otherParticipant.lastName ?? ''}'.trim();
       return 'Conversation vide. Envoyez votre premier message à $participantName pour conseils ou autre.';
     }
     return 'Conversation vide. Envoyez votre premier message.';

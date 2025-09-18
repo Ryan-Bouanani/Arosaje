@@ -2,7 +2,7 @@ name: Deploy Flutter Web to GitHub Pages
 
 on:
   push:
-    branches: [ deploy-clean ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:

@@ -62,10 +62,8 @@ class AdviceProvider extends ChangeNotifier {
         final authService = await AuthService.getInstance();
         final userData = await authService.getCurrentUser(token);
         _currentBotanistId = userData['id'];
-        print('🔍 DEBUG AdviceProvider: currentBotanistId = $_currentBotanistId');
         notifyListeners();
       } else {
-        print('🚨 DEBUG AdviceProvider: token is null!');
       }
     } catch (e) {
       // Erreur silencieuse

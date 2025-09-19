@@ -1,0 +1,180 @@
+"""
+PlantFactory - Génération de plantes avec vraies images
+Utilise les 8 vraies images fournies et des données botaniques réalistes
+"""
+
+import factory
+import random
+import os
+from factories.base import BaseFactory, ImageMixin
+from factories import fake, random_plant_name
+from models.plant import Plant
+from models.user import User, UserRole
+
+class PlantFactory(BaseFactory, ImageMixin):
+    """
+    Factory pour générer des plantes avec les vraies images fournies
+
+    Exemples:
+        # Plante avec image aléatoire
+        plant = PlantFactory()
+
+        # Plante spécifique
+        monstera = PlantFactory(nom="Monstera Deliciosa")
+
+        # Lot de plantes
+        plants = PlantFactory.create_batch(8)  # Une pour chaque image
+
+        # Plante pour un propriétaire spécifique
+        my_plant = PlantFactory(owner=my_user)
+    """
+
+    class Meta:
+        model = Plant
+        exclude = ['PLANT_IMAGE_MAPPING']
+
+    # Mapping des 8 vraies images vers les plantes
+    PLANT_IMAGE_MAPPING = {
+        'Monstera Deliciosa': {
+            'path': 'api/assets/plants/c30fa0f2-f6f5-49ae-831d-db6f2e101156.jpg',
+            'species': 'Monstera deliciosa',
+            'description': 'Une magnifique plante tropicale aux feuilles perforées, parfaite pour décorer votre intérieur. Ses grandes feuilles sculptées en font une star de la décoration végétale.'
+        },
+        'Ficus Lyrata': {
+            'path': 'api/assets/plants/f7250849-a325-4d8f-aff0-6938a440c4ab.jpg',
+            'species': 'Ficus lyrata',
+            'description': 'Le figuier lyre, une plante élégante avec de grandes feuilles en forme de violon. Très appréciée pour son port majestueux et ses feuilles brillantes.'
+        },
+        'Sansevieria Trifasciata': {
+            'path': 'api/assets/plants/fe70ee54-62c7-49ff-a1cc-ed1cbf7b0092.jpg',
+            'species': 'Sansevieria trifasciata',
+            'description': 'La langue de belle-mère, une plante résistante et purificatrice d\'air. Parfaite pour les débutants grâce à sa grande tolérance.'
+        },
+        'Pothos Doré': {
+            'path': 'api/assets/plants/b928e83d-d68e-4be2-af5d-53a37c589f92.jpg',
+            'species': 'Epipremnum aureum',
+            'description': 'Une plante grimpante facile à entretenir, parfaite pour les suspensions. Ses feuilles dorées apportent de la lumière à votre intérieur.'
+        },
+        'Zamioculcas Zamiifolia': {
+            'path': 'api/assets/plants/3ec6b4c8-f0bd-44e5-929e-3000b28e891c.jpg',
+            'species': 'Zamioculcas zamiifolia',
+            'description': 'La plante ZZ, robuste et brillante, idéale pour les espaces peu éclairés. Ses feuilles charnues stockent l\'eau, la rendant très résistante.'
+        },
+        'Chlorophytum Comosum': {
+            'path': 'api/assets/plants/11471877.png',
+            'species': 'Chlorophytum comosum',
+            'description': 'La plante araignée, facile à multiplier avec ses petites pousses. Produit naturellement des rejets que vous pouvez replanter facilement.'
+        },
+        'Strelitzia Reginae': {
+            'path': 'api/assets/plants/11471878.png',
+            'species': 'Strelitzia reginae',
+            'description': 'L\'oiseau de paradis, une plante spectaculaire aux fleurs orange et bleues. Peut fleurir en intérieur avec des soins appropriés.'
+        },
+        'Dracaena Marginata': {
+            'path': 'api/assets/plants/plante-de-palmier-en-pot.jpg',
+            'species': 'Dracaena marginata',
+            'description': 'Le dragonnier de Madagascar, un palmier d\'intérieur élégant et résistant. Sa croissance verticale en fait un excellent choix décoratif.'
+        }
+    }
+
+    # Choix aléatoire d'une plante parmi les 8 disponibles
+    nom = factory.LazyFunction(
+        lambda: random.choice(list(PlantFactory.PLANT_IMAGE_MAPPING.keys()))
+    )
+    name = factory.LazyAttribute(lambda obj: obj.nom)
+
+    # Espèce et description basées sur le choix
+    espece = factory.LazyAttribute(
+        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.nom]['species']
+    )
+    species = factory.LazyAttribute(lambda obj: obj.espece)
+
+    description = factory.LazyAttribute(
+        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.nom]['description']
+    )
+
+    # Image en base64 correspondante
+    photo_base64 = factory.LazyAttribute(
+        lambda obj: PlantFactory._get_plant_image(obj.nom)
+    )
+
+    # Propriétaire aléatoire (USER ou BOTANIST, pas ADMIN)
+    owner = factory.SubFactory(
+        'factories.user_factory.UserFactory',
+        role=factory.LazyFunction(
+            lambda: fake.random_element([UserRole.USER, UserRole.BOTANIST])
+        )
+    )
+    owner_id = factory.LazyAttribute(lambda obj: obj.owner.id)
+
+    @staticmethod
+    def _get_plant_image(plant_name):
+        """Récupère l'image base64 pour une plante donnée"""
+        if plant_name in PlantFactory.PLANT_IMAGE_MAPPING:
+            image_path = PlantFactory.PLANT_IMAGE_MAPPING[plant_name]['path']
+            return PlantFactory.image_to_base64(image_path)
+        return 'data:image/jpeg;base64,placeholder'
+
+    @classmethod
+    def create_all_species(cls, **kwargs):
+        """
+        Crée une plante de chaque espèce (les 8 vraies images)
+        Garantit qu'on a toutes les images utilisées
+        """
+        plants = []
+        for plant_name in cls.PLANT_IMAGE_MAPPING.keys():
+            plant = cls.create(_plant_choice=plant_name, **kwargs)
+            plants.append(plant)
+        return plants
+
+    @classmethod
+    def create_specific_plant(cls, plant_name, **kwargs):
+        """
+        Crée une plante spécifique par nom
+
+        Args:
+            plant_name: Un des noms dans PLANT_IMAGE_MAPPING
+        """
+        if plant_name not in cls.PLANT_IMAGE_MAPPING:
+            raise ValueError(f"Plante inconnue: {plant_name}. Disponibles: {list(cls.PLANT_IMAGE_MAPPING.keys())}")
+
+        return cls.create(nom=plant_name, **kwargs)
+
+class MonsteraFactory(PlantFactory):
+    """Factory spécialisée pour Monstera Deliciosa"""
+    nom = "Monstera Deliciosa"
+
+class FicusFactory(PlantFactory):
+    """Factory spécialisée pour Ficus Lyrata"""
+    nom = "Ficus Lyrata"
+
+class SansevieriaFactory(PlantFactory):
+    """Factory spécialisée pour Sansevieria Trifasciata"""
+    nom = "Sansevieria Trifasciata"
+
+class PothosFactory(PlantFactory):
+    """Factory spécialisée pour Pothos Doré"""
+    nom = "Pothos Doré"
+
+class ZamioculcasFactory(PlantFactory):
+    """Factory spécialisée pour Zamioculcas Zamiifolia"""
+    nom = "Zamioculcas Zamiifolia"
+
+class ChlorophytumFactory(PlantFactory):
+    """Factory spécialisée pour Chlorophytum Comosum"""
+    nom = "Chlorophytum Comosum"
+
+class StrelitziaFactory(PlantFactory):
+    """Factory spécialisée pour Strelitzia Reginae"""
+    nom = "Strelitzia Reginae"
+
+class DracaenaFactory(PlantFactory):
+    """Factory spécialisée pour Dracaena Marginata"""
+    nom = "Dracaena Marginata"
+
+# Exports
+__all__ = [
+    'PlantFactory', 'MonsteraFactory', 'FicusFactory', 'SansevieriaFactory',
+    'PothosFactory', 'ZamioculcasFactory', 'ChlorophytumFactory',
+    'StrelitziaFactory', 'DracaenaFactory'
+]

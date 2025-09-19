@@ -201,50 +201,74 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
 
         return Column(
           children: [
-            ListTile(
-              // Photo de la plante
-              leading: CircleAvatar(
-                backgroundColor: Colors.grey[200],
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(50),
-                  child: AdaptiveImage(
-                    imageBase64: plant['photo_base64'],
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorWidget: Icon(
-                      Icons.local_florist,
-                      color: Colors.green[700],
+            Stack(
+              children: [
+                ListTile(
+                  // Photo de la plante
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.grey[200],
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(50),
+                      child: AdaptiveImage(
+                        imageBase64: plant['photo_base64'],
+                        width: 40,
+                        height: 40,
+                        fit: BoxFit.cover,
+                        errorWidget: Icon(
+                          Icons.local_florist,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Nom de la plante
+                  title: Text(plant['name'] ?? 'Plante'),
+                  // Propriétaire et dates de garde
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Propriétaire: ${owner['first_name']} ${owner['last_name']}'),
+                      Text('Du ${DateFormat('dd/MM/yy').format(startDate)} au ${DateFormat('dd/MM/yy').format(endDate)}'),
+                      if (care['location'] != null)  // Affichage conditionnel
+                        Text('Lieu: ${care['location']}',
+                          style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                    ],
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  // Navigation vers la page de détails de la garde
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PlantCareDetailsScreen(
+                          isCurrentPlant: false,
+                          careId: care['id'],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                // Badge de statut en haut à droite
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _getStatusColor(care['status']),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      _getStatusText(care['status']),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-              ),
-              // Nom de la plante
-              title: Text(plant['name'] ?? 'Plante'),
-              // Propriétaire et dates de garde
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Propriétaire: ${owner['first_name']} ${owner['last_name']}'),
-                  Text('Du ${DateFormat('dd/MM/yy').format(startDate)} au ${DateFormat('dd/MM/yy').format(endDate)}'),
-                  if (care['location'] != null)  // Affichage conditionnel
-                    Text('Lieu: ${care['location']}', 
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                ],
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              // Navigation vers la page de détails de la garde
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlantCareDetailsScreen(
-                      isCurrentPlant: false,
-                      careId: care['id'],
-                    ),
-                  ),
-                );
-              },
+              ],
             ),
             const Divider(),
           ],

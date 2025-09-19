@@ -13,7 +13,9 @@ class PlantCurrentListScreen extends StatefulWidget {
 
 class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  // Contrôleur pour gérer l'input de recherche
   final TextEditingController _searchController = TextEditingController();
+  // Stockage de la requête filtrée en minuscules
   String _searchQuery = "";
   late final PlantCareService _plantCareService;
   bool _isInitialized = false;
@@ -87,9 +89,11 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
     }
   }
 
+  // === NETTOYAGE DES RESSOURCES ===
   @override
   void dispose() {
     _tabController.dispose();
+    // Nettoyage obligatoire du contrôleur pour éviter les fuites mémoire
     _searchController.dispose();
     super.dispose();
   }
@@ -121,10 +125,13 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
         children: [
           Padding(
             padding: const EdgeInsets.all(12.0),
+            // === BARRE DE RECHERCHE ===
             child: TextField(
               controller: _searchController,
+              // Mise à jour en temps réel à chaque frappe
               onChanged: (value) {
                 setState(() {
+                  // Normalisation en minuscules pour recherche insensible à la casse
                   _searchQuery = value.toLowerCase();
                 });
               },
@@ -167,13 +174,16 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
         return bDate.compareTo(aDate); // Plus récent d'abord
       });
 
+    // === LOGIQUE DE FILTRAGE ===
+    // Filtrage sécurisé avec vérifications null
     final filteredCares = sortedCares
-        .where((care) => 
-          care['plant'] != null && 
-          care['plant']['name'] != null && 
+        .where((care) =>
+          care['plant'] != null &&
+          care['plant']['name'] != null &&
           care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
+    // Gestion du cas vide
     if (filteredCares.isEmpty) {
       return const Center(child: Text('Aucune plante confiée'));
     }
@@ -244,10 +254,12 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
   }
 
   Widget _buildMyCaretakingList() {
+    // === FILTRAGE ONGLET 2 ===
+    // Même logique de filtrage appliquée au second onglet
     final filteredCares = mesCaretaking
-        .where((care) => 
-          care['plant'] != null && 
-          care['plant']['name'] != null && 
+        .where((care) =>
+          care['plant'] != null &&
+          care['plant']['name'] != null &&
           care['plant']['name'].toLowerCase().contains(_searchQuery))
         .toList();
 
@@ -266,56 +278,32 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
 
         return Column(
           children: [
-            ListTile(
-              leading: Stack(
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              child: Stack(
                 children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.grey[200],
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(50),
-                      child: AdaptiveImage(
-                        imageBase64: plant['photo_base64'],
-                        width: 40,
-                        height: 40,
-                        fit: BoxFit.cover,
-                        errorWidget: Icon(
-                          Icons.local_florist,
-                          color: Colors.green[700],
-                        ),
-                      ),
-                    ),
-                  ),
-                  if (mesCaretaking.any((care) => 
-                    care['plant'] != null &&
-                    care['plant']['id'] == plant['id'] && 
-                    care['status'] == 'in_progress'
-                  ))
-                    Positioned(
-                      right: -5,
-                      bottom: -5,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.green[700],
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.grey[200],
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: AdaptiveImage(
+                          imageBase64: plant['photo_base64'],
+                          width: 40,
+                          height: 40,
+                          fit: BoxFit.cover,
+                          errorWidget: Icon(
+                            Icons.local_florist,
+                            color: Colors.green[700],
                           ),
                         ),
-                        child: const Icon(
-                          Icons.volunteer_activism,
-                          size: 12,
-                          color: Colors.white,
-                        ),
                       ),
                     ),
-                ],
-              ),
-              title: Text(
-                plant['name'] ?? 'Plante sans nom',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+                    title: Text(
+                      plant['name'] ?? 'Plante sans nom',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -326,22 +314,80 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
                   ),
                 ],
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PlantCareDetailsScreen(
-                      isCurrentPlant: true,
-                      careId: care['id'],
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PlantCareDetailsScreen(
+                            isCurrentPlant: true,
+                            careId: care['id'],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  // Badge de statut en haut à droite
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(care['status']),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        _getStatusText(care['status']),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-                );
-              },
+                ],
+              ),
             ),
-            const Divider(),
           ],
         );
       },
     );
+  }
+
+  // Fonction helper pour les couleurs de statut
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'accepted':
+        return Colors.blue;
+      case 'in_progress':
+        return Colors.green;
+      case 'completed':
+        return Colors.purple;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // Fonction helper pour les textes de statut
+  String _getStatusText(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'En attente';
+      case 'accepted':
+        return 'Acceptée';
+      case 'in_progress':
+        return 'En cours';
+      case 'completed':
+        return 'Terminée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return status;
+    }
   }
 }

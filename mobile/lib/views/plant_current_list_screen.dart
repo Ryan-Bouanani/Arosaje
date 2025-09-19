@@ -138,6 +138,18 @@ class PlantCurrentListScreenState extends State<PlantCurrentListScreen> with Sin
               decoration: InputDecoration(
                 hintText: "Recherche",
                 prefixIcon: const Icon(Icons.search),
+                // Bouton croix pour effacer la recherche
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = "";
+                          });
+                        },
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,

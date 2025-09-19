@@ -1,10 +1,10 @@
-// 🔥 FORCE REBUILD STRATEGY v10 - Netlify Bypass
+// 🔥 FORCE REBUILD STRATEGY v10 - GitHub Pages Bypass
 // Created: 2025-09-15 23:55
 // Purpose: Add unique content to force Dart compilation differences
 
 /// Unique class to force asset regeneration
 class ForceRebuildStrategyV10 {
-  static const String strategyId = 'NETLIFY_BYPASS_STRATEGY_v10_UNIQUE_CONTENT';
+  static const String strategyId = 'GITHUB_PAGES_STRATEGY_v10_UNIQUE_CONTENT';
   static const String buildCommit = '978b40d1f2fab4e26f6f018552ccb7cc7d453536';
   static const int forceBuildNumber = 15092025;
   
@@ -15,7 +15,7 @@ class ForceRebuildStrategyV10 {
       DateTime.now().millisecondsSinceEpoch.toString(),
       buildCommit,
       forceBuildNumber.toString(),
-      'NETLIFY_ASSET_DETECTION_BYPASS'
+      'GITHUB_PAGES_DETECTION_BYPASS'
     ];
     
     return uniqueData.join('_');
@@ -29,7 +29,7 @@ class ForceRebuildStrategyV10 {
       'buildNumber': forceBuildNumber,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'uniqueContent': _generateUniqueContent(),
-      'netlifyBypass': 'AGGRESSIVE_ASSET_CHANGE_v10'
+      'githubPagessBypass': 'AGGRESSIVE_ASSET_CHANGE_v10'
     };
   }
   
@@ -39,7 +39,7 @@ class ForceRebuildStrategyV10 {
     
     // Add 1000 lines of unique content
     for (int i = 0; i < 1000; i++) {
-      buffer.writeln('UNIQUE_LINE_${i}_FORCE_REBUILD_v10_${DateTime.now().millisecondsSinceEpoch}_NETLIFY_BYPASS');
+      buffer.writeln('UNIQUE_LINE_${i}_FORCE_REBUILD_v10_${DateTime.now().millisecondsSinceEpoch}_GITHUB_PAGES_BYPASS');
     }
     
     return buffer.toString();

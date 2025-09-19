@@ -175,8 +175,16 @@ Avant de lancer `bin/up`, assurez-vous d'avoir :
 
 Sans ces étapes préalables, l'application ne fonctionnera pas correctement.
 
-### **🌐 Services & Ports**
+### **🌐 Services & URLs**
 
+#### Production 🚀
+| Service | Description | URL Production | Technologies |
+|---------|------------|----------------|--------------|
+| **API** | Backend API | https://arosaje-backend-t2x7.onrender.com | FastAPI (Python) + Render |
+| **Mobile** | App Flutter (Web) | https://ryan-bouanani.github.io/Arosaje/ | Flutter + GitHub Pages |
+| **Base de données** | Base de données | Neon PostgreSQL (cloud) | PostgreSQL 17 |
+
+#### Développement Local 🏠
 | Service | Description | URL Locale | Technologies |
 |---------|------------|------------|--------------|
 | **API** | Backend API | http://localhost:8000 | FastAPI (Python) |
@@ -229,6 +237,40 @@ Rôle: BOTANIST (conseils et validation)
 ```
 
 **Note** : Ces comptes sont automatiquement créés au premier démarrage de l'application.
+
+### **🏭 Système de Données de Test (Factory_boy + Faker)**
+
+A'rosa-je utilise un système professionnel de génération de données basé sur **factory_boy** et **Faker** pour créer des données françaises réalistes :
+
+#### **Génération de Données Professionnelle**
+```bash
+# Scénarios prédéfinis
+docker exec arosa-je-api python seeders/run.py demo     # 20 users + 8 plantes (recommandé pour démo)
+docker exec arosa-je-api python seeders/run.py dev      # 100+ entités pour développement
+docker exec arosa-je-api python seeders/run.py test     # 500+ entités pour tests de performance
+docker exec arosa-je-api python seeders/run.py minimal  # Configuration minimale
+
+# Chargement personnalisé
+docker exec arosa-je-api python seeders/run.py load --users 50 --botanists 10 --plants 30
+
+# Gestion et monitoring
+docker exec arosa-je-api python seeders/run.py status          # Statistiques de la base
+docker exec arosa-je-api python seeders/run.py reset --confirm # Reset complet sécurisé
+docker exec arosa-je-api python test_factories.py             # Test dry-run sans DB
+```
+
+#### **Données Françaises Réalistes**
+- **Noms et prénoms** : Générés avec Faker français (fr_FR)
+- **Villes** : Principales villes françaises (Paris, Lyon, Marseille, etc.)
+- **Téléphones** : Format français correct (ex: 06.12.34.56.78)
+- **Emails** : Domaines français réalistes (@gmail.fr, @orange.fr, @jardin-[ville].fr pour botanistes)
+- **Plantes** : 8 vraies espèces avec images et descriptions botaniques professionnelles
+
+#### **Architecture Modulaire**
+- **UserFactory** : Utilisateurs français avec répartition 85% USER / 15% BOTANIST
+- **PlantFactory** : 8 espèces réelles avec mapping vers vraies images
+- **Factories avancées** : PlantCare, Advice, CareReport avec scénarios réalistes
+- **CLI moderne** : Interface en ligne de commande avec aide intégrée (`--help`)
 
 ### **🛠️ Commandes Utiles**
 

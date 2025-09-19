@@ -1,0 +1,103 @@
+#!/bin/bash
+
+# Script pour gérer les fixtures de développement
+# Équivalent des commandes Symfony: php bin/console doctrine:fixtures:load
+
+set -e
+
+API_CONTAINER="arosa-je-api"
+
+echo "🌱 Gestion des fixtures A'rosa-je"
+
+# Fonction pour afficher l'aide
+show_help() {
+    echo "Usage: ./bin/fixtures [COMMAND]"
+    echo ""
+    echo "Commands:"
+    echo "  load     Charge les fixtures de développement"
+    echo "  force    Force le rechargement des fixtures"
+    echo "  reset    Efface toutes les données et recharge les fixtures"
+    echo "  prod     Charge les fixtures en production (pour app d'école)"
+    echo "  help     Affiche cette aide"
+    echo ""
+    echo "Exemples:"
+    echo "  ./bin/fixtures load          # Charge les fixtures si pas déjà présentes"
+    echo "  ./bin/fixtures force         # Force le rechargement"
+    echo "  ./bin/fixtures prod          # Pour déploiement en production"
+}
+
+# Fonction pour charger les fixtures
+load_fixtures() {
+    echo "📦 Chargement des données de test (seeders)..."
+
+    if docker ps | grep -q $API_CONTAINER; then
+        docker exec $API_CONTAINER python populate_db.py
+    else
+        echo "❌ Erreur: Le conteneur API n'est pas en cours d'exécution"
+        echo "💡 Lancez d'abord: ./bin/up api"
+        exit 1
+    fi
+}
+
+# Fonction pour reset et recharger
+reset_fixtures() {
+    echo "🗑️ Reset complet des données et rechargement des fixtures..."
+
+    if docker ps | grep -q $API_CONTAINER; then
+        docker exec -it $API_CONTAINER python fixtures.py --reset
+    else
+        echo "❌ Erreur: Le conteneur API n'est pas en cours d'exécution"
+        echo "💡 Lancez d'abord: ./bin/up api"
+        exit 1
+    fi
+}
+
+# Fonction pour forcer le rechargement
+force_fixtures() {
+    echo "🔄 Rechargement forcé des données..."
+
+    if docker ps | grep -q $API_CONTAINER; then
+        docker exec $API_CONTAINER python reset_data.py
+        docker exec $API_CONTAINER python populate_db.py
+    else
+        echo "❌ Erreur: Le conteneur API n'est pas en cours d'exécution"
+        exit 1
+    fi
+}
+
+# Fonction pour la production
+prod_fixtures() {
+    echo "🚀 Chargement des données pour production (app d'école)..."
+
+    if docker ps | grep -q $API_CONTAINER; then
+        docker exec $API_CONTAINER python populate_db.py
+    else
+        echo "❌ Erreur: Le conteneur API n'est pas en cours d'exécution"
+        exit 1
+    fi
+}
+
+# Traitement des arguments
+case "${1:-help}" in
+    "load")
+        load_fixtures
+        ;;
+    "force")
+        force_fixtures
+        ;;
+    "reset")
+        reset_fixtures
+        ;;
+    "prod")
+        prod_fixtures
+        ;;
+    "help"|"--help"|"-h")
+        show_help
+        ;;
+    *)
+        echo "❌ Commande inconnue: $1"
+        echo ""
+        show_help
+        exit 1
+        ;;
+esac

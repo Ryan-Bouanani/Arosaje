@@ -115,7 +115,33 @@ Rôle: BOTANIST
 CTRL+C                   # Arrête tous les conteneurs
 ```
 
+### Données de test (Database population)
+```bash
+# Nouveau système factory_boy + Faker (recommandé)
+docker exec arosa-je-api python seeders/run.py demo     # Données de démo (20 users, 8 plantes)
+docker exec arosa-je-api python seeders/run.py dev      # Environnement de développement (100+ entités)
+docker exec arosa-je-api python seeders/run.py test     # Tests de performance (500+ entités)
+docker exec arosa-je-api python seeders/run.py minimal  # Configuration minimale
+
+# Chargement personnalisé
+docker exec arosa-je-api python seeders/run.py load --users 50 --plants 20
+
+# Statistiques et reset
+docker exec arosa-je-api python seeders/run.py status   # Voir les stats de la base
+docker exec arosa-je-api python seeders/run.py reset --confirm  # Reset complet
+
+# Test dry-run (sans base de données)
+docker exec arosa-je-api python test_factories.py      # Valide la génération française
+```
+
 ### URLs des Services
+
+#### 🌐 Production
+- **API**: https://arosaje-backend-t2x7.onrender.com (Swagger: /docs)
+- **Mobile Web**: https://ryan-bouanani.github.io/Arosaje/
+- **Base de données**: Neon PostgreSQL (cloud)
+
+#### 🏠 Développement Local
 - **API**: http://localhost:8000 (Swagger: /docs)
 - **Mobile Web**: http://localhost:5000
 - **PostgreSQL**: localhost:5432

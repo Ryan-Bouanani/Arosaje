@@ -120,18 +120,19 @@ class SeedManager:
             plant_seeder.verify_images()
 
         # 3. Gardes, conseils, rapports (à implémenter)
-        print(f"📝 Prévu: {scenario.get('cares', 0)} gardes, {scenario.get('advices', 0)} conseils, {scenario.get('reports', 0)} rapports")
+        print(f"Prevu: {scenario.get('cares', 0)} gardes, {scenario.get('advices', 0)} conseils, {scenario.get('reports', 0)} rapports")
 
     def _reset_data(self):
         """Reset sécurisé des données"""
         print("Nettoyage des donnees...")
 
-        # Reset dans l'ordre des dépendances
-        with UserSeeder() as user_seeder:
-            user_seeder.clear()
-
+        # Reset dans l'ordre des dépendances (foreign keys)
+        # D'abord les plantes, puis les utilisateurs
         with PlantSeeder() as plant_seeder:
             plant_seeder.clear()
+
+        with UserSeeder() as user_seeder:
+            user_seeder.clear()
 
         print("Nettoyage termine\n")
 

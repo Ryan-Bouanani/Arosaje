@@ -33,45 +33,45 @@ class PlantFactory(BaseFactory, ImageMixin):
         model = Plant
         exclude = ['PLANT_IMAGE_MAPPING']
 
-    # Mapping des 8 vraies images vers les plantes
+    # Mapping des 8 vraies images vers les plantes (chemins mis à jour)
     PLANT_IMAGE_MAPPING = {
         'Monstera Deliciosa': {
-            'path': 'api/assets/plants/c30fa0f2-f6f5-49ae-831d-db6f2e101156.jpg',
+            'path': 'assets/plants/monstera_deliciosa.jpg',
             'species': 'Monstera deliciosa',
             'description': 'Une magnifique plante tropicale aux feuilles perforées, parfaite pour décorer votre intérieur. Ses grandes feuilles sculptées en font une star de la décoration végétale.'
         },
         'Ficus Lyrata': {
-            'path': 'api/assets/plants/f7250849-a325-4d8f-aff0-6938a440c4ab.jpg',
+            'path': 'assets/plants/ficus_lyrata.jpg',
             'species': 'Ficus lyrata',
             'description': 'Le figuier lyre, une plante élégante avec de grandes feuilles en forme de violon. Très appréciée pour son port majestueux et ses feuilles brillantes.'
         },
         'Sansevieria Trifasciata': {
-            'path': 'api/assets/plants/fe70ee54-62c7-49ff-a1cc-ed1cbf7b0092.jpg',
+            'path': 'assets/plants/sansevieria_trifasciata.jpg',
             'species': 'Sansevieria trifasciata',
             'description': 'La langue de belle-mère, une plante résistante et purificatrice d\'air. Parfaite pour les débutants grâce à sa grande tolérance.'
         },
         'Pothos Doré': {
-            'path': 'api/assets/plants/b928e83d-d68e-4be2-af5d-53a37c589f92.jpg',
+            'path': 'assets/plants/pothos_dore.jpg',
             'species': 'Epipremnum aureum',
             'description': 'Une plante grimpante facile à entretenir, parfaite pour les suspensions. Ses feuilles dorées apportent de la lumière à votre intérieur.'
         },
         'Zamioculcas Zamiifolia': {
-            'path': 'api/assets/plants/3ec6b4c8-f0bd-44e5-929e-3000b28e891c.jpg',
+            'path': 'assets/plants/zamioculcas_zamiifolia.jpg',
             'species': 'Zamioculcas zamiifolia',
             'description': 'La plante ZZ, robuste et brillante, idéale pour les espaces peu éclairés. Ses feuilles charnues stockent l\'eau, la rendant très résistante.'
         },
         'Chlorophytum Comosum': {
-            'path': 'api/assets/plants/11471877.png',
+            'path': 'assets/plants/chlorophytum_comosum.png',
             'species': 'Chlorophytum comosum',
             'description': 'La plante araignée, facile à multiplier avec ses petites pousses. Produit naturellement des rejets que vous pouvez replanter facilement.'
         },
         'Strelitzia Reginae': {
-            'path': 'api/assets/plants/11471878.png',
+            'path': 'assets/plants/strelitzia_reginae.png',
             'species': 'Strelitzia reginae',
             'description': 'L\'oiseau de paradis, une plante spectaculaire aux fleurs orange et bleues. Peut fleurir en intérieur avec des soins appropriés.'
         },
         'Dracaena Marginata': {
-            'path': 'api/assets/plants/plante-de-palmier-en-pot.jpg',
+            'path': 'assets/plants/dracaena_marginata.jpg',
             'species': 'Dracaena marginata',
             'description': 'Le dragonnier de Madagascar, un palmier d\'intérieur élégant et résistant. Sa croissance verticale en fait un excellent choix décoratif.'
         }
@@ -123,7 +123,7 @@ class PlantFactory(BaseFactory, ImageMixin):
         """
         plants = []
         for plant_name in cls.PLANT_IMAGE_MAPPING.keys():
-            plant = cls.create(_plant_choice=plant_name, **kwargs)
+            plant = cls.create(nom=plant_name, **kwargs)
             plants.append(plant)
         return plants
 

@@ -2,6 +2,8 @@
 UserSeeder - Génération d'utilisateurs français réalistes
 """
 
+import random
+from faker import Faker
 from seeders import BaseSeeder
 from factories.user_factory import UserFactory, BotanistFactory, RegularUserFactory
 from models.user import User, UserRole
@@ -77,6 +79,9 @@ class UserSeeder(BaseSeeder):
         print(f"Création de {users} utilisateurs + {botanists} botanistes...")
         self.start_timer()
 
+        # Randomiser la seed Faker pour éviter les doublons
+        self._randomize_faker_seed()
+
         # Créer les utilisateurs
         regular_users = RegularUserFactory.create_batch_safe(users, **kwargs)
         botanist_users = BotanistFactory.create_batch_safe(botanists, **kwargs)
@@ -116,6 +121,12 @@ class UserSeeder(BaseSeeder):
         self.end_timer()
 
         return all_users
+
+    def _randomize_faker_seed(self):
+        """Randomise la seed Faker pour éviter les doublons d'emails"""
+        new_seed = random.randint(1, 10000)
+        Faker.seed(new_seed)
+        print(f"  Seed Faker: {new_seed}")
 
     def ensure_base_users(self):
         """

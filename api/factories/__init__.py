@@ -70,3 +70,9 @@ __all__ = [
     'random_french_email', 'random_plant_name', 'FRENCH_CITIES',
     'FRENCH_PLANT_NAMES', 'FRENCH_DOMAINS'
 ]
+
+# Import des factories pour faciliter l'usage
+from .user_factory import UserFactory, BotanistFactory, RegularUserFactory
+from .plant_factory import PlantFactory
+from .care_factory import PlantCareFactory
+from .care_report_factory import CareReportFactory

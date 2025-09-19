@@ -50,24 +50,25 @@ class PlantCareFactory(BaseFactory):
         if self.status == CareStatus.PENDING:
             return None  # Pas encore de gardien assigné
 
-        # S'assurer que gardien ≠ propriétaire
-        attempt = 0
-        while self.caretaker.id == self.owner_id and attempt < 10:
-            from factories.user_factory import RegularUserFactory
-            self.caretaker = RegularUserFactory(role=UserRole.USER)
-            attempt += 1
+        # Priorité aux comptes de base user@arosaje.fr (20% de chance)
+        if fake.random_int(1, 100) <= 20:
+            # Utiliser user@arosaje.fr comme gardien (ID: 2)
+            if self.owner_id != 2:  # Sauf si c'est déjà le propriétaire
+                return 2
 
-        return self.caretaker.id
+        # Pour les autres statuts, retourner l'ID du gardien
+        return self.caretaker.id if hasattr(self, 'caretaker') and self.caretaker else None
 
     # Statut avec distribution réaliste
     status = factory.LazyFunction(
-        lambda: fake.random_element({
-            CareStatus.COMPLETED: 0.4,    # 40% terminées
-            CareStatus.IN_PROGRESS: 0.2,  # 20% en cours
-            CareStatus.ACCEPTED: 0.2,     # 20% acceptées
-            CareStatus.PENDING: 0.15,     # 15% en attente
-            CareStatus.CANCELLED: 0.05    # 5% annulées
-        })
+        lambda: fake.random_element([
+            CareStatus.COMPLETED,    # Plus fréquent
+            CareStatus.COMPLETED,
+            CareStatus.IN_PROGRESS,
+            CareStatus.ACCEPTED,
+            CareStatus.PENDING,
+            CareStatus.CANCELLED     # Moins fréquent
+        ])
     )
 
     # Dates cohérentes selon le statut
@@ -97,6 +98,68 @@ class PlantCareFactory(BaseFactory):
 
     # Localisation française
     location = factory.LazyFunction(random_french_city)
+
+    # Coordonnées GPS basées sur la ville
+    @factory.lazy_attribute
+    def latitude(self):
+        """Génère latitude selon la ville avec dispersion réaliste"""
+        return self._get_city_coordinates()[0]
+
+    @factory.lazy_attribute
+    def longitude(self):
+        """Génère longitude selon la ville avec dispersion réaliste"""
+        return self._get_city_coordinates()[1]
+
+    def _get_city_coordinates(self):
+        """Retourne coordonnées GPS avec dispersion pour simulation quartiers"""
+        import random
+
+        # Coordonnées centres + dispersion par ville
+        city_coords = {
+            'Paris, France': (48.8566, 2.3522, 0.1),
+            'Lyon, France': (45.7640, 4.8357, 0.08),
+            'Marseille, France': (43.2965, 5.3698, 0.08),
+            'Toulouse, France': (43.6047, 1.4442, 0.08),
+            'Nice, France': (43.7102, 7.2620, 0.06),
+            'Nantes, France': (47.2184, -1.5536, 0.06),
+            'Montpellier, France': (43.6110, 3.8767, 0.06),
+            'Strasbourg, France': (48.5734, 7.7521, 0.06),
+            'Bordeaux, France': (44.8378, -0.5792, 0.08),
+            'Lille, France': (50.6292, 3.0573, 0.06),
+            'Rennes, France': (48.1173, -1.6778, 0.06),
+            'Reims, France': (49.2583, 4.0317, 0.05),
+            'Le Havre, France': (49.4944, 0.1079, 0.05),
+            'Saint-Étienne, France': (45.4397, 4.3872, 0.05),
+            'Tours, France': (47.3941, 0.6848, 0.05),
+            'Amiens, France': (49.8951, 2.2956, 0.05),
+            'Limoges, France': (45.8336, 1.2611, 0.05),
+            'Angers, France': (47.4784, -0.5632, 0.05),
+            'Dijon, France': (47.3220, 5.0415, 0.05),
+            'Brest, France': (48.3904, -4.4861, 0.05),
+            'Clermont-Ferrand, France': (45.7797, 3.0863, 0.05),
+            'Orléans, France': (47.9029, 1.9093, 0.05),
+            'Metz, France': (49.1193, 6.1757, 0.05),
+            'Rouen, France': (49.4431, 1.0993, 0.05),
+            'Perpignan, France': (42.6886, 2.8948, 0.04),
+            'Caen, France': (49.1829, -0.3707, 0.05),
+            'Besançon, France': (47.2380, 6.0240, 0.04),
+            'Villeurbanne, France': (45.7640, 4.8357, 0.05)  # Proche Lyon
+        }
+
+        # Récupérer coordonnées de base ou utiliser Paris par défaut
+        lat_base, lng_base, dispersion = city_coords.get(
+            self.location,
+            (48.8566, 2.3522, 0.1)  # Paris par défaut
+        )
+
+        # Ajouter dispersion aléatoire pour simuler différents quartiers
+        lat_offset = (random.random() - 0.5) * dispersion
+        lng_offset = (random.random() - 0.5) * dispersion
+
+        return (
+            round(lat_base + lat_offset, 6),
+            round(lng_base + lng_offset, 6)
+        )
 
     # Instructions de garde contextuelles
     @factory.lazy_attribute

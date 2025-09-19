@@ -98,13 +98,29 @@ class PlantFactory(BaseFactory, ImageMixin):
         lambda obj: PlantFactory._get_plant_image(obj.nom)
     )
 
-    # Propriétaire aléatoire (USER ou BOTANIST, pas ADMIN)
-    owner = factory.SubFactory(
-        'factories.user_factory.UserFactory',
-        role=factory.LazyFunction(
-            lambda: fake.random_element([UserRole.USER, UserRole.BOTANIST])
+    # Propriétaire aléatoire avec priorité aux comptes de base
+    @factory.lazy_attribute
+    def owner(self):
+        """Choisir propriétaire avec priorité aux comptes de base"""
+        from factories.user_factory import UserFactory
+
+        # 30% de chance d'utiliser user@arosaje.fr (ID: 2)
+        if fake.random_int(1, 100) <= 30:
+            from models.user import User
+            from factories.base import SessionLocal
+            session = SessionLocal()
+            try:
+                test_user = session.query(User).filter(User.email == 'user@arosaje.fr').first()
+                if test_user:
+                    return test_user
+            finally:
+                session.close()
+
+        # Sinon, créer un utilisateur standard avec bon rôle
+        return UserFactory(
+            role=fake.random_element([UserRole.USER, UserRole.BOTANIST])
         )
-    )
+
     owner_id = factory.LazyAttribute(lambda obj: obj.owner.id)
 
     @staticmethod

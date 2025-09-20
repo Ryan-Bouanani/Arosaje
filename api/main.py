@@ -13,6 +13,7 @@ from routers import (
     ws,
     admin,
     metrics,
+    populate,
 )
 from routers import care_report, botanist_report_advice, geocoding
 import os
@@ -118,6 +119,7 @@ app.include_router(metrics.router)
 app.include_router(care_report.router)
 app.include_router(botanist_report_advice.router)
 app.include_router(geocoding.router)
+app.include_router(populate.router)  # Endpoint temporaire de population
 
 # Démarrage du service RGPD
 rgpd_service = RGPDCleanupService()

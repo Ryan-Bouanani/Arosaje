@@ -39,6 +39,13 @@ class PlantBase(BaseModel):
     nom: Optional[str] = None
     espece: Optional[str] = None
 
+    def model_post_init(self, __context) -> None:
+        """Map les champs français vers anglais pour compatibilité frontend"""
+        if self.name is None and self.nom:
+            self.name = self.nom
+        if self.species is None and self.espece:
+            self.species = self.espece
+
     model_config = {"from_attributes": True}
 
 

@@ -104,17 +104,11 @@ class PlantFactory(BaseFactory, ImageMixin):
         """Choisir propriétaire avec priorité aux comptes de base"""
         from factories.user_factory import UserFactory
 
-        # 30% de chance d'utiliser user@arosaje.fr (ID: 2)
+        # 30% de chance d'utiliser user@arosaje.fr si il existe
         if fake.random_int(1, 100) <= 30:
-            from models.user import User
-            from factories.base import SessionLocal
-            session = SessionLocal()
-            try:
-                test_user = session.query(User).filter(User.email == 'user@arosaje.fr').first()
-                if test_user:
-                    return test_user
-            finally:
-                session.close()
+            test_user = PlantFactory._get_or_create_user_by_email('user@arosaje.fr')
+            if test_user:
+                return test_user
 
         # Sinon, créer un utilisateur standard avec bon rôle
         return UserFactory(

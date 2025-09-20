@@ -29,14 +29,29 @@ class BaseFactory(factory.alchemy.SQLAlchemyModelFactory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         """
-        Création personnalisée avec gestion d'erreurs
+        Création personnalisée avec gestion d'erreurs et merge des objets
         """
         try:
+            # Merger les objets qui pourraient venir d'autres sessions
+            for key, value in kwargs.items():
+                if hasattr(value, '__table__'):  # Si c'est un objet SQLAlchemy
+                    # Merger l'objet dans la session actuelle
+                    kwargs[key] = cls._meta.sqlalchemy_session.merge(value)
+
             return super()._create(model_class, *args, **kwargs)
         except Exception as e:
             # Rollback en cas d'erreur
             cls._meta.sqlalchemy_session.rollback()
             raise e
+
+    @classmethod
+    def _get_or_create_user_by_email(cls, email):
+        """
+        Récupère un utilisateur existant par email ou retourne None
+        Utilise la session de la factory pour éviter les conflits
+        """
+        from models.user import User
+        return cls._meta.sqlalchemy_session.query(User).filter(User.email == email).first()
 
     @classmethod
     def create_batch_safe(cls, size, **kwargs):

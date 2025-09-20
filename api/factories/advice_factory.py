@@ -125,8 +125,13 @@ class AdviceFactory(BaseFactory):
     def validator_id(self):
         """Validateur différent de l'auteur si conseils validé"""
         if self.validation_status == ValidationStatus.VALIDATED:
+            # Essayer d'utiliser botanist@arosaje.fr en priorité
+            test_botanist = AdviceFactory._get_or_create_user_by_email('botanist@arosaje.fr')
+            if test_botanist and test_botanist.id != self.botanist_id:
+                return test_botanist.id
+
+            # Sinon créer un autre botaniste
             from factories.user_factory import BotanistFactory
-            # Créer un autre botaniste
             validator = BotanistFactory()
             # S'assurer qu'il est différent de l'auteur
             attempt = 0

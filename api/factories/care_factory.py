@@ -52,9 +52,9 @@ class PlantCareFactory(BaseFactory):
 
         # Priorité aux comptes de base user@arosaje.fr (20% de chance)
         if fake.random_int(1, 100) <= 20:
-            # Utiliser user@arosaje.fr comme gardien (ID: 2)
-            if self.owner_id != 2:  # Sauf si c'est déjà le propriétaire
-                return 2
+            test_user = PlantCareFactory._get_or_create_user_by_email('user@arosaje.fr')
+            if test_user and test_user.id != self.owner_id:
+                return test_user.id
 
         # Pour les autres statuts, retourner l'ID du gardien
         return self.caretaker.id if hasattr(self, 'caretaker') and self.caretaker else None

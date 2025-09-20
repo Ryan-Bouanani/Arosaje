@@ -68,11 +68,11 @@ class UserFactory(BaseFactory):
         En cas de conflit, ajoute un nombre aléatoire
         """
         if create:
-            # Vérifier unicité et modifier si nécessaire
+            # Utiliser la session de la factory pour vérifier unicité
             from sqlalchemy import exists
-            from factories.base import SessionLocal
 
-            session = SessionLocal()
+            # Utiliser la session de la factory au lieu d'en créer une nouvelle
+            session = UserFactory._meta.sqlalchemy_session
             attempt = 0
             original_email = obj.email
 
@@ -86,8 +86,6 @@ class UserFactory(BaseFactory):
                 if attempt > 100:
                     obj.email = f"{fake.uuid4()}@gmail.com"
                     break
-
-            session.close()
 
 class AdminUserFactory(UserFactory):
     """Factory spécialisée pour les administrateurs"""

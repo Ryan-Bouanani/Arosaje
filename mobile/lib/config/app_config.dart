@@ -3,9 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AppConfig {
   // 🔥 FORCE GITHUB PAGES REBUILD - Unique content for asset detection
-  static const String _buildSignature = 'FORCE_REBUILD_978b40d_v2_0_0_UNIQUE_HASH_19092025';
-  static const int _buildTimestamp = 1726435800000; // Force unique compilation
-  static const String _forceRebuildId = 'GITHUB_PAGES_STRATEGY_v10';
+  static const String _buildSignature = 'FORCE_REBUILD_NEW_DATA_v2_1_0_HASH_20092025';
+  static const int _buildTimestamp = 1726866600000; // Force unique compilation with new data
+  static const String _forceRebuildId = 'GITHUB_PAGES_STRATEGY_v11_NEW_GARDES';
   
   static const String _prodApiUrl = 'https://arosaje-backend-t2x7.onrender.com';
   static const String _devApiUrl = 'http://localhost:8000';

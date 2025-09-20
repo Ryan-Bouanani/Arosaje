@@ -30,8 +30,8 @@ class UserBase(BaseModel):
 
 class PlantBase(BaseModel):
     id: int
-    # Nouveaux champs anglais
-    name: str
+    # Nouveaux champs anglais - compatibilité avec données existantes
+    name: Optional[str] = None
     species: Optional[str] = None
     photo: Optional[str] = None
     photo_base64: Optional[str] = None

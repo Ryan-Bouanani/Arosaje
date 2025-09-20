@@ -3,19 +3,23 @@ from .base import BaseSchema, IDSchema
 
 
 class PlantBase(BaseSchema):
-    # Nouveaux champs anglais (standard technique)
-    name: str
+    # Champs principaux - accepte les deux formats nom/name et espece/species
+    name: Optional[str] = None
     species: Optional[str] = None
     description: Optional[str] = None
     photo_base64: Optional[str] = None  # Image encodée en Base64
     owner_id: int
-    # Anciens champs français (compatibilité temporaire)
+    # Champs français pour compatibilité
     nom: Optional[str] = None
     espece: Optional[str] = None
 
+    class Config:
+        from_attributes = True
+
 
 class PlantCreate(PlantBase):
-    pass
+    # Pour la création, au moins nom doit être fourni
+    nom: str  # Requis pour la création
 
 
 class PlantUpdate(BaseSchema):

@@ -49,10 +49,8 @@ class CRUDPlantCare:
 
         query = db.query(PlantCare).options(
             joinedload(PlantCare.owner),
-            # PERFORMANCE: Charger la plante SANS photo_base64 (images énormes)
-            joinedload(PlantCare.plant).load_only(
-                Plant.id, Plant.name, Plant.species, Plant.description, Plant.owner_id
-            ),
+            # ROLLBACK: Charger la plante AVEC photo_base64 pour compatibilité Flutter
+            joinedload(PlantCare.plant),
             joinedload(PlantCare.caretaker)
         )
 
@@ -83,10 +81,8 @@ class CRUDPlantCare:
             db.query(PlantCare)
             .options(
                 joinedload(PlantCare.owner),
-                # PERFORMANCE: Charger la plante SANS photo_base64 (images énormes)
-                joinedload(PlantCare.plant).load_only(
-                    Plant.id, Plant.name, Plant.species, Plant.description, Plant.owner_id
-                ),
+                # ROLLBACK: Charger la plante AVEC photo_base64 pour compatibilité Flutter
+                joinedload(PlantCare.plant),
                 joinedload(PlantCare.caretaker)
             )
             .filter(PlantCare.status == CareStatus.PENDING)

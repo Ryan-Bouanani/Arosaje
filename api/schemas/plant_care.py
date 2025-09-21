@@ -34,8 +34,8 @@ class PlantBase(BaseModel):
     name: Optional[str] = None
     species: Optional[str] = None
     photo: Optional[str] = None
-    # PERFORMANCE: Exclure photo_base64 de la liste (images énormes)
-    # photo_base64: Optional[str] = None
+    # ROLLBACK: Restaurer photo_base64 pour compatibilité Flutter
+    photo_base64: Optional[str] = None
     # Anciens champs français (compatibilité temporaire)
     nom: Optional[str] = None
     espece: Optional[str] = None
@@ -113,7 +113,7 @@ class PlantCareInDB(PlantCareBase):
 
 
 class PlantCareList(PlantCareBase):
-    """Version optimisée pour les listes - sans images base64"""
+    """Version pour les listes - ROLLBACK avec images pour compatibilité Flutter"""
     id: int
     owner_id: int
     caretaker_id: Optional[int] = None
@@ -121,7 +121,7 @@ class PlantCareList(PlantCareBase):
     conversation_id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    plant: PlantLightweight
+    plant: PlantBase  # ROLLBACK: Utiliser PlantBase avec photo_base64
     owner: Optional[UserBase] = None
     caretaker: Optional[UserBase] = None
 

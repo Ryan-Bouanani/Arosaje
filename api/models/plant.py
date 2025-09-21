@@ -10,7 +10,8 @@ class Plant(Base):
     name = Column(String, nullable=False)
     species = Column(String, nullable=True)
     description = Column(String, nullable=True)
-    photo_base64 = Column(Text, nullable=True)  # Image encodée en Base64
+    photo_base64 = Column(Text, nullable=True)  # Image complète encodée en Base64
+    photo_thumbnail = Column(Text, nullable=True)  # Thumbnail 150x150 pour listes
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     # Relations

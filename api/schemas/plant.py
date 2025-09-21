@@ -7,7 +7,8 @@ class PlantBase(BaseSchema):
     name: Optional[str] = None
     species: Optional[str] = None
     description: Optional[str] = None
-    photo_base64: Optional[str] = None  # Image encodée en Base64
+    photo_base64: Optional[str] = None  # Image complète encodée en Base64
+    photo_thumbnail: Optional[str] = None  # Thumbnail 150x150 pour listes
     owner_id: int
 
     class Config:
@@ -25,6 +26,7 @@ class PlantUpdate(BaseSchema):
     species: Optional[str] = None
     description: Optional[str] = None
     photo_base64: Optional[str] = None
+    photo_thumbnail: Optional[str] = None  # Généré automatiquement par CRUD
     owner_id: Optional[int] = None
 
 

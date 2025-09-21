@@ -34,8 +34,9 @@ class PlantBase(BaseModel):
     name: Optional[str] = None
     species: Optional[str] = None
     photo: Optional[str] = None
-    # ROLLBACK: Restaurer photo_base64 pour compatibilité Flutter
+    # Images: full et thumbnail pour optimisation
     photo_base64: Optional[str] = None
+    photo_thumbnail: Optional[str] = None
     # Anciens champs français (compatibilité temporaire)
     nom: Optional[str] = None
     espece: Optional[str] = None
@@ -50,17 +51,20 @@ class PlantBase(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class PlantLightweight(BaseModel):
-    """Version allégée pour les listes - sans images base64"""
+class PlantOptimized(BaseModel):
+    """Version optimisée pour les listes - avec thumbnails OU full images selon flag"""
     id: int
     name: Optional[str] = None
     species: Optional[str] = None
+    # Image optimisée: thumbnail si disponible, sinon photo_base64 en fallback
+    photo_thumbnail: Optional[str] = None
+    photo_base64: Optional[str] = None  # Fallback si pas de thumbnail
     # Anciens champs français (compatibilité)
     nom: Optional[str] = None
     espece: Optional[str] = None
 
     def model_post_init(self, __context) -> None:
-        """Map les champs français vers anglais pour compatibilité frontend"""
+        """Map les champs français vers anglais + gestion image optimisée"""
         if self.name is None and self.nom:
             self.name = self.nom
         if self.species is None and self.espece:
@@ -112,8 +116,11 @@ class PlantCareInDB(PlantCareBase):
     model_config = {"from_attributes": True}
 
 
+# FEATURE FLAG: Choisir la version à utiliser facilement
+USE_THUMBNAILS = False  # True = PlantOptimized, False = PlantBase (rollback)
+
 class PlantCareList(PlantCareBase):
-    """Version pour les listes - ROLLBACK avec images pour compatibilité Flutter"""
+    """Version pour les listes avec feature flag pour rollback facile"""
     id: int
     owner_id: int
     caretaker_id: Optional[int] = None
@@ -121,7 +128,24 @@ class PlantCareList(PlantCareBase):
     conversation_id: Optional[int] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    plant: PlantBase  # ROLLBACK: Utiliser PlantBase avec photo_base64
+    # FEATURE FLAG: PlantOptimized (thumbnails) OU PlantBase (full images)
+    plant: PlantBase  # Utiliser PlantBase pour l'instant (rollback)
+    owner: Optional[UserBase] = None
+    caretaker: Optional[UserBase] = None
+
+    model_config = {"from_attributes": True}
+
+
+class PlantCareListOptimized(PlantCareBase):
+    """Version optimisée pour les listes - avec thumbnails"""
+    id: int
+    owner_id: int
+    caretaker_id: Optional[int] = None
+    status: CareStatus = CareStatus.PENDING
+    conversation_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    plant: PlantOptimized  # Utilise PlantOptimized avec thumbnails
     owner: Optional[UserBase] = None
     caretaker: Optional[UserBase] = None
 

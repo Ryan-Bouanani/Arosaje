@@ -13,24 +13,14 @@ class CRUDUser:
         return db.query(User).filter(User.email == email).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
-        # Gestion de la compatibilité entre anciens et nouveaux champs
-        first_name = obj_in.first_name or obj_in.prenom or ''
-        last_name = obj_in.last_name or obj_in.nom or ''
-        location = obj_in.location or obj_in.localisation
-        
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
-            # Nouveaux champs anglais
-            first_name=first_name,
-            last_name=last_name,
-            location=location,
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            location=obj_in.location,
             telephone=obj_in.telephone,
             role=obj_in.role,
-            # Anciens champs français pour compatibilité
-            nom=obj_in.nom or last_name,
-            prenom=obj_in.prenom or first_name,
-            localisation=obj_in.localisation or location,
         )
         db.add(db_obj)
         db.commit()

@@ -160,7 +160,7 @@ class ConcerningReportFactory(CareReportFactory):
     health_level = HealthLevel.CONCERNING
 
     description = factory.LazyAttribute(
-        lambda obj: f"Attention requise pour {obj.plant_care.plant.nom}. "
+        lambda obj: f"Attention requise pour {obj.plant_care.plant.name}. "
                    f"Des signes de stress ont été observés. "
                    f"Mesures correctives appliquées et surveillance renforcée."
     )

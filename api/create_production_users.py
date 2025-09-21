@@ -51,7 +51,7 @@ def create_production_users(db: Session):
                 role=user_data["role"],
                 is_verified=True,
                 telephone=f"+336123456{len(str(created))}{len(str(created))}",
-                localisation="Lyon, France"
+                location="Lyon, France"
             )
 
             db.add(user)
@@ -90,8 +90,8 @@ def create_production_plants(db: Session):
     for plant_data in plants_data:
         try:
             plant = Plant(
-                nom=plant_data["nom"],
-                espece=plant_data["espece"],
+                name=plant_data["nom"],
+                species=plant_data["espece"],
                 description=plant_data["description"],
                 owner_id=owner.id,
                 photo_base64=None  # Pas d'images pour l'instant

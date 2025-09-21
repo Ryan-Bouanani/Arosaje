@@ -33,12 +33,9 @@ class PlantCare(Base):
 
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
-    status = Column(Enum(CareStatus), default=CareStatus.PENDING)
+    status = Column(Enum(CareStatus), default=CareStatus.PENDING, nullable=False)
 
     care_instructions = Column(String, nullable=True)
-    # Ancien champ français (compatibilité temporaire)
-    localisation = Column(String, nullable=True)
-    # Nouveau champ anglais
     location = Column(String, nullable=True)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)

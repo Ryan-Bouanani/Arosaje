@@ -14,18 +14,11 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String, unique=True)
-    password = Column(String)
-    # Nouveaux champs anglais (standard technique)
+    email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
-    # Anciens champs français (compatibilité temporaire)
-    nom = Column(String)
-    prenom = Column(String)
     telephone = Column(String)
-    # Anciens champs français (compatibilité temporaire)
-    localisation = Column(String)
-    # Nouveau champ anglais
     location = Column(String, nullable=True)
     role = Column(Enum(UserRole), default=UserRole.USER)
     is_verified = Column(
@@ -64,4 +57,4 @@ class User(Base):
 
     def get_full_name(self) -> str:
         """Retourne le nom complet de l'utilisateur"""
-        return f"{self.first_name or self.prenom} {self.last_name or self.nom}"
+        return f"{self.first_name} {self.last_name}"

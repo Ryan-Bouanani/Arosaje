@@ -79,18 +79,22 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    # Configuration spéciale pour Neon PostgreSQL avec SSL
+    # Configuration adaptative local/production
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = DATABASE_URL
-    
+
+    # Adapter SSL selon l'environnement
+    connect_args = {"application_name": "arosaje-alembic"}
+    if "localhost" in DATABASE_URL or "postgres:5432" in DATABASE_URL:
+        connect_args["sslmode"] = "disable"
+    else:
+        connect_args["sslmode"] = "require"
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args={
-            "sslmode": "require",
-            "application_name": "arosaje-alembic"
-        }
+        connect_args=connect_args
     )
 
     with connectable.connect() as connection:

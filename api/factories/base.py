@@ -8,8 +8,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-# Configuration database
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://neondb_owner:npg_YfAhut3ZEMS2@ep-spring-bonus-agd7s9t1-pooler.c-2.eu-central-1.aws.neon.tech/neondb?channel_binding=require&sslmode=require')
+# Configuration database - utilise la variable d'environnement
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required")
 
 # Session SQLAlchemy partagée
 engine = create_engine(DATABASE_URL)

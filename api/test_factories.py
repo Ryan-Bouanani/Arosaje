@@ -48,8 +48,8 @@ def test_plant_factory():
 
     # Test plante aléatoire
     plant = PlantFactory.build()
-    print(f"Plante: {plant.nom}")
-    print(f"Espèce: {plant.espece}")
+    print(f"Plante: {plant.name}")
+    print(f"Espèce: {plant.species}")
     print(f"Description: {plant.description[:60]}...")
     print(f"Photo disponible: {'Oui' if plant.photo_base64 and len(plant.photo_base64) > 100 else 'Non'}")
     print()
@@ -57,8 +57,8 @@ def test_plant_factory():
     # Test toutes les espèces
     print("Espèces disponibles avec vraies images:")
     for plant_name in PlantFactory.PLANT_IMAGE_MAPPING.keys():
-        plant = PlantFactory.build(nom=plant_name)
-        print(f"  • {plant.nom} ({plant.espece})")
+        plant = PlantFactory.build(name=plant_name)
+        print(f"  • {plant.name} ({plant.species})")
     print()
 
 def test_data_quality():

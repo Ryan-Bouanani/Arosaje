@@ -23,7 +23,7 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(Enum(ConversationType))
+    type = Column(Enum(ConversationType), nullable=False)
     related_id = Column(Integer, nullable=True)  # ID de la garde ou du conseil associé
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

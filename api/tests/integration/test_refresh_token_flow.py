@@ -46,8 +46,8 @@ class TestRefreshTokenFlow:
         test_user = User(
             email="test@example.com",
             password=get_password_hash("testpassword"),
-            nom="Test",
-            prenom="User",
+            first_name="User",
+            last_name="Test",
             role=UserRole.USER,
             is_verified=True
         )

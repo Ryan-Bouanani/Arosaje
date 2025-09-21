@@ -87,8 +87,8 @@ class TestRefreshTokenSecurity:
             id=1,
             email="test@example.com",
             password="hashed_password",
-            nom="Test",
-            prenom="User",
+            first_name="User",
+            last_name="Test",
             role=UserRole.USER,
             is_verified=True
         )

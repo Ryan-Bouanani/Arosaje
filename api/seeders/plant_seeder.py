@@ -54,7 +54,7 @@ class PlantSeeder(BaseSeeder):
 
         print("  Espèces créées:")
         for plant in plants:
-            print(f"    • {plant.nom}")
+            print(f"    • {plant.name}")
 
         self.end_timer()
         return plants
@@ -171,7 +171,7 @@ class PlantSeeder(BaseSeeder):
         # Statistiques de distribution
         distribution = {}
         for plant in all_plants:
-            species = plant.nom
+            species = plant.name
             distribution[species] = distribution.get(species, 0) + 1
 
         print("  Distribution par espèce:")
@@ -191,7 +191,7 @@ class PlantSeeder(BaseSeeder):
         print("Vérification des images utilisées...")
 
         plants = self.session.query(Plant).all()
-        used_species = set(plant.nom for plant in plants)
+        used_species = set(plant.name for plant in plants)
         all_species = set(PlantFactory.PLANT_IMAGE_MAPPING.keys())
 
         missing = all_species - used_species

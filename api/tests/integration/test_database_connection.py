@@ -75,10 +75,6 @@ class TestDatabaseIntegration:
                 password="test_hash",
                 role=UserRole.USER,
                 is_verified=True,
-                # Keep old fields for compatibility
-                nom="TestUser",
-                prenom="Integration",
-                localisation="Test City",
             )
 
             db.add(test_user)
@@ -122,11 +118,11 @@ class TestDatabaseIntegration:
             unique_email = f"unique_test_{id(db)}@example.com"
 
             user1 = User(
-                nom="User1",
-                prenom="Test",
+                first_name="Test",
+                last_name="User1",
                 email=unique_email,
                 telephone="0123456789",
-                localisation="Test City",
+                location="Test City",
                 password="test_hash",
                 role=UserRole.USER,
             )
@@ -136,11 +132,11 @@ class TestDatabaseIntegration:
 
             # Essayer d'insérer un deuxième utilisateur avec le même email
             user2 = User(
-                nom="User2",
-                prenom="Test",
+                first_name="Test",
+                last_name="User2",
                 email=unique_email,  # Même email
                 telephone="0123456789",
-                localisation="Test City",
+                location="Test City",
                 password="test_hash",
                 role=UserRole.USER,
             )

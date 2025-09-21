@@ -6,11 +6,8 @@ from utils.database import Base
 class Plant(Base):
     __tablename__ = "plants"
     id = Column(Integer, primary_key=True, autoincrement=True)
-    # Anciens champs français (compatibilité temporaire)
-    nom = Column(String, nullable=False)
-    espece = Column(String, nullable=True)
-    # Nouveaux champs anglais
-    name = Column(String, nullable=True)
+    # Champs anglais standard
+    name = Column(String, nullable=False)
     species = Column(String, nullable=True)
     description = Column(String, nullable=True)
     photo_base64 = Column(Text, nullable=True)  # Image encodée en Base64

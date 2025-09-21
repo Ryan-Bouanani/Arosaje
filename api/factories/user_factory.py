@@ -34,10 +34,6 @@ class UserFactory(BaseFactory):
     first_name = factory.Faker('first_name', locale='fr_FR')
     last_name = factory.Faker('last_name', locale='fr_FR')
 
-    # Compatibilité avec colonnes françaises existantes
-    prenom = factory.LazyAttribute(lambda obj: obj.first_name)
-    nom = factory.LazyAttribute(lambda obj: obj.last_name)
-
     # Email généré à partir du nom (évite les doublons)
     email = factory.LazyAttribute(
         lambda obj: random_french_email(obj.first_name, obj.last_name)
@@ -48,7 +44,6 @@ class UserFactory(BaseFactory):
 
     # Localisation française
     location = factory.LazyFunction(random_french_city)
-    localisation = factory.LazyAttribute(lambda obj: obj.location)  # Compatibilité
 
     # Téléphone français
     telephone = factory.LazyFunction(random_french_phone)

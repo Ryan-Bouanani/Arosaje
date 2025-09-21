@@ -1,39 +1,50 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-Script pour exécuter les seeders factory_boy + Faker directement en production
-Utilise la base Neon PostgreSQL et génère des données françaises réalistes
+Script simplifie pour seeder la production directement
 """
-
-import sys
 import os
+import sys
 from pathlib import Path
 
-# Ajouter le répertoire courant au path pour les imports
+# Configuration pour la production
+os.environ["DATABASE_URL"] = "postgresql://neondb_owner:npg_ixk4tgXnGJZ9@ep-spring-bonus-agd7s9t1-pooler.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require"
+os.environ["RENDER"] = "true"
+
+# Ajouter le path
 sys.path.append(str(Path(__file__).parent))
 
-from seeders.run import SeedManager
-
 def main():
-    """Exécute le scénario demo en production"""
-    print("Execution des seeders factory_boy + Faker en PRODUCTION")
-    print("Base: Neon PostgreSQL")
-    print("Donnees: Francaises realistes via Faker\n")
+    print("Seed Production A'rosa-je")
+    print("=" * 40)
 
     try:
+        from seeders.run import SeedManager
+        from seeders import Statistics
+
+        print("Etat initial:")
+        Statistics.show_database_stats()
+
+        print("\nLancement dev scenario...")
         manager = SeedManager()
-        success = manager.run_scenario('demo')
+        success = manager.run_scenario('dev')
 
         if success:
-            print("\nSeeders factory_boy executes avec succes en production !")
-            print("Scenario demo: 20 users + 8 plantes + gardes/conseils")
-            print("Application prete: https://ryan-bouanani.github.io/Arosaje/")
+            print("\nProduction seedee !")
+            print("\nEtat final:")
+            Statistics.show_database_stats()
+
+            print("\nComptes:")
+            print("  root@arosaje.fr / epsi691")
+            print("  user@arosaje.fr / epsi691")
+            print("  botanist@arosaje.fr / epsi691")
         else:
-            print("\nErreur lors de l'execution des seeders")
-            sys.exit(1)
+            print("Erreur")
 
     except Exception as e:
-        print(f"\nERREUR: {e}")
-        sys.exit(1)
+        print(f"ERREUR: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     main()

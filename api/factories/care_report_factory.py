@@ -65,7 +65,7 @@ class CareReportFactory(BaseFactory):
         from factories.plant_factory import PlantFactory
 
         if hasattr(self.plant_care, 'plant') and self.plant_care.plant:
-            plant_name = self.plant_care.plant.nom
+            plant_name = self.plant_care.plant.name
             image = PlantFactory._get_plant_image(plant_name)
 
             if image and image != 'data:image/jpeg;base64,placeholder':
@@ -113,7 +113,7 @@ class CareReportFactory(BaseFactory):
     def description(self):
         """Description basée sur la plante et les niveaux de santé"""
         if hasattr(self.plant_care, 'plant') and self.plant_care.plant:
-            plant_name = self.plant_care.plant.nom
+            plant_name = self.plant_care.plant.name
         else:
             plant_name = "la plante"
 

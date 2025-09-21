@@ -20,7 +20,7 @@ class PlantFactory(BaseFactory, ImageMixin):
         plant = PlantFactory()
 
         # Plante spécifique
-        monstera = PlantFactory(nom="Monstera Deliciosa")
+        monstera = PlantFactory(name="Monstera Deliciosa")
 
         # Lot de plantes
         plants = PlantFactory.create_batch(8)  # Une pour chaque image
@@ -78,24 +78,22 @@ class PlantFactory(BaseFactory, ImageMixin):
     }
 
     # Choix aléatoire d'une plante parmi les 8 disponibles
-    nom = factory.LazyFunction(
+    name = factory.LazyFunction(
         lambda: random.choice(list(PlantFactory.PLANT_IMAGE_MAPPING.keys()))
     )
-    name = factory.LazyAttribute(lambda obj: obj.nom)
 
     # Espèce et description basées sur le choix
-    espece = factory.LazyAttribute(
-        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.nom]['species']
+    species = factory.LazyAttribute(
+        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.name]['species']
     )
-    species = factory.LazyAttribute(lambda obj: obj.espece)
 
     description = factory.LazyAttribute(
-        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.nom]['description']
+        lambda obj: PlantFactory.PLANT_IMAGE_MAPPING[obj.name]['description']
     )
 
     # Image en base64 correspondante
     photo_base64 = factory.LazyAttribute(
-        lambda obj: PlantFactory._get_plant_image(obj.nom)
+        lambda obj: PlantFactory._get_plant_image(obj.name)
     )
 
     # Propriétaire aléatoire avec priorité aux comptes de base
@@ -133,7 +131,7 @@ class PlantFactory(BaseFactory, ImageMixin):
         """
         plants = []
         for plant_name in cls.PLANT_IMAGE_MAPPING.keys():
-            plant = cls.create(nom=plant_name, **kwargs)
+            plant = cls.create(name=plant_name, **kwargs)
             plants.append(plant)
         return plants
 
@@ -148,39 +146,39 @@ class PlantFactory(BaseFactory, ImageMixin):
         if plant_name not in cls.PLANT_IMAGE_MAPPING:
             raise ValueError(f"Plante inconnue: {plant_name}. Disponibles: {list(cls.PLANT_IMAGE_MAPPING.keys())}")
 
-        return cls.create(nom=plant_name, **kwargs)
+        return cls.create(name=plant_name, **kwargs)
 
 class MonsteraFactory(PlantFactory):
     """Factory spécialisée pour Monstera Deliciosa"""
-    nom = "Monstera Deliciosa"
+    name = "Monstera Deliciosa"
 
 class FicusFactory(PlantFactory):
     """Factory spécialisée pour Ficus Lyrata"""
-    nom = "Ficus Lyrata"
+    name = "Ficus Lyrata"
 
 class SansevieriaFactory(PlantFactory):
     """Factory spécialisée pour Sansevieria Trifasciata"""
-    nom = "Sansevieria Trifasciata"
+    name = "Sansevieria Trifasciata"
 
 class PothosFactory(PlantFactory):
     """Factory spécialisée pour Pothos Doré"""
-    nom = "Pothos Doré"
+    name = "Pothos Doré"
 
 class ZamioculcasFactory(PlantFactory):
     """Factory spécialisée pour Zamioculcas Zamiifolia"""
-    nom = "Zamioculcas Zamiifolia"
+    name = "Zamioculcas Zamiifolia"
 
 class ChlorophytumFactory(PlantFactory):
     """Factory spécialisée pour Chlorophytum Comosum"""
-    nom = "Chlorophytum Comosum"
+    name = "Chlorophytum Comosum"
 
 class StrelitziaFactory(PlantFactory):
     """Factory spécialisée pour Strelitzia Reginae"""
-    nom = "Strelitzia Reginae"
+    name = "Strelitzia Reginae"
 
 class DracaenaFactory(PlantFactory):
     """Factory spécialisée pour Dracaena Marginata"""
-    nom = "Dracaena Marginata"
+    name = "Dracaena Marginata"
 
 # Exports
 __all__ = [

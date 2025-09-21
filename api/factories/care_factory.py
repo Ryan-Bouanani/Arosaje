@@ -165,7 +165,7 @@ class PlantCareFactory(BaseFactory):
     @factory.lazy_attribute
     def care_instructions(self):
         """Instructions basées sur la plante et le scénario"""
-        plant_name = self.plant.nom if hasattr(self.plant, 'nom') else "cette plante"
+        plant_name = self.plant.name if hasattr(self.plant, 'name') else "cette plante"
 
         base_instructions = {
             'Monstera Deliciosa': "Arroser 2 fois par semaine, exposition indirecte, vaporiser les feuilles",
@@ -235,7 +235,7 @@ class UrgentCareFactory(PlantCareFactory):
     )
 
     care_instructions = factory.LazyAttribute(
-        lambda obj: f"URGENCE - Départ imminent ! {obj.plant.nom} nécessite des soins attentifs."
+        lambda obj: f"URGENCE - Départ imminent ! {obj.plant.name} nécessite des soins attentifs."
     )
 
 # Exports

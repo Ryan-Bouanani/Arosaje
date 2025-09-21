@@ -34,8 +34,28 @@ class PlantBase(BaseModel):
     name: Optional[str] = None
     species: Optional[str] = None
     photo: Optional[str] = None
-    photo_base64: Optional[str] = None
+    # PERFORMANCE: Exclure photo_base64 de la liste (images énormes)
+    # photo_base64: Optional[str] = None
     # Anciens champs français (compatibilité temporaire)
+    nom: Optional[str] = None
+    espece: Optional[str] = None
+
+    def model_post_init(self, __context) -> None:
+        """Map les champs français vers anglais pour compatibilité frontend"""
+        if self.name is None and self.nom:
+            self.name = self.nom
+        if self.species is None and self.espece:
+            self.species = self.espece
+
+    model_config = {"from_attributes": True}
+
+
+class PlantLightweight(BaseModel):
+    """Version allégée pour les listes - sans images base64"""
+    id: int
+    name: Optional[str] = None
+    species: Optional[str] = None
+    # Anciens champs français (compatibilité)
     nom: Optional[str] = None
     espece: Optional[str] = None
 
@@ -86,6 +106,22 @@ class PlantCareInDB(PlantCareBase):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     plant: PlantBase
+    owner: Optional[UserBase] = None
+    caretaker: Optional[UserBase] = None
+
+    model_config = {"from_attributes": True}
+
+
+class PlantCareList(PlantCareBase):
+    """Version optimisée pour les listes - sans images base64"""
+    id: int
+    owner_id: int
+    caretaker_id: Optional[int] = None
+    status: CareStatus = CareStatus.PENDING
+    conversation_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    plant: PlantLightweight
     owner: Optional[UserBase] = None
     caretaker: Optional[UserBase] = None
 

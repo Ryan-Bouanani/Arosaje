@@ -11,7 +11,7 @@ from crud.plant import plant as plant_crud
 from crud.user import user as user_crud
 from models.plant_care import CareStatus, PlantCare as PlantCareModel
 from models.user import User as UserModel
-from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB
+from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB, PlantCareList
 from schemas.user import User
 from crud.message import message
 from models.message import ConversationType
@@ -88,7 +88,7 @@ async def create_plant_care(
         )
 
 
-@router.get("/", response_model=List[PlantCare])
+@router.get("/", response_model=List[PlantCareList])
 def read_plant_cares(
     db: Session = Depends(get_db),
     skip: int = 0,

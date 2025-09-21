@@ -44,9 +44,15 @@ class CRUDPlantCare:
         status: Optional[CareStatus] = None
     ) -> List[PlantCare]:
         """Récupérer plusieurs gardes avec filtres optionnels"""
+        from sqlalchemy.orm import load_only
+        from models.plant import Plant
+
         query = db.query(PlantCare).options(
             joinedload(PlantCare.owner),
-            joinedload(PlantCare.plant),
+            # PERFORMANCE: Charger la plante SANS photo_base64 (images énormes)
+            joinedload(PlantCare.plant).load_only(
+                Plant.id, Plant.name, Plant.species, Plant.description, Plant.owner_id
+            ),
             joinedload(PlantCare.caretaker)
         )
 
@@ -70,11 +76,17 @@ class CRUDPlantCare:
         self, db: Session, *, current_user_id: int, skip: int = 0, limit: int = 100
     ) -> List[PlantCare]:
         """Récupérer les gardes disponibles pour l'utilisateur (en attente et créées par d'autres utilisateurs)"""
+        from sqlalchemy.orm import load_only
+        from models.plant import Plant
+
         return (
             db.query(PlantCare)
             .options(
                 joinedload(PlantCare.owner),
-                joinedload(PlantCare.plant),
+                # PERFORMANCE: Charger la plante SANS photo_base64 (images énormes)
+                joinedload(PlantCare.plant).load_only(
+                    Plant.id, Plant.name, Plant.species, Plant.description, Plant.owner_id
+                ),
                 joinedload(PlantCare.caretaker)
             )
             .filter(PlantCare.status == CareStatus.PENDING)

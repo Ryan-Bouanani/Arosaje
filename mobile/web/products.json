@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "name": "A'rosa-je",
+  "description": "Application de garde de plantes",
+  "features": [
+    "plant_care",
+    "botanical_advice",
+    "messaging",
+    "geolocation"
+  ],
+  "environment": "production"
+}

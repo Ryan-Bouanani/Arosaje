@@ -23,6 +23,7 @@ from models.user import User
 
 from utils.settings import PROJECT_NAME, VERSION
 from utils.monitoring import monitoring_middleware
+from middleware.security import global_security_middleware
 from services.rgpd_cleanup_service import RGPDCleanupService
 
 app = FastAPI(title=PROJECT_NAME, version=VERSION)
@@ -52,8 +53,11 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000",  # Frontend web
         "http://localhost:5001",  # Mobile app
+        "http://localhost:5007",  # Mobile app (nouveau port)
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5001",
+        "http://127.0.0.1:5007",
+        "https://ryan-bouanani.github.io",  # GitHub Pages production
         "*",  # Temporaire pour debug complet
     ],
     allow_credentials=True,
@@ -74,6 +78,9 @@ app.add_middleware(
 )
 
 app.middleware("http")(monitoring_middleware)
+
+# Middleware de sécurité global (authentification automatique)
+app.middleware("http")(global_security_middleware)
 
 
 @app.middleware("http")

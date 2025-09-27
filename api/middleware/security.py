@@ -210,6 +210,11 @@ class SecurityMiddleware:
                             )
                     # GET autorisé pour tous les utilisateurs connectés
 
+                elif path.startswith("/plant-care"):
+                    # Gestion des gardes de plantes : accessible à tous les utilisateurs connectés
+                    # Pas de restriction spéciale par rôle
+                    pass
+
             finally:
                 db.close()
 

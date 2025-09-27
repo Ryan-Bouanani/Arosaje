@@ -25,28 +25,63 @@ class CRUDMessage:
         initiator_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """Crée une nouvelle conversation avec les participants spécifiés, ou retourne une conversation existante."""
-        
+        import logging
+        import time
+
+        logger = logging.getLogger(__name__)
+        start_time = time.time()
+
+        logger.info(f"🔵 CRUD create_conversation: DEBUT")
+        logger.info(f"🔵 CRUD create_conversation: participant_ids={participant_ids}")
+        logger.info(f"🔵 CRUD create_conversation: type={conversation_type}, related_id={related_id}")
+
         # Vérifier s'il existe déjà une conversation avec les mêmes paramètres
         if conversation_type == ConversationType.PLANT_CARE and related_id:
+            check_start = time.time()
             existing_conversation = self._find_existing_plant_care_conversation(db, participant_ids, related_id)
+            check_duration = (time.time() - check_start) * 1000
+            logger.info(f"🔵 CRUD: Vérification conversation existante: {check_duration:.2f}ms")
+
             if existing_conversation:
+                total_duration = (time.time() - start_time) * 1000
+                logger.info(f"🔵 CRUD: Conversation existante trouvée en {total_duration:.2f}ms")
                 return existing_conversation
-        
+
+        logger.info(f"🔵 CRUD: Création nouvelle conversation...")
         db_conversation = Conversation(type=conversation_type, related_id=related_id)
         db.add(db_conversation)
-        db.flush()
 
-        for user_id in participant_ids:
+        flush_start = time.time()
+        db.flush()
+        flush_duration = (time.time() - flush_start) * 1000
+        logger.info(f"🔵 CRUD: db.flush() en {flush_duration:.2f}ms - conversation_id={db_conversation.id}")
+
+        logger.info(f"🔵 CRUD: Ajout des participants...")
+        for i, user_id in enumerate(participant_ids):
             participant = ConversationParticipant(
                 conversation_id=db_conversation.id, user_id=user_id
             )
             db.add(participant)
+            logger.info(f"🔵 CRUD: Participant {i+1}/{len(participant_ids)} ajouté (user_id={user_id})")
 
+        commit_start = time.time()
         db.commit()
+        commit_duration = (time.time() - commit_start) * 1000
+        logger.info(f"🔵 CRUD: db.commit() en {commit_duration:.2f}ms")
+
         db.refresh(db_conversation)
-        
+
         # Utiliser la méthode commune pour construire la réponse
-        return self._build_conversation_response(db, db_conversation)
+        response_start = time.time()
+        result = self._build_conversation_response(db, db_conversation)
+        response_duration = (time.time() - response_start) * 1000
+
+        total_duration = (time.time() - start_time) * 1000
+        logger.info(f"🔵 CRUD: _build_conversation_response en {response_duration:.2f}ms")
+        logger.info(f"🔵 CRUD create_conversation: SUCCESS total {total_duration:.2f}ms")
+        logger.info(f"🔵 CRUD: result participants={[p.get('user', {}).get('id') for p in result.get('participants', [])]}")
+
+        return result
 
     def _find_existing_plant_care_conversation(
         self, db: Session, participant_ids: List[int], related_id: int
@@ -136,8 +171,8 @@ class CRUDMessage:
                 if plant:
                     conv_dict["plant_info"] = {
                         "id": plant.id,
-                        "nom": plant.name,
-                        "espece": plant.species,
+                        "name": plant.name,
+                        "species": plant.species,
                     }
 
                 conv_dict["plant_care_info"] = {
@@ -216,9 +251,7 @@ class CRUDMessage:
                     db.query(User)
                     .join(ConversationParticipant)
                     .filter(
-                        ConversationParticipant.conversation_id == conversation.id,
-                        ConversationParticipant.user_id
-                        != user_id,  # Exclure l'utilisateur actuel
+                        ConversationParticipant.conversation_id == conversation.id
                     )
                     .all()
                 )
@@ -244,6 +277,7 @@ class CRUDMessage:
                     conv_dict["participants"].append(
                         {
                             "id": participant.id,
+                            "user_id": participant.id,  # Pour compatibilité Flutter
                             "nom": participant.last_name,
                             "prenom": participant.first_name,
                             "email": participant.email,
@@ -272,8 +306,8 @@ class CRUDMessage:
                         if plant:
                             conv_dict["plant_info"] = {
                                 "id": plant.id,
-                                "nom": plant.name,
-                                "espece": plant.species,
+                                "name": plant.name,
+                                "species": plant.species,
                             }
 
                         conv_dict["plant_care_info"] = {

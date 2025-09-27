@@ -40,8 +40,8 @@ class ConversationParticipant {
 
   factory ConversationParticipant.fromJson(Map<String, dynamic> json) {
     final userId = json['user_id'] ?? json['id'] ?? 0;
-    final lastName = json['last_name'] ?? '';
-    final firstName = json['first_name'] ?? '';
+    final lastName = json['last_name'] ?? json['nom'] ?? '';
+    final firstName = json['first_name'] ?? json['prenom'] ?? '';
     final email = json['email'] ?? '';
     
     return ConversationParticipant(
@@ -243,17 +243,17 @@ class Conversation {
         (p) => p.userId != currentUserId,
         orElse: () => participants.first, // Fallback si pas trouvé
       );
-      
+
       // Construire le nom complet
       final firstName = otherParticipant.firstName ?? '';
       final lastName = otherParticipant.lastName ?? '';
       final fullName = '$firstName $lastName'.trim();
-      
+
       if (fullName.isNotEmpty) {
         participantName = fullName;
       }
     }
-    
+
     // Construire le titre avec contexte
     if (type == ConversationType.plantCare && plantInfo != null) {
       final plant = plantInfo!;
@@ -261,7 +261,7 @@ class Conversation {
     } else if (type == ConversationType.botanicalAdvice) {
       return '$participantName - Conseil botanique';
     }
-    
+
     // Fallback
     return participantName;
   }

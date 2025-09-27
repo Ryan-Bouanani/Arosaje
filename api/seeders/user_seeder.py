@@ -149,9 +149,21 @@ class UserSeeder(BaseSeeder):
                 'last_name': 'Test'
             },
             {
+                'email': 'gardien@arosaje.fr',
+                'role': UserRole.USER,
+                'first_name': 'Gardien',
+                'last_name': 'Test'
+            },
+            {
                 'email': 'botanist@arosaje.fr',
                 'role': UserRole.BOTANIST,
                 'first_name': 'Botanist',
+                'last_name': 'Expert'
+            },
+            {
+                'email': 'botanist2@arosaje.fr',
+                'role': UserRole.BOTANIST,
+                'first_name': 'Botanist2',
                 'last_name': 'Expert'
             }
         ]

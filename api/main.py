@@ -51,11 +51,7 @@ finally:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",  # Frontend web
-        "http://localhost:5001",  # Mobile app
-        "http://localhost:5007",  # Mobile app (nouveau port)
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:5001",
+        "http://localhost:5007",  # Mobile app Flutter
         "http://127.0.0.1:5007",
         "https://ryan-bouanani.github.io",  # GitHub Pages production
         "*",  # Temporaire pour debug complet

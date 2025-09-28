@@ -83,34 +83,12 @@ def run_migrations_online() -> None:
     configuration = config.get_section(config.config_ini_section, {})
     configuration["sqlalchemy.url"] = DATABASE_URL
 
-    # Configuration SSL robuste et configurable
-    def get_ssl_mode_alembic(database_url: str) -> str:
-        """Détermine le mode SSL de façon robuste pour Alembic"""
-        # 1. Variable explicite (priorité maximale)
-        explicit_ssl = os.getenv("DB_SSL_MODE")
-        if explicit_ssl:
-            return explicit_ssl
-
-        # 2. Détection automatique améliorée
-        from urllib.parse import urlparse
-        parsed = urlparse(database_url)
-
-        # Environnements locaux étendus
-        local_indicators = [
-            'localhost', '127.0.0.1', '::1',  # IP locales
-            'db', 'postgres',  # Noms containers Docker
-            '.local'  # Domaines locaux
-        ]
-
-        hostname = parsed.hostname or ""
-        if any(indicator in hostname.lower() for indicator in local_indicators):
-            return "disable"
-
-        # 3. Production par défaut (sécurisé)
-        return "require"
-
+    # Configuration SSL adaptative - détection simple
     connect_args = {"application_name": "arosaje-alembic"}
-    connect_args["sslmode"] = get_ssl_mode_alembic(DATABASE_URL)
+    if "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL or "postgres:" in DATABASE_URL:
+        connect_args["sslmode"] = "disable"
+    else:
+        connect_args["sslmode"] = "require"
 
     connectable = engine_from_config(
         configuration,

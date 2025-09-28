@@ -17,34 +17,13 @@ if not DATABASE_URL:
 # Configuration du moteur SQLAlchemy - adaptatif local/production
 connect_args = {"application_name": "arosaje-fastapi"}
 
-# Configuration SSL adaptative et robuste
-def get_ssl_mode(database_url: str) -> str:
-    """Détermine le mode SSL de façon robuste et configurable"""
-    # 1. Variable explicite (priorité maximale)
-    explicit_ssl = os.getenv("DB_SSL_MODE")
-    if explicit_ssl:
-        return explicit_ssl
-
-    # 2. Détection automatique améliorée (fallback)
-    from urllib.parse import urlparse
-    parsed = urlparse(database_url)
-
-    # Environnements locaux étendus
-    local_indicators = [
-        'localhost', '127.0.0.1', '::1',  # IP locales
-        'db', 'postgres',  # Noms containers Docker
-        '.local'  # Domaines locaux
-    ]
-
-    hostname = parsed.hostname or ""
-    if any(indicator in hostname.lower() for indicator in local_indicators):
-        return "disable"
-
-    # 3. Production par défaut (sécurisé)
-    return "require"
-
-# Appliquer la configuration SSL
-connect_args["sslmode"] = get_ssl_mode(DATABASE_URL)
+# Configuration SSL adaptative - détection simple et fiable
+if "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL or "postgres:" in DATABASE_URL:
+    # Développement local - pas de SSL
+    connect_args["sslmode"] = "disable"
+else:
+    # Production (cloud) - SSL requis
+    connect_args["sslmode"] = "require"
 
 engine = create_engine(
     DATABASE_URL,

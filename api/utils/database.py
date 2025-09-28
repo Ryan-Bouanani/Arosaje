@@ -17,12 +17,12 @@ if not DATABASE_URL:
 # Configuration du moteur SQLAlchemy - adaptatif local/production
 connect_args = {"application_name": "arosaje-fastapi"}
 
-# Configuration SSL adaptative - détection simple et fiable
+# Configuration SSL adaptative
 if "localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL or "postgres:" in DATABASE_URL:
     # Développement local - pas de SSL
     connect_args["sslmode"] = "disable"
 else:
-    # Production (cloud) - SSL requis
+    # Production (Neon) - SSL requis
     connect_args["sslmode"] = "require"
 
 engine = create_engine(

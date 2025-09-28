@@ -34,12 +34,12 @@ scrape_configs:
     metrics_path: '/metrics'
     scrape_interval: 10s
 
-  # Application Web Next.js (si métriques exposées)
-  - job_name: 'web'
-    static_configs:
-      - targets: ['web:3000']
-    metrics_path: '/api/metrics'
-    scrape_interval: 30s
+  # Application Web Next.js (désactivé - service non utilisé)
+  # - job_name: 'web'
+  #   static_configs:
+  #     - targets: ['web:3000']
+  #   metrics_path: '/api/metrics'
+  #   scrape_interval: 30s
 
   # InfluxDB métriques
   - job_name: 'influxdb'
@@ -47,14 +47,14 @@ scrape_configs:
       - targets: ['influxdb:8086']
     metrics_path: '/metrics'
 
-  # PostgreSQL principal (avec postgres_exporter si configuré)
-  - job_name: 'postgres'
-    static_configs:
-      - targets: ['postgres:5432']
-    # Nécessiterait postgres_exporter
+  # PostgreSQL principal (désactivé - nécessiterait postgres_exporter)
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres:5432']
+  #   # Nécessiterait postgres_exporter
 
-  # Redis métriques (avec redis_exporter si configuré)  
-  - job_name: 'redis'
-    static_configs:
-      - targets: ['api-redis:6379']
-    # Nécessiterait redis_exporter 
+  # Redis métriques (désactivé - nécessiterait redis_exporter)
+  # - job_name: 'redis'
+  #   static_configs:
+  #     - targets: ['api-redis:6379']
+  #   # Nécessiterait redis_exporter 

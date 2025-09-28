@@ -38,6 +38,7 @@ class SecurityMiddleware:
 
         # Santé et monitoring
         "/health",
+        "/metrics",
         "/",
 
         # WebSocket (authentification gérée séparément)

@@ -243,7 +243,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         
                         _buildActionCard(
                           'Surveillance Système',
-                          'Monitoring et métriques',
+                          'Monitoring et métriques\nadmin / arosaje_grafana_2024',
                           Icons.info,
                           () async {
                             final url = Uri.parse('http://localhost:3001');

@@ -76,22 +76,22 @@ def create_production_plants(db: Session):
         return 0
 
     plants_data = [
-        {"nom": "Monstera Deliciosa", "espece": "Monstera deliciosa", "description": "Plante tropicale aux feuilles perforées"},
-        {"nom": "Ficus Lyrata", "espece": "Ficus lyrata", "description": "Figuier lyre aux grandes feuilles"},
-        {"nom": "Sansevieria", "espece": "Sansevieria trifasciata", "description": "Langue de belle-mère, très résistante"},
-        {"nom": "Pothos Doré", "espece": "Epipremnum aureum", "description": "Plante grimpante facile d'entretien"},
-        {"nom": "ZZ Plant", "espece": "Zamioculcas zamiifolia", "description": "Plante ZZ, parfaite pour débutants"},
-        {"nom": "Chlorophytum", "espece": "Chlorophytum comosum", "description": "Plante araignée, purificatrice d'air"},
-        {"nom": "Philodendron", "espece": "Philodendron hederaceum", "description": "Philodendron à feuilles en cœur"},
-        {"nom": "Dracaena", "espece": "Dracaena marginata", "description": "Dragonnier de Madagascar, très décoratif"}
+        {"name": "Monstera Deliciosa", "species": "Monstera deliciosa", "description": "Plante tropicale aux feuilles perforées"},
+        {"name": "Ficus Lyrata", "species": "Ficus lyrata", "description": "Figuier lyre aux grandes feuilles"},
+        {"name": "Sansevieria", "species": "Sansevieria trifasciata", "description": "Langue de belle-mère, très résistante"},
+        {"name": "Pothos Doré", "species": "Epipremnum aureum", "description": "Plante grimpante facile d'entretien"},
+        {"name": "ZZ Plant", "species": "Zamioculcas zamiifolia", "description": "Plante ZZ, parfaite pour débutants"},
+        {"name": "Chlorophytum", "species": "Chlorophytum comosum", "description": "Plante araignée, purificatrice d'air"},
+        {"name": "Philodendron", "species": "Philodendron hederaceum", "description": "Philodendron à feuilles en cœur"},
+        {"name": "Dracaena", "species": "Dracaena marginata", "description": "Dragonnier de Madagascar, très décoratif"}
     ]
 
     created = 0
     for plant_data in plants_data:
         try:
             plant = Plant(
-                name=plant_data["nom"],
-                species=plant_data["espece"],
+                name=plant_data["name"],
+                species=plant_data["species"],
                 description=plant_data["description"],
                 owner_id=owner.id,
                 photo_base64=None  # Pas d'images pour l'instant

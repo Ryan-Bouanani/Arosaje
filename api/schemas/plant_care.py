@@ -11,42 +11,23 @@ class UserBase(BaseModel):
     last_name: str
     email: str
     location: Optional[str] = None
-    # Anciens champs français (compatibilité temporaire)
-    nom: Optional[str] = None
-    prenom: Optional[str] = None
-    localisation: Optional[str] = None
 
     @property
     def username(self) -> str:
         """Retourne le nom complet comme username"""
-        # Utiliser les nouveaux champs anglais en priorité
-        if hasattr(self, 'first_name') and hasattr(self, 'last_name'):
-            return f"{self.first_name} {self.last_name}"
-        # Fallback vers les anciens champs français
-        return f"{self.first_name or self.prenom or ''} {self.last_name or self.nom or ''}"
+        return f"{self.first_name} {self.last_name}"
 
     model_config = {"from_attributes": True}
 
 
 class PlantBase(BaseModel):
     id: int
-    # Nouveaux champs anglais - compatibilité avec données existantes
     name: Optional[str] = None
     species: Optional[str] = None
     photo: Optional[str] = None
     # Images: full et thumbnail pour optimisation
     photo_base64: Optional[str] = None
     photo_thumbnail: Optional[str] = None
-    # Anciens champs français (compatibilité temporaire)
-    nom: Optional[str] = None
-    espece: Optional[str] = None
-
-    def model_post_init(self, __context) -> None:
-        """Map les champs français vers anglais pour compatibilité frontend"""
-        if self.name is None and self.nom:
-            self.name = self.nom
-        if self.species is None and self.espece:
-            self.species = self.espece
 
     model_config = {"from_attributes": True}
 
@@ -59,16 +40,6 @@ class PlantOptimized(BaseModel):
     # Image optimisée: thumbnail si disponible, sinon photo_base64 en fallback
     photo_thumbnail: Optional[str] = None
     photo_base64: Optional[str] = None  # Fallback si pas de thumbnail
-    # Anciens champs français (compatibilité)
-    nom: Optional[str] = None
-    espece: Optional[str] = None
-
-    def model_post_init(self, __context) -> None:
-        """Map les champs français vers anglais + gestion image optimisée"""
-        if self.name is None and self.nom:
-            self.name = self.nom
-        if self.species is None and self.espece:
-            self.species = self.espece
 
     model_config = {"from_attributes": True}
 
@@ -79,8 +50,6 @@ class PlantCareBase(BaseModel):
     end_date: datetime
     care_instructions: Optional[str] = None
     location: Optional[str] = None
-    # Ancien champ français (compatibilité temporaire)
-    localisation: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
 
@@ -99,6 +68,15 @@ class PlantCareUpdate(BaseModel):
     status: Optional[CareStatus] = None
     care_instructions: Optional[str] = None
     conversation_id: Optional[int] = None
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    location: Optional[str] = None
+
+    @field_validator("end_date")
+    def end_date_must_be_after_start_date(cls, v, info):
+        if v and "start_date" in info.data and info.data["start_date"] and v <= info.data["start_date"]:
+            raise ValueError("La date de fin doit être postérieure à la date de début")
+        return v
 
 
 class PlantCareInDB(PlantCareBase):

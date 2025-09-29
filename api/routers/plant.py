@@ -27,8 +27,8 @@ def read_plants(
 
 @router.post("/", response_model=Plant)
 async def create_plant(
-    nom: str = Form(...),
-    espece: str = Form(None),
+    name: str = Form(...),
+    species: str = Form(None),
     photo: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -37,10 +37,9 @@ async def create_plant(
     try:
         # Créer l'objet PlantCreate avec les données du formulaire
         plant_data = {
-            "nom": nom, 
-            "espece": espece, 
+            "name": name,
+            "species": species,
             "owner_id": current_user.id,
-            "photo": None,  # Initialiser à None par défaut
             "photo_base64": None  # Initialiser à None par défaut
         }
 
@@ -81,7 +80,7 @@ async def create_plant(
 
         # Créer la plante
         plant_in = PlantCreate(**plant_data)
-        result = plant.create(db=db, obj_in=plant_in)
+        result = plant.create(db=db, obj_in=plant_in, owner_id=current_user.id)
         return result
     except Exception as e:
         import traceback

@@ -144,8 +144,8 @@ class CRUDMessage:
             conv_dict["participants"].append({
                 "id": participant.id,
                 "user_id": participant.id,  # Pour compatibilité
-                "nom": participant.last_name,
-                "prenom": participant.first_name,
+                "last_name": participant.last_name,
+                "first_name": participant.first_name,
                 "email": participant.email,
             })
 
@@ -278,8 +278,8 @@ class CRUDMessage:
                         {
                             "id": participant.id,
                             "user_id": participant.id,  # Pour compatibilité Flutter
-                            "nom": participant.last_name,
-                            "prenom": participant.first_name,
+                            "last_name": participant.last_name,
+                            "first_name": participant.first_name,
                             "email": participant.email,
                         }
                     )

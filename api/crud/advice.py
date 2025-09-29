@@ -29,8 +29,8 @@ class AdviceCRUD:
                     Plant.name.label("plant_name"),
                     Plant.species.label("plant_species"),
                     Plant.photo_base64.label("plant_photo_base64"),
-                    User.first_name.label("owner_prenom"),
-                    User.last_name.label("owner_nom"),
+                    User.first_name.label("owner_first_name"),
+                    User.last_name.label("owner_last_name"),
                     User.email.label("owner_email"),
                 )
                 .join(Plant, PlantCare.plant_id == Plant.id)
@@ -75,11 +75,11 @@ class AdviceCRUD:
                         else None
                     ),
                     "care_instructions": result.PlantCare.care_instructions,
-                    "localisation": result.PlantCare.location,
+                    "location": result.PlantCare.location,
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_photo_base64": result.plant_photo_base64,
-                    "owner_name": f"{result.owner_prenom} {result.owner_nom}",
+                    "owner_name": f"{result.owner_first_name} {result.owner_last_name}",
                     "owner_email": result.owner_email,
                     "priority": AdvicePriority.NORMAL.value,  # Par défaut
                     "current_advice": None,
@@ -120,8 +120,8 @@ class AdviceCRUD:
                 Plant.name.label("plant_name"),
                 Plant.species.label("plant_species"),
                 Plant.photo_base64.label("plant_photo_base64"),
-                User.first_name.label("owner_prenom"),
-                User.last_name.label("owner_nom"),
+                User.first_name.label("owner_first_name"),
+                User.last_name.label("owner_last_name"),
                 User.email.label("owner_email"),
             )
             .join(Plant, PlantCare.plant_id == Plant.id)
@@ -192,11 +192,11 @@ class AdviceCRUD:
                         else None
                     ),
                     "care_instructions": result.PlantCare.care_instructions,
-                    "localisation": result.PlantCare.location,
+                    "location": result.PlantCare.location,
                     "plant_name": result.plant_name,
                     "plant_species": result.plant_species,
                     "plant_photo_base64": result.plant_photo_base64,
-                    "owner_name": f"{result.owner_prenom} {result.owner_nom}",
+                    "owner_name": f"{result.owner_first_name} {result.owner_last_name}",
                     "owner_email": result.owner_email,
                     "priority": (
                         current_advice.priority.value

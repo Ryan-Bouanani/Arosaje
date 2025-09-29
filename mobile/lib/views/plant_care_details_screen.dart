@@ -53,6 +53,8 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
   final TextEditingController _instructionsController = TextEditingController();
   final TextEditingController _plantNameController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  DateTime? _selectedStartDate;
+  DateTime? _selectedEndDate;
   dynamic _newPlantImage;
 
   @override
@@ -104,6 +106,14 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         _instructionsController.text = details['care_instructions'] ?? '';
         _plantNameController.text = details['plant']?['name'] ?? '';
         _locationController.text = details['location'] ?? '';
+
+        // Initialiser les dates
+        if (details['start_date'] != null) {
+          _selectedStartDate = DateTime.parse(details['start_date']);
+        }
+        if (details['end_date'] != null) {
+          _selectedEndDate = DateTime.parse(details['end_date']);
+        }
       });
       
       // Charger les rapports de garde si on a les détails
@@ -616,6 +626,68 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
     }
   }
 
+  Future<void> _selectStartDate() async {
+    // Pour modification de garde existante, permettre dates passées d'un an
+    final DateTime firstAllowedDate = DateTime.now().subtract(const Duration(days: 365));
+    final DateTime maxDate = DateTime.now().add(const Duration(days: 365));
+
+    // Si on a une date sélectionnée, l'utiliser, sinon utiliser aujourd'hui
+    DateTime initialDate = _selectedStartDate ?? DateTime.now();
+
+    // S'assurer que initialDate est dans la plage autorisée
+    if (initialDate.isBefore(firstAllowedDate)) {
+      initialDate = firstAllowedDate;
+    } else if (initialDate.isAfter(maxDate)) {
+      initialDate = DateTime.now();
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstAllowedDate,
+      lastDate: maxDate,
+    );
+
+    if (picked != null && picked != _selectedStartDate) {
+      setState(() {
+        _selectedStartDate = picked;
+        // Si la date de fin est avant la nouvelle date de début, l'ajuster
+        if (_selectedEndDate != null && _selectedEndDate!.isBefore(picked)) {
+          _selectedEndDate = picked.add(const Duration(days: 1));
+        }
+      });
+    }
+  }
+
+  Future<void> _selectEndDate() async {
+    // Date minimale: le jour suivant la date de début ou demain si pas de date de début
+    final DateTime minDate = _selectedStartDate?.add(const Duration(days: 1)) ?? DateTime.now().add(const Duration(days: 1));
+    final DateTime maxDate = DateTime.now().add(const Duration(days: 365));
+
+    // Date initiale: la date de fin actuelle ou la date minimale
+    DateTime initialDate = _selectedEndDate ?? minDate;
+
+    // S'assurer que initialDate est dans la plage autorisée
+    if (initialDate.isBefore(minDate)) {
+      initialDate = minDate;
+    } else if (initialDate.isAfter(maxDate)) {
+      initialDate = minDate;
+    }
+
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: minDate,
+      lastDate: maxDate,
+    );
+
+    if (picked != null && picked != _selectedEndDate) {
+      setState(() {
+        _selectedEndDate = picked;
+      });
+    }
+  }
+
   void _toggleEditMode() {
     setState(() {
       _isEditMode = !_isEditMode;
@@ -624,6 +696,15 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
         _instructionsController.text = _careDetails!['care_instructions'] ?? '';
         _plantNameController.text = _careDetails!['plant']?['name'] ?? '';
         _locationController.text = _careDetails!['location'] ?? '';
+
+        // Restaurer les dates originales
+        if (_careDetails!['start_date'] != null) {
+          _selectedStartDate = DateTime.parse(_careDetails!['start_date']);
+        }
+        if (_careDetails!['end_date'] != null) {
+          _selectedEndDate = DateTime.parse(_careDetails!['end_date']);
+        }
+
         _newPlantImage = null;
       }
     });
@@ -635,23 +716,55 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
       final plantId = _careDetails!['plant']['id'];
       final currentPlantName = _careDetails!['plant']['name'];
       final newPlantName = _plantNameController.text.trim();
-      
+
       if (newPlantName.isNotEmpty && newPlantName != currentPlantName) {
         await _plantService.updatePlant(
           plantId: plantId,
           name: newPlantName,
         );
       }
-      
+
+      // Sauvegarder les modifications de la garde (dates, localisation, instructions)
+      final careId = _careDetails!['id'];
+      final currentLocation = _careDetails!['location'];
+      final currentInstructions = _careDetails!['care_instructions'];
+      final currentStartDate = _careDetails!['start_date'] != null ? DateTime.parse(_careDetails!['start_date']) : null;
+      final currentEndDate = _careDetails!['end_date'] != null ? DateTime.parse(_careDetails!['end_date']) : null;
+
+      final newLocation = _locationController.text.trim();
+      final newInstructions = _instructionsController.text.trim();
+
+      // Vérifier s'il y a des modifications à sauvegarder pour la garde
+      final hasLocationChanged = newLocation != (currentLocation ?? '');
+      final hasInstructionsChanged = newInstructions != (currentInstructions ?? '');
+      final hasStartDateChanged = _selectedStartDate != currentStartDate;
+      final hasEndDateChanged = _selectedEndDate != currentEndDate;
+
+      if (hasLocationChanged || hasInstructionsChanged || hasStartDateChanged || hasEndDateChanged) {
+        await _plantCareService.updatePlantCare(
+          careId: careId,
+          startDate: hasStartDateChanged ? _selectedStartDate : null,
+          endDate: hasEndDateChanged ? _selectedEndDate : null,
+          location: hasLocationChanged ? newLocation : null,
+          careInstructions: hasInstructionsChanged ? newInstructions : null,
+        );
+      }
+
       setState(() {
         _isEditMode = false;
         // Mettre à jour les détails avec les nouvelles valeurs sauvegardées
-        _careDetails!['care_instructions'] = _instructionsController.text;
+        _careDetails!['care_instructions'] = newInstructions;
         _careDetails!['plant']['name'] = newPlantName;
-        _careDetails!['location'] = _locationController.text;
+        _careDetails!['location'] = newLocation;
+        if (_selectedStartDate != null) {
+          _careDetails!['start_date'] = _selectedStartDate!.toIso8601String();
+        }
+        if (_selectedEndDate != null) {
+          _careDetails!['end_date'] = _selectedEndDate!.toIso8601String();
+        }
         // La photo sera gérée séparément si une nouvelle image est sélectionnée
       });
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Modifications sauvegardées avec succès!'),
@@ -1110,29 +1223,107 @@ class _PlantCareDetailsScreenState extends State<PlantCareDetailsScreen> {
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(color: Colors.blue[100]!),
                             ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Période de garde',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                if (_isEditMode && _isCurrentUserOwner()) ...[
+                                  // Mode édition - Sélecteurs de dates
+                                  Row(
                                     children: [
-                                      const Text(
-                                        'Période de garde',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue,
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Date de début',
+                                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            InkWell(
+                                              onTap: _selectStartDate,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(color: Colors.blue),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  color: Colors.white,
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      _selectedStartDate != null
+                                                          ? _formatDate(_selectedStartDate!.toIso8601String())
+                                                          : 'Sélectionner',
+                                                      style: const TextStyle(fontSize: 14),
+                                                    ),
+                                                    const Icon(Icons.calendar_today, size: 16, color: Colors.blue),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Du ${_formatDate(_careDetails!['start_date'])} au ${_formatDate(_careDetails!['end_date'])}',
-                                        style: const TextStyle(fontSize: 14),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'Date de fin',
+                                              style: TextStyle(fontSize: 12, color: Colors.grey),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            InkWell(
+                                              onTap: _selectEndDate,
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                                decoration: BoxDecoration(
+                                                  border: Border.all(color: Colors.blue),
+                                                  borderRadius: BorderRadius.circular(4),
+                                                  color: Colors.white,
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      _selectedEndDate != null
+                                                          ? _formatDate(_selectedEndDate!.toIso8601String())
+                                                          : 'Sélectionner',
+                                                      style: const TextStyle(fontSize: 14),
+                                                    ),
+                                                    const Icon(Icons.calendar_today, size: 16, color: Colors.blue),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ),
+                                ] else ...[
+                                  // Mode lecture - Affichage des dates
+                                  Text(
+                                    'Du ${_formatDate(_careDetails!['start_date'])} au ${_formatDate(_careDetails!['end_date'])}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
                               ],
                             ),
                           ),

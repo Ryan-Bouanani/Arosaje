@@ -235,6 +235,53 @@ class PlantCareService {
   }
 
 
+  Future<Map<String, dynamic>> updatePlantCare({
+    required int careId,
+    DateTime? startDate,
+    DateTime? endDate,
+    String? location,
+    String? careInstructions,
+  }) async {
+    final token = _storageService.getToken();
+    if (token == null) throw Exception('Non authentifié');
+
+    // Construire le body avec seulement les champs modifiés
+    final Map<String, dynamic> body = {};
+
+    if (startDate != null) {
+      body['start_date'] = startDate.toIso8601String();
+    }
+    if (endDate != null) {
+      body['end_date'] = endDate.toIso8601String();
+    }
+    if (location != null) {
+      body['location'] = location;
+    }
+    if (careInstructions != null) {
+      body['care_instructions'] = careInstructions;
+    }
+
+    final response = await http.put(
+      Uri.parse('$baseUrl/plant-care/$careId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 403) {
+      throw Exception('Vous n\'êtes pas autorisé à modifier cette garde');
+    } else if (response.statusCode == 400) {
+      final errorData = json.decode(response.body);
+      throw Exception(errorData['detail'] ?? 'Cette garde ne peut pas être modifiée');
+    } else {
+      throw Exception('Échec de la modification de la garde: ${response.statusCode}');
+    }
+  }
+
   Future<Map<String, dynamic>> getPlantCareDetailsByPlantId(int plantId) async {
     final token = _storageService.getToken();
     if (token == null) throw Exception('Non authentifié');

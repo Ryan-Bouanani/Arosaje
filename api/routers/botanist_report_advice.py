@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.role_dependencies import require_botanist
 from models.user import User, UserRole
 from models.care_report import CareReport as CareReportModel
 from crud import botanist_report_advice as crud_advice
@@ -21,15 +22,13 @@ router = APIRouter(prefix="/botanist-report-advice", tags=["botanist-report-advi
 async def create_botanist_advice_on_report(
     advice: BotanistReportAdviceCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Créer un avis de botaniste sur un rapport de séance
 
     🔒 **Accès réservé aux botanistes**
     """
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(status_code=403, detail="Accès réservé aux botanistes")
 
     # Vérifier que le rapport existe
     report = (
@@ -52,7 +51,7 @@ async def create_botanist_advice_on_report(
 def get_advices_for_care_report(
     care_report_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Tous les avis botaniques pour un rapport spécifique
@@ -65,7 +64,7 @@ async def update_botanist_advice(
     advice_id: int,
     advice_update: BotanistReportAdviceUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Modifier un avis de botaniste existant
@@ -74,8 +73,6 @@ async def update_botanist_advice(
 
     🔒 **Accès réservé aux botanistes**
     """
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(status_code=403, detail="Accès réservé aux botanistes")
 
     try:
         return crud_advice.update_botanist_report_advice(
@@ -90,7 +87,7 @@ async def update_botanist_advice(
 
 @router.get("/my-advised-reports", response_model=List[CareReportWithDetails])
 def get_my_advised_reports(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(require_botanist)
 ):
     """
     Rapports sur lesquels j'ai donné un avis (portfolio botaniste)
@@ -99,7 +96,5 @@ def get_my_advised_reports(
 
     🔒 **Accès réservé aux botanistes**
     """
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(status_code=403, detail="Accès réservé aux botanistes")
 
     return crud_advice.get_care_reports_with_my_advice(db, current_user.id)

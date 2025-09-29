@@ -13,8 +13,15 @@ class AppConfig {
   /// Récupère l'URL de l'API selon l'environnement
   static String get apiUrl {
     if (kIsWeb) {
-      // Pour le web (GitHub Pages), utiliser toujours l'API de production
-      return _prodApiUrl;
+      // Vérifier si on est en développement local (localhost)
+      final currentUrl = Uri.base.host;
+      if (currentUrl == 'localhost' || currentUrl == '127.0.0.1') {
+        // En développement local, utiliser l'API locale
+        return _devApiUrl;
+      } else {
+        // En production (GitHub Pages), utiliser l'API de production
+        return _prodApiUrl;
+      }
     } else {
       // Pour mobile, utiliser dotenv si disponible, sinon production
       return dotenv.env['FLUTTER_API_URL'] ?? _prodApiUrl;

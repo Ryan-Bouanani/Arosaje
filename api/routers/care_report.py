@@ -4,6 +4,7 @@ from typing import List
 import base64
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.role_dependencies import require_botanist
 from models.user import User, UserRole
 from crud import care_report as crud_care_report
 from models.care_report import CareReport as CareReportModel
@@ -131,7 +132,7 @@ def get_reports_for_botanist(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_botanist),
 ):
     """Rapports nécessitant l'avis d'un botaniste
 
@@ -139,8 +140,6 @@ def get_reports_for_botanist(
 
     🔒 **Accès réservé aux botanistes**
     """
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(status_code=403, detail="Accès réservé aux botanistes")
 
     result = crud_care_report.get_care_reports_for_botanist(
         db, current_user.id, skip, limit
@@ -153,7 +152,7 @@ def get_reports_with_my_advice(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_botanist),
 ):
     """Rapports déjà commentés par ce botaniste
 
@@ -161,8 +160,6 @@ def get_reports_with_my_advice(
 
     🔒 **Accès réservé aux botanistes**
     """
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(status_code=403, detail="Accès réservé aux botanistes")
 
     result = crud_care_report.get_care_reports_with_my_advice(
         db, current_user.id, skip, limit

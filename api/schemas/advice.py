@@ -27,8 +27,8 @@ class AdviceValidation(BaseModel):
 
 class BotanistInfo(BaseModel):
     id: int
-    prenom: str
-    nom: str
+    first_name: str
+    last_name: str
     email: str
 
     class Config:
@@ -65,7 +65,7 @@ class PlantCareWithAdvice(BaseModel):
     start_date: datetime
     end_date: datetime
     care_instructions: Optional[str] = None
-    localisation: Optional[str] = None
+    location: Optional[str] = None
     priority: AdvicePriority = AdvicePriority.NORMAL
 
     # Info de la plante

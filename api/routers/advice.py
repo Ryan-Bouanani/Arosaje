@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.role_dependencies import require_botanist
 from models.user import User, UserRole
 from models.advice import AdvicePriority, ValidationStatus
 from crud.advice import advice
@@ -20,19 +21,11 @@ router = APIRouter(prefix="/advices", tags=["advices"])
 notification_service = NotificationService()
 
 
-def verify_botanist(current_user: User = Depends(get_current_user)):
-    """Vérifier que l'utilisateur est un botaniste"""
-    if current_user.role != UserRole.BOTANIST:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Seuls les botanistes peuvent accéder à cette ressource",
-        )
-    return current_user
 
 
 @router.get("/stats", response_model=AdviceStats)
 async def get_advice_stats(
-    db: Session = Depends(get_db), current_user: User = Depends(verify_botanist)
+    db: Session = Depends(get_db), current_user: User = Depends(require_botanist)
 ):
     """
     Statistiques personnelles du botaniste
@@ -50,7 +43,7 @@ async def get_plant_cares_to_review(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Gardes à examiner par les botanistes
@@ -75,7 +68,7 @@ async def get_plant_cares_with_advice(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Gardes ayant reçu des avis botaniques
@@ -97,7 +90,7 @@ async def get_plant_cares_with_advice(
 async def create_advice(
     advice_data: AdviceCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Créer un nouveau conseil botanique
@@ -149,7 +142,7 @@ async def update_advice(
     advice_id: int,
     advice_data: AdviceUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Modifier un conseil existant (crée une nouvelle version)
@@ -198,7 +191,7 @@ async def validate_advice(
     advice_id: int,
     validation_data: AdviceValidation,
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Valider ou rejeter le conseil d'un autre botaniste
@@ -253,7 +246,7 @@ async def validate_advice(
 async def get_advice_by_id(
     advice_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Récupérer un conseil par son ID
@@ -379,7 +372,7 @@ async def get_current_plant_care_advice(
 async def get_count_by_priority(
     priority: AdvicePriority,
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """
     Obtenir le nombre de gardes par priorité
@@ -401,7 +394,7 @@ async def get_count_by_priority(
 @router.get("/debug/plant-images")
 async def debug_plant_images(
     db: Session = Depends(get_db),
-    current_user: User = Depends(verify_botanist),
+    current_user: User = Depends(require_botanist),
 ):
     """Debug endpoint to check plant image data"""
     from models.plant import Plant

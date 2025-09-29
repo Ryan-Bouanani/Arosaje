@@ -11,7 +11,7 @@ from crud.plant import plant as plant_crud
 from crud.user import user as user_crud
 from models.plant_care import CareStatus, PlantCare as PlantCareModel
 from models.user import User as UserModel
-from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB, PlantCareList
+from schemas.plant_care import PlantCare, PlantCareCreate, PlantCareInDB, PlantCareList, PlantCareUpdate
 from schemas.user import User
 from crud.message import message
 from models.message import ConversationType
@@ -61,8 +61,8 @@ async def create_plant_care(
                 raise HTTPException(status_code=404, detail="Gardien non trouvé")
 
         # Géocoder l'adresse si fournie
-        if plant_care_in.location or plant_care_in.localisation:
-            address = plant_care_in.location or plant_care_in.localisation
+        if plant_care_in.location:
+            address = plant_care_in.location
             logging.info(f"Géocodage de l'adresse: {address}")
             coords = await geocoding_service.geocode_address(address)
             if coords:
@@ -255,6 +255,57 @@ async def accept_plant_care(
         raise HTTPException(status_code=500, detail=f"Erreur interne: {str(e)}")
 
 
+@router.put("/{care_id}", response_model=PlantCare)
+async def update_plant_care(
+    care_id: int,
+    plant_care_update: PlantCareUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Mettre à jour une garde de plante"""
+    db_care = plant_care.get(db, id=care_id)
+    if not db_care:
+        raise HTTPException(status_code=404, detail="Garde non trouvée")
+
+    # Vérifier que l'utilisateur est le propriétaire de la garde
+    if db_care.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Seul le propriétaire peut modifier cette garde"
+        )
+
+    # Vérifier que la garde peut être modifiée
+    if db_care.status in [CareStatus.IN_PROGRESS, CareStatus.COMPLETED, CareStatus.CANCELLED]:
+        raise HTTPException(
+            status_code=400,
+            detail="Cette garde ne peut plus être modifiée"
+        )
+
+    # Géocoder la nouvelle adresse si fournie
+    if plant_care_update.location:
+        address = plant_care_update.location
+        logging.info(f"Géocodage de l'adresse: {address}")
+        coords = await geocoding_service.geocode_address(address)
+        if coords:
+            plant_care_update.latitude = coords[0]
+            plant_care_update.longitude = coords[1]
+            logging.info(f"Coordonnées obtenues: {coords}")
+        else:
+            logging.warning(f"Impossible de géocoder l'adresse: {address}")
+
+    # Mettre à jour les champs modifiés
+    update_data = plant_care_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        if hasattr(db_care, field):
+            setattr(db_care, field, value)
+
+    db.add(db_care)
+    db.commit()
+    db.refresh(db_care)
+
+    return db_care
+
+
 @router.put("/{care_id}/complete", response_model=PlantCare)
 async def complete_plant_care_by_owner(
     care_id: int,
@@ -331,10 +382,10 @@ def get_plant_care_by_plant(
     if not plant:
         # Créer une plante fictive basée sur l'ID pour la démonstration
         fake_plants = {
-            1: {"nom": "Monstera Deliciosa", "espece": "Monstera"},
-            2: {"nom": "Ficus Lyrata", "espece": "Ficus"},
-            3: {"nom": "Calathea Orbifolia", "espece": "Calathea"},
-            4: {"nom": "Pilea Peperomioides", "espece": "Pilea"},
+            1: {"name": "Monstera Deliciosa", "species": "Monstera"},
+            2: {"name": "Ficus Lyrata", "species": "Ficus"},
+            3: {"name": "Calathea Orbifolia", "species": "Calathea"},
+            4: {"name": "Pilea Peperomioides", "species": "Pilea"},
         }
 
         if plant_id in fake_plants:
@@ -349,8 +400,8 @@ def get_plant_care_by_plant(
                 "start_date": dt.datetime.now(),
                 "end_date": dt.datetime.now(),
                 "status": "pending",
-                "care_instructions": f'Cette {fake_plant_data["nom"]} est disponible pour la garde',
-                "localisation": "Plante de démonstration - Paris",
+                "care_instructions": f'Cette {fake_plant_data["name"]} est disponible pour la garde',
+                "location": "Plante de démonstration - Paris",
                 "start_photo_url": None,
                 "end_photo_url": None,
                 "conversation_id": None,
@@ -358,14 +409,14 @@ def get_plant_care_by_plant(
                 "updated_at": dt.datetime.now(),
                 "plant": {
                     "id": plant_id,
-                    "nom": fake_plant_data["nom"],
-                    "espece": fake_plant_data["espece"],
+                    "name": fake_plant_data["name"],
+                    "species": fake_plant_data["species"],
                     "photo": None,
                 },
                 "owner": {
                     "id": current_user.id,
-                    "nom": current_user.last_name,
-                    "prenom": current_user.first_name,
+                    "last_name": current_user.last_name,
+                    "first_name": current_user.first_name,
                     "email": current_user.email,
                 },
             }
@@ -405,7 +456,7 @@ def get_plant_care_by_plant(
             "end_date": datetime.now(),
             "status": "pending",
             "care_instructions": "Aucune garde active pour cette plante",
-            "localisation": "Emplacement de la plante non spécifié",
+            "location": "Emplacement de la plante non spécifié",
             "start_photo_url": None,
             "end_photo_url": None,
             "conversation_id": None,
@@ -413,15 +464,15 @@ def get_plant_care_by_plant(
             "updated_at": datetime.now(),
             "plant": {
                 "id": plant.id,
-                "nom": plant.name,
-                "espece": plant.species,
+                "name": plant.name,
+                "species": plant.species,
                 "photo": plant.photo,
             },
             "owner": (
                 {
                     "id": owner.id,
-                    "nom": owner.last_name,
-                    "prenom": owner.first_name,
+                    "last_name": owner.last_name,
+                    "first_name": owner.first_name,
                     "email": owner.email,
                 }
                 if owner

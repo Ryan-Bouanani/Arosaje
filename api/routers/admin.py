@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from utils.database import get_db
 from utils.security import get_current_user
+from utils.role_dependencies import require_admin
 from models.user import User, UserRole
 from schemas.user import User as UserSchema
 from crud.user import user as user_crud
@@ -20,14 +21,6 @@ router = APIRouter(prefix="/admin", tags=["administration"])
 email_service = EmailService()
 
 
-def check_admin_rights(current_user: dict = Depends(get_current_user)):
-    """Vérifie que l'utilisateur est un admin"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Accès réservé aux administrateurs",
-        )
-    return current_user
 
 
 async def send_validation_email(user_email: str, user_name: str):
@@ -52,7 +45,7 @@ async def send_rejection_email(user_email: str, user_name: str):
 
 @router.get("/pending-verifications", response_model=List[UserSchema])
 async def get_pending_verifications(
-    db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
+    db: Session = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Lister tous les comptes en attente de vérification"""
     return db.query(User).filter(not User.is_verified).all()
@@ -63,7 +56,7 @@ async def verify_user(
     user_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(check_admin_rights),
+    current_user: User = Depends(require_admin),
 ):
     """Vérifier un compte utilisateur"""
     user = user_crud.get(db, id=user_id)
@@ -92,7 +85,7 @@ async def reject_user(
     user_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(check_admin_rights),
+    current_user: User = Depends(require_admin),
 ):
     """Rejeter et supprimer un compte utilisateur"""
     user = user_crud.get(db, id=user_id)
@@ -119,7 +112,7 @@ async def reject_user(
 
 @router.get("/stats")
 async def get_admin_stats(
-    db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
+    db: Session = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Statistiques pour le dashboard administrateur"""
     try:
@@ -152,7 +145,7 @@ async def get_admin_stats(
 
 @router.delete("/reset-data")
 async def reset_data(
-    db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
+    db: Session = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Reset toutes les données sauf les comptes utilisateurs"""
     try:
@@ -193,11 +186,9 @@ async def reset_data(
 
 @router.post("/rgpd/cleanup")
 async def manual_rgpd_cleanup(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Nettoyage manuel RGPD pour démonstration/tests"""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(status_code=403, detail="Accès admin requis")
 
     cleanup_service = RGPDCleanupService()
     result = cleanup_service.manual_cleanup()
@@ -206,7 +197,7 @@ async def manual_rgpd_cleanup(
 
 @router.get("/verified-users", response_model=List[UserSchema])
 async def get_verified_users(
-    db: Session = Depends(get_db), current_user: dict = Depends(check_admin_rights)
+    db: Session = Depends(get_db), current_user: User = Depends(require_admin)
 ):
     """Lister tous les utilisateurs vérifiés et actifs"""
     return db.query(User).filter(User.is_verified).all()
@@ -217,7 +208,7 @@ async def change_user_role(
     user_id: int,
     role_data: dict,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(check_admin_rights),
+    current_user: User = Depends(require_admin),
 ):
     """Modifier le rôle d'un utilisateur"""
     user = user_crud.get(db, id=user_id)
@@ -261,8 +252,8 @@ async def change_user_role(
         "message": f"Rôle de l'utilisateur {user.first_name} {user.last_name} changé vers {new_role}",
         "user": {
             "id": user.id,
-            "nom": user.last_name,
-            "prenom": user.first_name,
+            "last_name": user.last_name,
+            "first_name": user.first_name,
             "email": user.email,
             "role": user.role.value,
         },

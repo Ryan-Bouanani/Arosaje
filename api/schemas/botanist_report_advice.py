@@ -28,8 +28,8 @@ class BotanistReportAdvice(BotanistReportAdviceBase):
 # Schéma pour le botaniste
 class BotanistSimple(BaseModel):
     id: int
-    prenom: str
-    nom: Optional[str] = None
+    first_name: str
+    last_name: Optional[str] = None
 
     model_config = {"from_attributes": True}
 

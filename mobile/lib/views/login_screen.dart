@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     
     // Valeurs par défaut pour faciliter les tests
     _emailController.text = 'user@arosaje.fr';
-    _passwordController.text = 'epsi691';
+    _passwordController.text = 'EpsiPassword123';
   }
 
   Future<void> _initializeStorage() async {
